@@ -28,6 +28,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Get started: getting-started.md
   - Catalogues: catalogues.md
   - Python API: api.md
   - Maintaining: maintaining.md
