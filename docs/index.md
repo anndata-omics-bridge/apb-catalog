@@ -32,6 +32,7 @@ Every set lists every rule APB2 packages, so a vendor without a relevant field a
 
 ## Pages
 
+- [Get started](getting-started.md): install, look up, use the data, map to MIAPE
 - [Catalogues](catalogues.md): every entry of both sets
 - [Python API](api.md): lookups, errors and snapshots
 - [Maintaining](maintaining.md): re-reviewing after an APB2 rule change

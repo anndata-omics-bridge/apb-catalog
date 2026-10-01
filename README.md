@@ -2,7 +2,7 @@
 
 Consumer-specific catalogues for APB results. Each catalogue names the fields one consumer needs, so the consumer asks for a meaning instead of vendor columns such as `PEP`, `EG_PEP` or `Q_Value`.
 
-Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/), built from [docs/](docs/) with `make docs`.
+Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/), built from [docs/](docs/) with `make docs`; start with [Get started](docs/getting-started.md).
 
 ## Use
 
