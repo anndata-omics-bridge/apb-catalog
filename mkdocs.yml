@@ -1,0 +1,43 @@
+site_name: APB Catalog
+site_description: Consumer-specific catalogues that name the APB2 fields a tool needs.
+site_url: https://anndata-omics-bridge.github.io/apb-catalog/
+repo_url: https://github.com/anndata-omics-bridge/apb-catalog
+repo_name: anndata-omics-bridge/apb-catalog
+docs_dir: docs
+site_dir: public
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - Catalogues: catalogues.md
+  - Python API: api.md
+  - Maintaining: maintaining.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences

@@ -33,6 +33,10 @@ dev = [
     "ruff>=0.15,<1",
     "twine>=6,<7",
 ]
+docs = [
+    "pymdown-extensions>=11,<12",
+    "zensical==0.0.43",
+]
 
 [tool.ruff]
 line-length = 100
