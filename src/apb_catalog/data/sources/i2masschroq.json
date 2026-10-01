@@ -1,0 +1,20 @@
+{
+  "catalogue_id": "i2masschroq",
+  "catalogue_version": "0.1",
+  "software_name": "i2MassChroQ",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "i2masschroq/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:2a3c5950afd64b87f54b7986f31250178f480efc7b9816a2e7c28aadb81eba36"
+      ]
+    }
+  ],
+  "entries": [],
+  "unmapped": []
+}

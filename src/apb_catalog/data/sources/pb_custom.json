@@ -1,0 +1,20 @@
+{
+  "catalogue_id": "pb_custom",
+  "catalogue_version": "0.1",
+  "software_name": "ProteoBench custom",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "pb_custom/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:fabeff4b50cc761711d16f26bfca950a781d4edbf3c6c907742f6a1210b6d6de"
+      ]
+    }
+  ],
+  "entries": [],
+  "unmapped": []
+}

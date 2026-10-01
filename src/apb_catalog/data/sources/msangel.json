@@ -1,0 +1,45 @@
+{
+  "catalogue_id": "msangel",
+  "catalogue_version": "0.1",
+  "software_name": "MS-Angel",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "msangel/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:ebcbbf37599cb7684eebf49bb164f774d9243cded1ce48f014ba1968e980da81"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "msangel.ion.Best_Score",
+      "rules": [
+        "msangel/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Best_Score"
+      },
+      "vendor_source": "^best_score_(?:DDA_)?(?P<sample>.+)$",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "score",
+        "entity": "precursor",
+        "statistic": "max",
+        "direction": "higher_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "MS-Angel exports Proline's 'Quantified peptide ions' sheet. Score of the best PSM (Mascot ion score by default) of this peptide ion in the run: proline-core LabelFreeSummarizers.scala::_buildMasterQuantPeptideIon selects sameChargePepMatches.maxBy(_.score); empty without a PSM in that run.",
+        "source": "https://www.profiproteomics.fr/wp-content/uploads/2023/03/ProlineSuite_UserGuide_2.2.pdf"
+      }
+    }
+  ],
+  "unmapped": []
+}

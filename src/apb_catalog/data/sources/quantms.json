@@ -1,0 +1,20 @@
+{
+  "catalogue_id": "quantms",
+  "catalogue_version": "0.1",
+  "software_name": "quantms",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "quantms/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:4006b77cbbf5b2da65b12c2bca2af634771c0846c7da698bd64c6c6b22f430a4"
+      ]
+    }
+  ],
+  "entries": [],
+  "unmapped": []
+}

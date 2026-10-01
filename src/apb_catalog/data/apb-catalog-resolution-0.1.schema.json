@@ -1,0 +1,499 @@
+{
+  "$defs": {
+    "Candidate": {
+      "additionalProperties": false,
+      "description": "One entry compatible with a request, and the requested qualifiers it leaves unknown.",
+      "properties": {
+        "entry_id": {
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/Reference"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        },
+        "undecided": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Undecided",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entry_id",
+        "reference",
+        "qualifiers"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "Concept": {
+      "additionalProperties": false,
+      "description": "One meaning a consumer can ask for, with every qualifier it must be described by.",
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Qualifier"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "definition",
+        "qualifiers"
+      ],
+      "title": "Concept",
+      "type": "object"
+    },
+    "ConceptRequest": {
+      "additionalProperties": false,
+      "description": "A consumer's question: one concept on one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier.",
+      "properties": {
+        "concept": {
+          "title": "Concept",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/ParsedLevelName"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "concept",
+        "level"
+      ],
+      "title": "ConceptRequest",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "Why a reviewer assigned an entry's meaning.",
+      "properties": {
+        "basis": {
+          "title": "Basis",
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        }
+      },
+      "required": [
+        "basis"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "LevelBinding": {
+      "discriminator": {
+        "mapping": {
+          "reviewed": "#/$defs/ReviewedBinding",
+          "unreviewed": "#/$defs/UnreviewedBinding"
+        },
+        "propertyName": "status"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ReviewedBinding"
+        },
+        {
+          "$ref": "#/$defs/UnreviewedBinding"
+        }
+      ]
+    },
+    "Location": {
+      "enum": [
+        "layers",
+        "var"
+      ],
+      "type": "string"
+    },
+    "ParsedLevelName": {
+      "enum": [
+        "ion",
+        "peptidoform",
+        "peptide",
+        "protein",
+        "fragment"
+      ],
+      "type": "string"
+    },
+    "Producer": {
+      "additionalProperties": false,
+      "description": "The package and version that wrote a snapshot.",
+      "properties": {
+        "package": {
+          "title": "Package",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "package",
+        "version"
+      ],
+      "title": "Producer",
+      "type": "object"
+    },
+    "Qualifier": {
+      "additionalProperties": false,
+      "description": "One dimension of a concept and the meanings of its admitted values.",
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "definition",
+        "values"
+      ],
+      "title": "Qualifier",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "description": "Where one retained field lives in an APB result, by its APB output name.",
+      "properties": {
+        "level": {
+          "$ref": "#/$defs/ParsedLevelName"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "location",
+        "name"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "Resolution": {
+      "additionalProperties": false,
+      "description": "The answer to one request; only ``resolved`` carries a reference.",
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/ConceptRequest"
+        },
+        "status": {
+          "$ref": "#/$defs/ResolutionStatus"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Reference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "candidates": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "request",
+        "status"
+      ],
+      "title": "Resolution",
+      "type": "object"
+    },
+    "ResolutionStatus": {
+      "enum": [
+        "resolved",
+        "missing",
+        "ambiguous",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "Review": {
+      "additionalProperties": false,
+      "description": "When a catalogue was reviewed and against which APB2 revision.",
+      "properties": {
+        "date": {
+          "title": "Date",
+          "type": "string"
+        },
+        "apb2_revision": {
+          "title": "Apb2 Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "apb2_revision"
+      ],
+      "title": "Review",
+      "type": "object"
+    },
+    "ReviewedBinding": {
+      "additionalProperties": false,
+      "description": "A level whose effective rule matches a reviewed catalogue variant.",
+      "properties": {
+        "status": {
+          "const": "reviewed",
+          "default": "reviewed",
+          "title": "Status",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/ParsedLevelName"
+        },
+        "fingerprint": {
+          "title": "Fingerprint",
+          "type": "string"
+        },
+        "catalogue_id": {
+          "title": "Catalogue Id",
+          "type": "string"
+        },
+        "catalogue_version": {
+          "title": "Catalogue Version",
+          "type": "string"
+        },
+        "software_name": {
+          "title": "Software Name",
+          "type": "string"
+        },
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        },
+        "review": {
+          "$ref": "#/$defs/Review"
+        }
+      },
+      "required": [
+        "level",
+        "fingerprint",
+        "catalogue_id",
+        "catalogue_version",
+        "software_name",
+        "rule",
+        "review"
+      ],
+      "title": "ReviewedBinding",
+      "type": "object"
+    },
+    "SourceEntry": {
+      "additionalProperties": false,
+      "description": "The reviewed meaning of one retained field under the listed rule documents.",
+      "properties": {
+        "entry_id": {
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "reference": {
+          "$ref": "#/$defs/Reference"
+        },
+        "vendor_source": {
+          "title": "Vendor Source",
+          "type": "string"
+        },
+        "concept": {
+          "title": "Concept",
+          "type": "string"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "entry_id",
+        "rules",
+        "reference",
+        "vendor_source",
+        "concept",
+        "qualifiers",
+        "evidence"
+      ],
+      "title": "SourceEntry",
+      "type": "object"
+    },
+    "UnreviewedBinding": {
+      "additionalProperties": false,
+      "description": "A level no catalogue describes, and why.",
+      "properties": {
+        "status": {
+          "const": "unreviewed",
+          "default": "unreviewed",
+          "title": "Status",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/ParsedLevelName"
+        },
+        "fingerprint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fingerprint"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "fingerprint",
+        "reason"
+      ],
+      "title": "UnreviewedBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Level bindings, the retained entries they supply, and the answers to consumer requests.",
+  "properties": {
+    "contract": {
+      "const": "apb-catalog-resolution",
+      "default": "apb-catalog-resolution",
+      "title": "Contract",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "0.1",
+      "default": "0.1",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "producer": {
+      "$ref": "#/$defs/Producer"
+    },
+    "vocabulary_version": {
+      "title": "Vocabulary Version",
+      "type": "string"
+    },
+    "concepts": {
+      "additionalProperties": {
+        "$ref": "#/$defs/Concept"
+      },
+      "title": "Concepts",
+      "type": "object"
+    },
+    "levels": {
+      "items": {
+        "$ref": "#/$defs/LevelBinding"
+      },
+      "title": "Levels",
+      "type": "array"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/SourceEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+    },
+    "resolutions": {
+      "items": {
+        "$ref": "#/$defs/Resolution"
+      },
+      "title": "Resolutions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "vocabulary_version",
+    "concepts",
+    "levels",
+    "entries",
+    "resolutions"
+  ],
+  "title": "ResolutionSnapshot",
+  "type": "object"
+}

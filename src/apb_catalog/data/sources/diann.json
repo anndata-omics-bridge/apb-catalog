@@ -1,0 +1,172 @@
+{
+  "catalogue_id": "diann",
+  "catalogue_version": "0.1",
+  "software_name": "DIA-NN",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "39f268c with uncommitted DIA-NN protein layers"
+  },
+  "variants": [
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:3b11723c693b2c3eea4db2110238ab1b586bc1eae92dd54396f10f561a6fbb5e"
+      ]
+    },
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:15593b5e899d0bd9fe9c74dbfff394c22400de9a0beee7d62ba1e46ae1783c63"
+      ]
+    },
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:340fc1770b2ff2fb71fc6c36f3145c002a887c128a5913cdf2b585266e896530"
+      ]
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:8be3db1d1915cbc973df235b117757449182d5818e9de83257f2cbb3b7cb6af7"
+      ]
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:51fe83d4d63a7c9b5e5c2a301c1a2546107acc0af329c76e2604abf09c0ecda7"
+      ]
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:55428fbd816eeffc0d3bd7350b8d2d4d5e94f51e6b769ba516b4024f2f9d461b"
+      ]
+    },
+    {
+      "rule": "diann/v2/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:a4588dd59008e4b8636cf25f2f86132b999e449417a4b5c40753d5425c7d9b7e",
+        "sha256:b618b55c20fbb9e16b3a28c1b0540f732ef68ff79403b4ab604fb7e5534fe135"
+      ]
+    },
+    {
+      "rule": "diann/v2/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:be1d98898a2021dda8043b80e4dc04f69315a2771e2ade26e87db917a79acab4"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "diann.ion.Q_Value",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Q_Value"
+      },
+      "vendor_source": "Q.Value",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "entity": "precursor",
+        "statistic": "value",
+        "direction": "lower_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "DIA-NN README: 'run-specific precursor q-value'. Q.Value differs across runs for every multi-run precursor while Global.Q.Value never does: fixture 300beac4 (2.x parquet, 17,536) and 1cd54fe0 (1.8 TSV, 96,860).",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.ion.PEP",
+      "rules": [
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "PEP"
+      },
+      "vendor_source": "PEP",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "entity": "precursor",
+        "statistic": "value",
+        "direction": "lower_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "DIA-NN README: 'run-specific posterior error probability for the precursor'. PEP differs across runs for 17,536 of 17,536 multi-run precursors in fixture 300beac4 (2.x parquet) and 96,851 of 96,860 in 1cd54fe0 (1.8 TSV). DIA-NN 1.7.16 reports carry no PEP column, so diann/v1_7 does not retain it.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.protein.PG_Q_Value",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "PG_Q_Value"
+      },
+      "vendor_source": "PG.Q.Value",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "entity": "protein_group",
+        "statistic": "value",
+        "direction": "lower_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "DIA-NN README: 'run-specific q-value for the protein group'. PG.Q.Value differs across runs for every multi-run protein group while Global.PG.Q.Value never does: fixture 300beac4 (2.x, 3,631) and 1cd54fe0 (1.8, 8,584).",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.protein.PG_PEP",
+      "rules": [
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "PG_PEP"
+      },
+      "vendor_source": "PG.PEP",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "entity": "protein_group",
+        "statistic": "value",
+        "direction": "lower_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "DIA-NN README: 'run-specific posterior error probability for the protein group'. Fixture 300beac4 (2.x): PG.PEP differs across runs for all 3,631 multi-run protein groups; the 1.8 fixture has no PG.PEP.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    }
+  ],
+  "unmapped": []
+}

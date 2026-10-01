@@ -1,0 +1,51 @@
+{
+  "vocabulary_version": "0.1",
+  "concepts": {
+    "confidence": {
+      "definition": "A value the producing software reports for how likely an identification, or the signal quantified for it, is correct.",
+      "qualifiers": {
+        "kind": {
+          "definition": "What the value measures.",
+          "values": {
+            "pep": "Posterior error probability: the probability that this single identification is wrong.",
+            "q_value": "The smallest false discovery rate at which this identification, or quantified signal, is accepted.",
+            "score": "A software-specific score, including classifier probabilities, not calibrated as an error probability or false discovery rate."
+          }
+        },
+        "entity": {
+          "definition": "The identified entity the value belongs to.",
+          "values": {
+            "precursor": "One peptidoform at one charge state.",
+            "peptidoform": "One modified peptide sequence, across charge states.",
+            "peptide": "One unmodified peptide sequence.",
+            "protein_group": "One protein group."
+          }
+        },
+        "statistic": {
+          "definition": "How the stored value relates to the underlying per-entity estimates.",
+          "values": {
+            "value": "The estimate itself.",
+            "mean": "The mean of estimates over the runs or channels the software combines.",
+            "min": "The minimum of those estimates.",
+            "max": "The maximum of those estimates.",
+            "percentile": "A software-defined percentile of those estimates."
+          }
+        },
+        "direction": {
+          "definition": "Which values indicate higher confidence.",
+          "values": {
+            "lower_better": "Smaller values indicate higher confidence.",
+            "higher_better": "Larger values indicate higher confidence."
+          }
+        },
+        "stage": {
+          "definition": "Which decision the value qualifies.",
+          "values": {
+            "identification": "Whether the entity is correctly identified.",
+            "quantification": "Whether the signal quantified for an identified entity, such as its MS1 peak, belongs to it."
+          }
+        }
+      }
+    }
+  }
+}

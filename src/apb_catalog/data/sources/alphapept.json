@@ -1,0 +1,69 @@
+{
+  "catalogue_id": "alphapept",
+  "catalogue_version": "0.1",
+  "software_name": "AlphaPept",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "alphapept/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:237dfd9df5d95a4c90aa1a056435872043c38fc40f7399f004ee439b5fda951a"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "alphapept.ion.Q_Value",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Q_Value"
+      },
+      "vendor_source": "q_value",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "entity": "precursor",
+        "statistic": "value",
+        "direction": "lower_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "score.py::score_hdf loads one file and applies cut_global_fdr(analyte_level='precursor') to it; interface.py runs it per file.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/score.py"
+      }
+    },
+    {
+      "entry_id": "alphapept.ion.Score",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Score"
+      },
+      "vendor_source": "score",
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "score",
+        "entity": "precursor",
+        "statistic": "value",
+        "direction": "higher_better",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "Default random-forest target probability of the best PSM, trained per file in score_hdf; not a calibrated PEP. cut_fdr sorts descending.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/score.py"
+      }
+    }
+  ],
+  "unmapped": []
+}
