@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  standalone:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -26,8 +26,44 @@ jobs:
           version: "0.9.8"
           enable-cache: true
 
-      - name: Synchronize environment
+      - name: Synchronize standalone quality environment
+        run: uv sync --frozen --only-group dev
+
+      - name: Run standalone quality gates
+        run: make format-check lint deps build
+
+  full-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apb-catalog
+    steps:
+      - name: Check out APB Catalog
+        uses: actions/checkout@v6
+        with:
+          path: apb-catalog
+
+      # Catalogue fingerprints are reviewed against this APB2 revision; bump it with a re-review.
+      - name: Check out reviewed APB2
+        uses: actions/checkout@v6
+        with:
+          repository: anndata-omics-bridge/apb2
+          ref: fb5f5e1e32057025d48a73ef6662570be2775a9b
+          path: apb2
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: "0.9.8"
+          enable-cache: true
+
+      - name: Synchronize complete environment
         run: uv sync --frozen --group dev
 
-      - name: Run quality gates
+      - name: Run complete quality gate
         run: make check
