@@ -33,41 +33,13 @@
         "location": "var",
         "name": "Q_Value"
       },
-      "vendor_source": "q_value",
       "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
-        "entity": "precursor",
-        "statistic": "value",
-        "direction": "lower_better",
         "stage": "quantification"
       },
       "evidence": {
         "basis": "Sage docs: 'MS1-integration specific q-value'. Targets compete with +11.06 Da, RT-shifted decoy peaks (lfq.rs::build_feature_map, fdr.rs::picked_precursor); one peak window is chosen from scores pooled over all files.",
-        "source": "https://sage-docs.vercel.app/docs/results/lfq"
-      }
-    },
-    {
-      "entry_id": "sage.ion.Score",
-      "rules": [
-        "sage/rules.json"
-      ],
-      "reference": {
-        "level": "ion",
-        "location": "var",
-        "name": "Score"
-      },
-      "vendor_source": "score",
-      "concept": "confidence",
-      "qualifiers": {
-        "kind": "score",
-        "entity": "precursor",
-        "statistic": "max",
-        "direction": "higher_better",
-        "stage": "quantification"
-      },
-      "evidence": {
-        "basis": "MS1 peak score used for the q-value, the best over RT bins (lfq.rs::Traces::integrate), pooled over all files; not a PSM score.",
         "source": "https://sage-docs.vercel.app/docs/results/lfq"
       }
     },
@@ -81,44 +53,15 @@
         "location": "var",
         "name": "Q_Value"
       },
-      "vendor_source": "q_value",
       "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
-        "entity": "peptidoform",
-        "statistic": "value",
-        "direction": "lower_better",
         "stage": "quantification"
       },
       "evidence": {
         "basis": "Sage docs: 'MS1-integration specific q-value'. Targets compete with +11.06 Da, RT-shifted decoy peaks (lfq.rs::build_feature_map, fdr.rs::picked_precursor); one peak window is chosen from scores pooled over all files.",
         "source": "https://sage-docs.vercel.app/docs/results/lfq"
       }
-    },
-    {
-      "entry_id": "sage.peptidoform.Score",
-      "rules": [
-        "sage/rules.json"
-      ],
-      "reference": {
-        "level": "peptidoform",
-        "location": "var",
-        "name": "Score"
-      },
-      "vendor_source": "score",
-      "concept": "confidence",
-      "qualifiers": {
-        "kind": "score",
-        "entity": "peptidoform",
-        "statistic": "max",
-        "direction": "higher_better",
-        "stage": "quantification"
-      },
-      "evidence": {
-        "basis": "MS1 peak score used for the q-value, the best over RT bins (lfq.rs::Traces::integrate), pooled over all files; not a PSM score.",
-        "source": "https://sage-docs.vercel.app/docs/results/lfq"
-      }
     }
-  ],
-  "unmapped": []
+  ]
 }

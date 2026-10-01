@@ -1,0 +1,103 @@
+{
+  "catalogue_id": "wombat",
+  "catalogue_version": "0.1-draft",
+  "software_name": "WOMBAT-P",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "fb5f5e1"
+  },
+  "variants": [
+    {
+      "rule": "wombat/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:0831a476c8a7f6f5ce66b42e7677d7995e58b963ab6675a158639fe6f660b9fb"
+      ]
+    },
+    {
+      "rule": "wombat/rules.json",
+      "level": "peptidoform",
+      "fingerprints": [
+        "sha256:eaca097dcf67996ef1e386a0eb68bda34465e348f5004173334a6ba438d1df1e"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "wombat.peptidoform.ProForma_peptidoform.peptidoform",
+      "rules": [
+        "wombat/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptidoform"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "peptidoform"
+      },
+      "evidence": {
+        "basis": "Draft. APB's canonical ProForma peptidoform, the level's var key.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "wombat.peptidoform.ProForma_peptide.sequence",
+      "rules": [
+        "wombat/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "sequence"
+      },
+      "evidence": {
+        "basis": "Draft. APB's stripped sequence of the peptidoform.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "wombat.peptidoform.protein_group.protein_group",
+      "rules": [
+        "wombat/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "protein_group"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_group"
+      },
+      "evidence": {
+        "basis": "Draft. protein_group as reported by WOMBAT-P.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "wombat.peptidoform.Abundance.raw",
+      "rules": [
+        "wombat/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "layers",
+        "name": "Abundance"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "raw"
+      },
+      "evidence": {
+        "basis": "Draft. abundance_<sample>. The rule's primary layer, the engine's principal reported quantity, taken as the unmodified engine output. WOMBAT-P's per-sample PSM counts are a layer, not MIAPE's per-feature n_psms.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    }
+  ]
+}

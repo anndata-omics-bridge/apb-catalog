@@ -1,0 +1,98 @@
+{
+  "catalogue_id": "maxquant",
+  "catalogue_version": "0.1",
+  "software_name": "MaxQuant",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "maxquant/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:fdabc3567b608167f87aad968b14fa5543c39f6f349eca2840d51795dcf77afd"
+      ]
+    },
+    {
+      "rule": "maxquant/rules.json",
+      "level": "peptidoform",
+      "fingerprints": [
+        "sha256:5480d4d745821a4d3bac927978ba5c3fbb0bf58371e48672ee6f283fc5faeb1e"
+      ]
+    },
+    {
+      "rule": "maxquant/rules.json",
+      "level": "peptide",
+      "fingerprints": [
+        "sha256:3b9fa1ee0535363f5266fc4684f5762336183a84946b19286800bf9f3ca043fc"
+      ]
+    },
+    {
+      "rule": "maxquant/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:92f25a55d8af8d259b05013d24c3ad221acec2b579baec32a31df0b95c23695f"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "maxquant.ion.PEP",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "PEP"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "evidence.txt posterior error probability of the identification in its raw file. Fixture 00e2f863 (evidence.txt): PEP differs across runs for 42,117 of 42,339 multi-run ions."
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.PEP",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "PEP"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "modificationSpecificPeptides.txt PEP. Retained by the rule as a var column: one value per feature across the experiment. How MaxQuant combines per-run PEPs is not reviewed."
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.PEP",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "PEP"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "peptides.txt PEP. Retained by the rule as a var column: one value per feature across the experiment. How MaxQuant combines per-run PEPs is not reviewed."
+      }
+    }
+  ]
+}

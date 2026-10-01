@@ -1,10 +1,10 @@
 {
   "catalogue_id": "i2masschroq",
-  "catalogue_version": "0.1",
+  "catalogue_version": "0.1-draft",
   "software_name": "i2MassChroQ",
   "review": {
-    "date": "2026-09-30",
-    "apb2_revision": "d25f295"
+    "date": "2026-10-01",
+    "apb2_revision": "fb5f5e1"
   },
   "variants": [
     {
@@ -15,6 +15,5 @@
       ]
     }
   ],
-  "entries": [],
-  "unmapped": []
+  "entries": []
 }

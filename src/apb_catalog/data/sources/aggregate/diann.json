@@ -78,13 +78,9 @@
         "location": "layers",
         "name": "Q_Value"
       },
-      "vendor_source": "Q.Value",
       "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
-        "entity": "precursor",
-        "statistic": "value",
-        "direction": "lower_better",
         "stage": "identification"
       },
       "evidence": {
@@ -103,70 +99,15 @@
         "location": "layers",
         "name": "PEP"
       },
-      "vendor_source": "PEP",
       "concept": "confidence",
       "qualifiers": {
         "kind": "pep",
-        "entity": "precursor",
-        "statistic": "value",
-        "direction": "lower_better",
         "stage": "identification"
       },
       "evidence": {
         "basis": "DIA-NN README: 'run-specific posterior error probability for the precursor'. PEP differs across runs for 17,536 of 17,536 multi-run precursors in fixture 300beac4 (2.x parquet) and 96,851 of 96,860 in 1cd54fe0 (1.8 TSV). DIA-NN 1.7.16 reports carry no PEP column, so diann/v1_7 does not retain it.",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
-    },
-    {
-      "entry_id": "diann.protein.PG_Q_Value",
-      "rules": [
-        "diann/v1_7/rules.json",
-        "diann/v1_8/rules.json",
-        "diann/v2/rules.json"
-      ],
-      "reference": {
-        "level": "protein",
-        "location": "layers",
-        "name": "PG_Q_Value"
-      },
-      "vendor_source": "PG.Q.Value",
-      "concept": "confidence",
-      "qualifiers": {
-        "kind": "q_value",
-        "entity": "protein_group",
-        "statistic": "value",
-        "direction": "lower_better",
-        "stage": "identification"
-      },
-      "evidence": {
-        "basis": "DIA-NN README: 'run-specific q-value for the protein group'. PG.Q.Value differs across runs for every multi-run protein group while Global.PG.Q.Value never does: fixture 300beac4 (2.x, 3,631) and 1cd54fe0 (1.8, 8,584).",
-        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
-      }
-    },
-    {
-      "entry_id": "diann.protein.PG_PEP",
-      "rules": [
-        "diann/v2/rules.json"
-      ],
-      "reference": {
-        "level": "protein",
-        "location": "layers",
-        "name": "PG_PEP"
-      },
-      "vendor_source": "PG.PEP",
-      "concept": "confidence",
-      "qualifiers": {
-        "kind": "pep",
-        "entity": "protein_group",
-        "statistic": "value",
-        "direction": "lower_better",
-        "stage": "identification"
-      },
-      "evidence": {
-        "basis": "DIA-NN README: 'run-specific posterior error probability for the protein group'. Fixture 300beac4 (2.x): PG.PEP differs across runs for all 3,631 multi-run protein groups; the 1.8 fixture has no PG.PEP.",
-        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
-      }
     }
-  ],
-  "unmapped": []
+  ]
 }

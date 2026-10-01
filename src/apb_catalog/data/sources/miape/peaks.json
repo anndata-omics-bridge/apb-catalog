@@ -1,0 +1,19 @@
+{
+  "catalogue_id": "peaks",
+  "catalogue_version": "0.1-draft",
+  "software_name": "PEAKS",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "fb5f5e1"
+  },
+  "variants": [
+    {
+      "rule": "peaks/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:63d46bd17924659ec0ce9dd5cd253d366742f1c2c9b85a7bc72e3867842f83eb"
+      ]
+    }
+  ],
+  "entries": []
+}

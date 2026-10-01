@@ -1,0 +1,103 @@
+{
+  "catalogue_id": "sage",
+  "catalogue_version": "0.1-draft",
+  "software_name": "Sage",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "fb5f5e1"
+  },
+  "variants": [
+    {
+      "rule": "sage/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:0ffa7ba880605f860b48c1d903235c0dd852a9ffb0d9b2dbac875ebacbbdf904"
+      ]
+    },
+    {
+      "rule": "sage/rules.json",
+      "level": "peptidoform",
+      "fingerprints": [
+        "sha256:8755a7465080dafa9f7a14170a038a674230d38b18c19e348ccc38a03ddfb157"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "sage.peptidoform.ProForma_peptidoform.peptidoform",
+      "rules": [
+        "sage/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptidoform"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "peptidoform"
+      },
+      "evidence": {
+        "basis": "Draft. APB's canonical ProForma peptidoform, the level's var key.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "sage.peptidoform.ProForma_peptide.sequence",
+      "rules": [
+        "sage/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "sequence"
+      },
+      "evidence": {
+        "basis": "Draft. APB's stripped sequence of the peptidoform.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "sage.peptidoform.Proteins.protein_group",
+      "rules": [
+        "sage/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "Proteins"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_group"
+      },
+      "evidence": {
+        "basis": "Draft. proteins: accessions the peptide maps to.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "sage.peptidoform.Intensity.raw",
+      "rules": [
+        "sage/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "raw"
+      },
+      "evidence": {
+        "basis": "Draft. Per-file LFQ intensity. The rule's primary layer, the engine's principal reported quantity, taken as the unmodified engine output.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    }
+  ]
+}

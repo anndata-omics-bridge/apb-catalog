@@ -1,48 +1,42 @@
 {
-  "vocabulary_version": "0.1",
+  "vocabulary_version": "0.2",
   "concepts": {
     "confidence": {
-      "definition": "A value the producing software reports for how likely an identification, or the signal quantified for it, is correct.",
+      "definition": "How likely an identification, or the signal quantified for it, is correct, as the producing software reports it.",
       "qualifiers": {
         "kind": {
           "definition": "What the value measures.",
           "values": {
-            "pep": "Posterior error probability: the probability that this single identification is wrong.",
-            "q_value": "The smallest false discovery rate at which this identification, or quantified signal, is accepted.",
-            "score": "A software-specific score, including classifier probabilities, not calibrated as an error probability or false discovery rate."
-          }
-        },
-        "entity": {
-          "definition": "The identified entity the value belongs to.",
-          "values": {
-            "precursor": "One peptidoform at one charge state.",
-            "peptidoform": "One modified peptide sequence, across charge states.",
-            "peptide": "One unmodified peptide sequence.",
-            "protein_group": "One protein group."
-          }
-        },
-        "statistic": {
-          "definition": "How the stored value relates to the underlying per-entity estimates.",
-          "values": {
-            "value": "The estimate itself.",
-            "mean": "The mean of estimates over the runs or channels the software combines.",
-            "min": "The minimum of those estimates.",
-            "max": "The maximum of those estimates.",
-            "percentile": "A software-defined percentile of those estimates."
-          }
-        },
-        "direction": {
-          "definition": "Which values indicate higher confidence.",
-          "values": {
-            "lower_better": "Smaller values indicate higher confidence.",
-            "higher_better": "Larger values indicate higher confidence."
+            "pep": "Posterior error probability: the probability that this single identification is wrong; lower is better.",
+            "q_value": "The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better."
           }
         },
         "stage": {
           "definition": "Which decision the value qualifies.",
           "values": {
-            "identification": "Whether the entity is correctly identified.",
-            "quantification": "Whether the signal quantified for an identified entity, such as its MS1 peak, belongs to it."
+            "identification": "Whether the level's entity is correctly identified.",
+            "quantification": "Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+          }
+        }
+      }
+    },
+    "miape": {
+      "definition": "A field of the MIAPE-AnnData 0.4.0 draft schema that a retained APB field supplies, on the matching modality: protein level to protein group, peptide to peptide, peptidoform to peptidoform.",
+      "qualifiers": {
+        "kind": {
+          "definition": "The MIAPE-AnnData field name; the requirement level is the schema's.",
+          "values": {
+            "protein_group": "var, MUST: protein-group identifier as semicolon-separated UniProt accessions; on peptide and peptidoform levels the foreign key to the protein modality.",
+            "gene_name": "var, SHOULD: gene symbol of the protein group.",
+            "organism": "var, SHOULD: species of the protein group.",
+            "protein_description": "var, MAY: free-text protein description, typically the UniProt protein name.",
+            "n_peptides_used": "var, SHOULD: distinct peptide sequences aggregated into the protein group.",
+            "is_contaminant": "var, SHOULD: whether the protein group comes from a contaminant database.",
+            "sequence": "var, MUST: bare amino-acid sequence without modifications or charge.",
+            "peptidoform": "var, MUST: ProForma 2.0 peptidoform, charge-collapsed.",
+            "is_unique": "var, MUST: whether the peptide or peptidoform maps to exactly one protein group.",
+            "n_psms": "var, MAY: peptide-spectrum matches aggregated into the row across all samples.",
+            "raw": "layers, MUST: the unmodified engine-output quantification matrix."
           }
         }
       }

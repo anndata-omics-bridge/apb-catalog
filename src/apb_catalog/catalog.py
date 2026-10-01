@@ -21,33 +21,27 @@ from apb_catalog.snapshot import ResolutionSnapshot, this_producer
 from apb_catalog.source import Location, Reference, SourceCatalogues, packaged_catalogues
 
 METADATA_KEY = "catalog"
-_DEFAULTS = {"statistic": "value", "stage": "identification"}
-_LEVEL_ENTITY: dict[ParsedLevelName, str] = {
-    "ion": "precursor",
-    "peptidoform": "peptidoform",
-    "peptide": "peptide",
-    "protein": "protein_group",
-}
+_DEFAULTS = {"stage": "identification"}
 
 
 class Catalog:
-    """What one APB result's fields mean, with the data handed back directly.
+    """What one APB result's fields mean to one consumer, with the data handed back directly.
 
-    ``catalog.layer("ion", concept="confidence", kind="pep")`` returns MaxQuant's ``PEP`` or
-    Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no PEP. Leaving out
-    ``kind`` lists the kinds the level holds for that concept. A lookup describes its level's own
-    entity, the plain value and identification unless keywords say otherwise, for example
-    ``statistic="max"`` or ``stage="quantification"``. Ambiguous or unreviewed answers raise
+    ``Catalog(parsed, "aggregate").layer("ion", concept="confidence", kind="pep")`` returns
+    MaxQuant's ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no
+    PEP; ``Catalog(parsed, "miape").var("protein", concept="miape", kind="gene_name")`` returns the
+    column MIAPE-AnnData calls ``gene_name``. Leaving out ``kind`` lists the kinds the level holds.
+    A level answers only for its own entity. Confidence lookups mean identification unless
+    ``stage="quantification"`` says otherwise. Ambiguous or unreviewed answers raise
     :class:`~apb_catalog.resolver.UnresolvedField` naming the candidates.
     """
 
-    __slots__ = ("_catalogues", "_parsed", "_resolutions", "_views")
+    __slots__ = ("_catalogues", "_name", "_parsed", "_resolutions", "_views")
 
-    def __init__(
-        self, parsed: ParsedLevels, /, *, catalogues: SourceCatalogues | None = None
-    ) -> None:
+    def __init__(self, parsed: ParsedLevels, catalogue: str, /) -> None:
         self._parsed = parsed
-        self._catalogues = catalogues or packaged_catalogues()
+        self._name = catalogue
+        self._catalogues = packaged_catalogues(catalogue)
         self._views: dict[ParsedLevelName, ReviewedLevel | UnreviewedLevel] = {
             name: level_view(name, level, self._catalogues) for name, level in parsed.levels.items()
         }
@@ -99,7 +93,6 @@ class Catalog:
                     "level": entry.reference.level,
                     "location": entry.reference.location,
                     "name": entry.reference.name,
-                    "vendor_source": entry.vendor_source,
                     "concept": entry.concept,
                     **entry.qualifiers,
                 }
@@ -122,6 +115,7 @@ class Catalog:
         vocabulary = self._catalogues.vocabulary
         return ResolutionSnapshot(
             producer=this_producer(),
+            catalogue=self._name,
             vocabulary_version=vocabulary.vocabulary_version,
             concepts={name: vocabulary.concept(name) for name in sorted(concepts)},
             levels=tuple(view.binding() for view in self._views.values()),
@@ -157,8 +151,6 @@ class Catalog:
     ) -> ConceptRequest:
         declared = self._catalogues.vocabulary.concept(concept).qualifiers
         described = {name: value for name, value in _DEFAULTS.items() if name in declared}
-        if "entity" in declared and level in _LEVEL_ENTITY:
-            described["entity"] = _LEVEL_ENTITY[level]
         described |= qualifiers
         return ConceptRequest(
             concept=concept,
@@ -203,16 +195,20 @@ def level_view(
 
 
 def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot, /) -> ParsedLevels:
-    """Return a new result carrying the snapshot; scientific data is shared, not copied."""
-    return replace(
-        parsed,
-        metadata={**parsed.metadata, METADATA_KEY: snapshot.model_dump(mode="json")},
-    )
+    """Return a new result carrying the snapshot beside other catalogues' snapshots.
+
+    Scientific data is shared, not copied.
+    """
+    namespace = parsed.metadata.get(METADATA_KEY)
+    snapshots = dict(namespace) if isinstance(namespace, dict) else {}
+    snapshots[snapshot.catalogue] = snapshot.model_dump(mode="json")
+    return replace(parsed, metadata={**parsed.metadata, METADATA_KEY: snapshots})
 
 
-def stored_snapshot(parsed: ParsedLevels, /) -> ResolutionSnapshot | None:
-    """Return the snapshot a result carries, if any."""
-    stored = parsed.metadata.get(METADATA_KEY)
+def stored_snapshot(parsed: ParsedLevels, catalogue: str, /) -> ResolutionSnapshot | None:
+    """Return the snapshot one catalogue set left on a result, if any."""
+    namespace = parsed.metadata.get(METADATA_KEY)
+    stored = namespace.get(catalogue) if isinstance(namespace, dict) else None
     if stored is None:
         return None
     return ResolutionSnapshot.model_validate(stored)

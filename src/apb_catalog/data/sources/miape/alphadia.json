@@ -1,0 +1,79 @@
+{
+  "catalogue_id": "alphadia",
+  "catalogue_version": "0.1-draft",
+  "software_name": "AlphaDIA",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "fb5f5e1"
+  },
+  "variants": [
+    {
+      "rule": "alphadia/v1_10/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:695e3b2bb6f43c78f1a7fa8f5e79be93c81041133a05dbf2208aef205158a259"
+      ]
+    },
+    {
+      "rule": "alphadia/v1_12/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:68a3d8684021009f90baa913a0abfdd448f6503e7ee1974768c7e7aa3f356273"
+      ]
+    },
+    {
+      "rule": "alphadia/v2/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:ce4a557025f1e3e031b9f935315adab61e40184ced6f312a95191ef8e3acf73b"
+      ]
+    },
+    {
+      "rule": "alphadia/v2/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:020b36e57a80c9268aec3f632060b91b17d31fa5229edef0eeb82e5c1b013a2c"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "alphadia.protein.Protein_Group.protein_group",
+      "rules": [
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Protein_Group"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_group"
+      },
+      "evidence": {
+        "basis": "Draft. pg.name: semicolon-separated accessions of the protein group, the level's var key.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "alphadia.protein.PG_Intensity.raw",
+      "rules": [
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "PG_Intensity"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "raw"
+      },
+      "evidence": {
+        "basis": "Draft. pg.intensity. The rule's primary layer, the engine's principal reported quantity, taken as the unmodified engine output.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    }
+  ]
+}

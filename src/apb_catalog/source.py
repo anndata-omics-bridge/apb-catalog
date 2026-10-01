@@ -36,18 +36,9 @@ class SourceEntry(FrozenModel):
     entry_id: str
     rules: tuple[str, ...]
     reference: Reference
-    vendor_source: str
     concept: str
     qualifiers: dict[str, str]
     evidence: Evidence
-
-
-class UnmappedField(FrozenModel):
-    """A retained field a reviewer deliberately left without a catalogued meaning."""
-
-    rules: tuple[str, ...]
-    reference: Reference
-    reason: str
 
 
 class RuleVariant(FrozenModel):
@@ -66,7 +57,7 @@ class Review(FrozenModel):
 
 
 class SourceCatalogue(FrozenModel):
-    """Every reviewed rule variant, entry and deliberate gap for one vendor."""
+    """Every reviewed rule variant of one vendor and the entries one consumer needs from it."""
 
     catalogue_id: str
     catalogue_version: str
@@ -74,7 +65,6 @@ class SourceCatalogue(FrozenModel):
     review: Review
     variants: tuple[RuleVariant, ...]
     entries: tuple[SourceEntry, ...]
-    unmapped: tuple[UnmappedField, ...] = ()
 
     @model_validator(mode="after")
     def _consistent(self) -> SourceCatalogue:
@@ -84,19 +74,12 @@ class SourceCatalogue(FrozenModel):
         declared = {(variant.rule, variant.level) for variant in self.variants}
         if len(declared) != len(self.variants):
             raise ValueError(f"{self.catalogue_id}: duplicate rule variants")
-        fields: list[SourceEntry | UnmappedField] = [*self.entries, *self.unmapped]
-        for field in fields:
-            if not field.rules:
-                raise ValueError(f"{self.catalogue_id}: {field.reference} lists no rules")
-            undeclared = {(rule, field.reference.level) for rule in field.rules} - declared
+        for entry in self.entries:
+            if not entry.rules:
+                raise ValueError(f"{self.catalogue_id}: {entry.reference} lists no rules")
+            undeclared = {(rule, entry.reference.level) for rule in entry.rules} - declared
             if undeclared:
-                raise ValueError(f"{self.catalogue_id}: {field.reference} uses {undeclared}")
-        mapped = {(rule, entry.reference) for entry in self.entries for rule in entry.rules}
-        gaps = {(rule, field.reference) for field in self.unmapped for rule in field.rules}
-        if mapped & gaps:
-            raise ValueError(
-                f"{self.catalogue_id}: fields both mapped and unmapped: {mapped & gaps}"
-            )
+                raise ValueError(f"{self.catalogue_id}: {entry.reference} uses {undeclared}")
         return self
 
     def entries_for(self, variant: RuleVariant, /) -> tuple[SourceEntry, ...]:
@@ -145,10 +128,16 @@ class SourceCatalogues:
         return self._by_fingerprint.get(fingerprint)
 
 
+CATALOGUES = ("aggregate", "miape")
+"""The packaged catalogue sets, each written for one consumer: apb-aggregate, MIAPE-AnnData."""
+
+
 @cache
-def packaged_catalogues() -> SourceCatalogues:
-    """Load and cross-check the vocabulary and source catalogues shipped with this package."""
-    directory = resources.files("apb_catalog").joinpath("data", "sources")
+def packaged_catalogues(name: str, /) -> SourceCatalogues:
+    """Load and cross-check one packaged catalogue set against the shared vocabulary."""
+    if name not in CATALOGUES:
+        raise ValueError(f"unknown catalogue {name!r}; packaged: {list(CATALOGUES)}")
+    directory = resources.files("apb_catalog").joinpath("data", "sources", name)
     catalogues = tuple(
         SourceCatalogue.model_validate_json(path.read_text("utf-8"))
         for path in sorted(directory.iterdir(), key=lambda path: path.name)

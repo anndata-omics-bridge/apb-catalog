@@ -1,0 +1,307 @@
+{
+  "catalogue_id": "maxquant",
+  "catalogue_version": "0.1-draft",
+  "software_name": "MaxQuant",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "fb5f5e1"
+  },
+  "variants": [
+    {
+      "rule": "maxquant/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:fdabc3567b608167f87aad968b14fa5543c39f6f349eca2840d51795dcf77afd"
+      ]
+    },
+    {
+      "rule": "maxquant/rules.json",
+      "level": "peptidoform",
+      "fingerprints": [
+        "sha256:5480d4d745821a4d3bac927978ba5c3fbb0bf58371e48672ee6f283fc5faeb1e"
+      ]
+    },
+    {
+      "rule": "maxquant/rules.json",
+      "level": "peptide",
+      "fingerprints": [
+        "sha256:3b9fa1ee0535363f5266fc4684f5762336183a84946b19286800bf9f3ca043fc"
+      ]
+    },
+    {
+      "rule": "maxquant/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:92f25a55d8af8d259b05013d24c3ad221acec2b579baec32a31df0b95c23695f"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "maxquant.protein.Protein_IDs.protein_group",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Protein_IDs"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_group"
+      },
+      "evidence": {
+        "basis": "Draft. Protein IDs: semicolon-separated accessions; MIAPE lists it as an engine-native protein_group column.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.Gene_Names.gene_name",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Gene_Names"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "gene_name"
+      },
+      "evidence": {
+        "basis": "Draft. Gene names of the protein group.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.Protein_Names.protein_description",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Protein_Names"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_description"
+      },
+      "evidence": {
+        "basis": "Draft. Protein names: UniProt protein names of the group members.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.Razor_Unique_Peptides.n_peptides_used",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Razor_Unique_Peptides"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "n_peptides_used"
+      },
+      "evidence": {
+        "basis": "Draft. Razor + unique peptides, what MaxQuant quantification uses by default; check the LFQ settings of the run.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.Potential_Contaminant.is_contaminant",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Potential_Contaminant"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "is_contaminant"
+      },
+      "evidence": {
+        "basis": "Draft. Potential contaminant: '+' marks MaxQuant common contaminants; convert to boolean on export.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.Intensity.raw",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "raw"
+      },
+      "evidence": {
+        "basis": "Draft. Intensity: summed peptide intensities. The rule's primary layer, the engine's principal reported quantity, taken as the unmodified engine output.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.ProForma_peptide.sequence",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "sequence"
+      },
+      "evidence": {
+        "basis": "Draft. Sequence: bare amino-acid sequence, the level's var key.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.Leading_Razor_Protein.protein_group",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "Leading_Razor_Protein"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_group"
+      },
+      "evidence": {
+        "basis": "Draft. Leading razor protein: one accession, not the protein-group id; MaxQuant's protein group ids are not retained.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.Unique_Groups.is_unique",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "Unique_Groups"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "is_unique"
+      },
+      "evidence": {
+        "basis": "Draft. Unique (Groups): 'yes' when the sequence maps to one protein group; convert to boolean on export.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.Intensity.raw",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "raw"
+      },
+      "evidence": {
+        "basis": "Draft. Intensity. The rule's primary layer, the engine's principal reported quantity, taken as the unmodified engine output.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.ProForma_peptide.sequence",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "sequence"
+      },
+      "evidence": {
+        "basis": "Draft. Sequence: bare amino-acid sequence; the rule builds no ProForma peptidoform, so MIAPE's peptidoform is missing.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.Proteins.protein_group",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "Proteins"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "protein_group"
+      },
+      "evidence": {
+        "basis": "Draft. Proteins: all accessions the peptide maps to, not a protein-group id.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.Unique_Groups.is_unique",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "Unique_Groups"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "is_unique"
+      },
+      "evidence": {
+        "basis": "Draft. Unique (Groups): 'yes' when it maps to one protein group; convert to boolean on export.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.Intensity.raw",
+      "rules": [
+        "maxquant/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "miape",
+      "qualifiers": {
+        "kind": "raw"
+      },
+      "evidence": {
+        "basis": "Draft. Intensity. The rule's primary layer, the engine's principal reported quantity, taken as the unmodified engine output.",
+        "source": "MIAPE-AnnData Schema 0.4.0 draft, HUPO-PSI AI Readiness Working Group"
+      }
+    }
+  ]
+}

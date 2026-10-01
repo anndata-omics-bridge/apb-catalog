@@ -366,10 +366,6 @@
         "reference": {
           "$ref": "#/$defs/Reference"
         },
-        "vendor_source": {
-          "title": "Vendor Source",
-          "type": "string"
-        },
         "concept": {
           "title": "Concept",
           "type": "string"
@@ -389,7 +385,6 @@
         "entry_id",
         "rules",
         "reference",
-        "vendor_source",
         "concept",
         "qualifiers",
         "evidence"
@@ -453,6 +448,10 @@
     "producer": {
       "$ref": "#/$defs/Producer"
     },
+    "catalogue": {
+      "title": "Catalogue",
+      "type": "string"
+    },
     "vocabulary_version": {
       "title": "Vocabulary Version",
       "type": "string"
@@ -488,6 +487,7 @@
   },
   "required": [
     "producer",
+    "catalogue",
     "vocabulary_version",
     "concepts",
     "levels",
