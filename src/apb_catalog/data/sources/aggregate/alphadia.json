@@ -1,0 +1,81 @@
+{
+  "catalogue_id": "alphadia",
+  "catalogue_version": "0.1",
+  "software_name": "AlphaDIA",
+  "review": {
+    "date": "2026-10-01",
+    "apb2_revision": "39f268c with uncommitted AlphaDIA protein-level change"
+  },
+  "variants": [
+    {
+      "rule": "alphadia/v1_10/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:695e3b2bb6f43c78f1a7fa8f5e79be93c81041133a05dbf2208aef205158a259"
+      ]
+    },
+    {
+      "rule": "alphadia/v1_12/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:68a3d8684021009f90baa913a0abfdd448f6503e7ee1974768c7e7aa3f356273"
+      ]
+    },
+    {
+      "rule": "alphadia/v2/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:ce4a557025f1e3e031b9f935315adab61e40184ced6f312a95191ef8e3acf73b"
+      ]
+    },
+    {
+      "rule": "alphadia/v2/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:020b36e57a80c9268aec3f632060b91b17d31fa5229edef0eeb82e5c1b013a2c"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "alphadia.v1_12.ion.QValue",
+      "rules": [
+        "alphadia/v1_12/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "QValue"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "fdr.py::perform_fdr runs per raw file inside the search workflow. Fixture 1bd69ca0: qval differs across runs for 92,849 of 92,884 multi-run precursors.",
+        "source": "https://github.com/MannLabs/alphadia/blob/main/alphadia/fdr/fdr.py"
+      }
+    },
+    {
+      "entry_id": "alphadia.v2.ion.QValue",
+      "rules": [
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "QValue"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "fdr.py::perform_fdr runs per raw file inside the search workflow. Fixture 26d8b797: precursor.qval differs across runs for 140,954 of 144,131 multi-run precursors; pg.qval is constant for all 10,657 multi-run protein groups.",
+        "source": "https://github.com/MannLabs/alphadia/blob/main/alphadia/fdr/fdr.py"
+      }
+    }
+  ]
+}

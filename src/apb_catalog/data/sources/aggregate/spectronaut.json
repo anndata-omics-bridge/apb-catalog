@@ -1,0 +1,118 @@
+{
+  "catalogue_id": "spectronaut",
+  "catalogue_version": "0.1",
+  "software_name": "Spectronaut",
+  "review": {
+    "date": "2026-09-30",
+    "apb2_revision": "d25f295"
+  },
+  "variants": [
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:b10adfed14e1c9d97b433db175d3aaf61fd3aab96a639b08b9d833f4bbc51e79"
+      ]
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:5f8d5711dd28a1a7c5ead89f76e2158f3f16e75eea72aa1051d5e13224bf5dcb"
+      ]
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:18b39661a2e163592c144985bc579e07bb16a35cfc8ed4d4d4fd16cc0225b1fc"
+      ]
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:5b2fade6276d13bb1b298f7af0f7715355f8c216195e5adf9fc21f2534a42db8"
+      ]
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:667fa9dcebba5012d74d3912de4c9e32870ab954c49f900f178c420895a44657"
+      ]
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:9466342e5db27547bc383614049d3bfdfd47a92ea14063baf8c2379d3b890e8b"
+      ]
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:1626829c610b82d79c8c94217475965f8ff3727fc6a80f5cc0dbfc29968d70ae"
+      ]
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:a23559040302678a14524ea822217ff07e4060759c2da66c62c29fcf0a6353d3"
+      ]
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:dabd7ba78f496f64e5952ad2ef9aa3d7d9a57a81898d3d33604888579ae6ef1f"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "spectronaut.ion.EG_PEP",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_PEP"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "In fixture 2eb6ecaa (Spectronaut 19/20), EG.PEP differs between charge states of one EG.ModifiedPeptide within a run for 56,329 of 56,446 multi-charge groups, so EG values are per precursor. In fixture 2eb6ecaa (Spectronaut 19/20), EG.PEP and EG.Qvalue differ across runs for all 120,858 multi-run precursors."
+      }
+    },
+    {
+      "entry_id": "spectronaut.ion.EG_Qvalue",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_Qvalue"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "In fixture 2eb6ecaa (Spectronaut 19/20), EG.PEP differs between charge states of one EG.ModifiedPeptide within a run for 56,329 of 56,446 multi-charge groups, so EG values are per precursor. In fixture 2eb6ecaa (Spectronaut 19/20), EG.PEP and EG.Qvalue differ across runs for all 120,858 multi-run precursors."
+      }
+    }
+  ]
+}

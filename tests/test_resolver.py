@@ -26,19 +26,12 @@ VARIANT = RuleVariant(rule="vendor/rules.json", level="ion", fingerprints=("sha2
 
 
 def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntry:
-    described = {
-        "kind": "pep",
-        "entity": "precursor",
-        "statistic": "value",
-        "direction": "lower_better",
-        "stage": "identification",
-    } | qualifiers
+    described = {"kind": "pep", "stage": "identification"} | qualifiers
     return SourceEntry.model_validate(
         {
             "entry_id": f"vendor.ion.{name}",
             "rules": ("vendor/rules.json",),
             "reference": {"level": "ion", "location": location, "name": name},
-            "vendor_source": name,
             "concept": "confidence",
             "qualifiers": described,
             "evidence": Evidence(basis="test"),
@@ -67,7 +60,7 @@ def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> 
 def test_one_matching_entry_resolves_to_its_reference() -> None:
     """A single compatible, fully known entry is the answer."""
     resolution = _level(_entry("PEP"), _entry("Q_Value", kind="q_value")).resolve(
-        _request(kind=("pep",), statistic=("value",))
+        _request(kind=("pep",), stage=("identification",))
     )
     assert resolution.status == "resolved"
     assert resolution.reference == Reference(level="ion", location="layers", name="PEP")
@@ -80,11 +73,11 @@ def test_pep_and_q_value_are_never_interchangeable() -> None:
     assert resolution.reference is None
 
 
-def test_a_summary_statistic_does_not_answer_a_plain_value_request() -> None:
-    """A channel maximum is not the per-run value itself."""
-    level = _level(_entry("Max_PEP", statistic="max"))
-    assert level.resolve(_request(kind=("pep",), statistic=("value",))).status == "missing"
-    assert level.resolve(_request(statistic=("max",))).status == "resolved"
+def test_quantification_confidence_does_not_answer_an_identification_request() -> None:
+    """An MS1-peak q-value is not an identification q-value."""
+    level = _level(_entry("Peak_Q", kind="q_value", stage="quantification"))
+    assert level.resolve(_request(kind=("q_value",), stage=("identification",))).status == "missing"
+    assert level.resolve(_request(stage=("quantification",))).status == "resolved"
 
 
 def test_two_matching_entries_are_ambiguous_and_both_are_reported() -> None:
@@ -100,26 +93,26 @@ def test_two_matching_entries_are_ambiguous_and_both_are_reported() -> None:
 
 def test_an_unknown_qualifier_makes_the_answer_unknown() -> None:
     """An entry the reviewer could not place may match, so the resolver will not decide."""
-    answer = _level(_entry("Q_Value", kind="q_value", statistic="unknown")).resolve(
-        _request(kind=("q_value",), statistic=("value",))
+    answer = _level(_entry("Q_Value", kind="q_value", stage="unknown")).resolve(
+        _request(kind=("q_value",), stage=("identification",))
     )
     assert answer.status == "unknown"
-    assert answer.candidates[0].undecided == ("statistic",)
-    assert answer.reasons == ("Q_Value leaves statistic unknown",)
+    assert answer.candidates[0].undecided == ("stage",)
+    assert answer.reasons == ("Q_Value leaves stage unknown",)
 
 
 def test_accepting_unknown_admits_an_undecided_entry() -> None:
     """A consumer may explicitly accept an unestablished qualifier."""
-    answer = _level(_entry("Q_Value", kind="q_value", statistic="unknown")).resolve(
-        _request(kind=("q_value",), statistic=("value", "unknown"))
+    answer = _level(_entry("Q_Value", kind="q_value", stage="unknown")).resolve(
+        _request(kind=("q_value",), stage=("identification", "unknown"))
     )
     assert answer.status == "resolved"
 
 
 def test_an_undecided_entry_blocks_a_single_match() -> None:
     """One sure match plus one possible match is not a unique answer."""
-    answer = _level(_entry("PEP"), _entry("Other_PEP", statistic="unknown")).resolve(
-        _request(kind=("pep",), statistic=("value",))
+    answer = _level(_entry("PEP"), _entry("Other_PEP", stage="unknown")).resolve(
+        _request(kind=("pep",), stage=("identification",))
     )
     assert answer.status == "unknown"
 

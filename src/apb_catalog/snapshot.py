@@ -36,6 +36,7 @@ class ResolutionSnapshot(FrozenModel):
     contract: Literal["apb-catalog-resolution"] = CONTRACT
     contract_version: Literal["0.1"] = CONTRACT_VERSION
     producer: Producer
+    catalogue: str
     vocabulary_version: str
     concepts: dict[str, Concept]
     levels: tuple[LevelBinding, ...]
