@@ -31,13 +31,13 @@ from apb2.result_facade import read_parsed_levels
 from apb_catalog.catalog import Catalog
 
 parsed = read_parsed_levels(Path("converted.h5mu"))
-aggregate = Catalog(parsed, "aggregate")
+confidence = Catalog(parsed, "identification_confidence")
 ```
 
 ## See what the result holds
 
 ```python
-aggregate.fields().select("level", "location", "name", "kind", "stage")
+confidence.fields().select("level", "location", "name", "kind", "stage")
 ```
 
 ```text
@@ -52,14 +52,14 @@ aggregate.fields().select("level", "location", "name", "kind", "stage")
 Or ask one level which kinds it offers, per run (`layer`) or per feature (`var`):
 
 ```python
-aggregate.layer("ion", concept="confidence")   # ('pep', 'q_value')
-aggregate.var("ion", concept="confidence")     # None: no per-feature confidence
+confidence.layer("ion", concept="confidence")   # ('pep', 'q_value')
+confidence.var("ion", concept="confidence")     # None: no per-feature confidence
 ```
 
 ## Get the data
 
 ```python
-pep = aggregate.layer("ion", concept="confidence", kind="pep")
+pep = confidence.layer("ion", concept="confidence", kind="pep")
 pep.layer_name      # 'PEP'; Spectronaut gives 'EG_PEP', MaxQuant 'PEP'
 pep.values.head(3)
 ```
@@ -86,9 +86,9 @@ weights = 1 - pep.values.drop(pep.var_key_columns).to_numpy()              # (18
 When the vendor reports no such field, the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
 
 ```python
-pep = aggregate.layer("ion", concept="confidence", kind="pep")
+pep = confidence.layer("ion", concept="confidence", kind="pep")
 if pep is None:
-    q_value = aggregate.layer("ion", concept="confidence", kind="q_value")
+    q_value = confidence.layer("ion", concept="confidence", kind="q_value")
 ```
 
 ## Map to MIAPE-AnnData
@@ -127,7 +127,7 @@ raw = miape.layer("protein", concept="miape", kind="raw")   # PG_MaxLFQ for DIA-
 from apb_catalog.resolver import UnresolvedField
 
 try:
-    pep = aggregate.layer("ion", concept="confidence", kind="pep")
+    pep = confidence.layer("ion", concept="confidence", kind="pep")
 except UnresolvedField as error:
     print(error)    # names the reason and any candidate fields
 ```
@@ -140,9 +140,9 @@ It is raised when the result was converted with an APB2 rule revision nobody rev
 from apb2.result_facade import write_parsed_levels
 from apb_catalog.catalog import attach_snapshot, stored_snapshot
 
-write_parsed_levels(attach_snapshot(parsed, aggregate.snapshot()), Path("annotated.h5mu"))
-stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "aggregate").resolutions
+write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
+stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_confidence").resolutions
 # one resolved lookup, referencing layer 'PEP'
 ```
 
-The snapshot sits at `metadata["catalog"]["aggregate"]` and can be read as plain JSON without APB Catalog installed.
+The snapshot sits at `metadata["catalog"]["identification_confidence"]` and can be read as plain JSON without APB Catalog installed.

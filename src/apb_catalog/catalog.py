@@ -18,7 +18,13 @@ from apb_catalog.resolver import (
     UnreviewedLevel,
 )
 from apb_catalog.snapshot import ResolutionSnapshot, this_producer
-from apb_catalog.source import Location, Reference, SourceCatalogues, packaged_catalogues
+from apb_catalog.source import (
+    CatalogueDescription,
+    Location,
+    Reference,
+    SourceCatalogues,
+    packaged_catalogues,
+)
 
 METADATA_KEY = "catalog"
 _DEFAULTS = {"stage": "identification"}
@@ -27,7 +33,7 @@ _DEFAULTS = {"stage": "identification"}
 class Catalog:
     """What one APB result's fields mean to one consumer, with the data handed back directly.
 
-    ``Catalog(parsed, "aggregate").layer("ion", concept="confidence", kind="pep")`` returns
+    ``Catalog(parsed, "identification_confidence").layer("ion", concept="confidence", kind="pep")`` returns
     MaxQuant's ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no
     PEP; ``Catalog(parsed, "miape").var("protein", concept="miape", kind="gene_name")`` returns the
     column MIAPE-AnnData calls ``gene_name``. Leaving out ``kind`` lists the kinds the level holds.
@@ -46,6 +52,11 @@ class Catalog:
             name: level_view(name, level, self._catalogues) for name, level in parsed.levels.items()
         }
         self._resolutions: list[Resolution] = []
+
+    @property
+    def description(self) -> CatalogueDescription:
+        """What this catalogue set holds and who uses it."""
+        return self._catalogues.description
 
     @overload
     def layer(
@@ -116,6 +127,7 @@ class Catalog:
         return ResolutionSnapshot(
             producer=this_producer(),
             catalogue=self._name,
+            description=self._catalogues.description,
             vocabulary_version=vocabulary.vocabulary_version,
             concepts={name: vocabulary.concept(name) for name in sorted(concepts)},
             levels=tuple(view.binding() for view in self._views.values()),

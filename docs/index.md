@@ -5,7 +5,7 @@ APB Catalog tells a consumer which field of an [APB2](https://github.com/anndata
 ```python
 from apb_catalog.catalog import Catalog
 
-catalog = Catalog(parsed, "aggregate")
+catalog = Catalog(parsed, "identification_confidence")
 catalog.layer("ion", concept="confidence")              # ('pep', 'q_value')
 pep = catalog.layer("ion", concept="confidence", kind="pep")
 ```
@@ -16,9 +16,9 @@ pep = catalog.layer("ion", concept="confidence", kind="pep")
 
 A catalogue annotates only what one consumer needs, never every vendor column.
 
-| Set | Consumer | Annotates |
+| Set | Used by | Annotates |
 | --- | --- | --- |
-| `aggregate` | apb-aggregate | Per-run and per-feature PEP and q-value used as aggregation weights |
+| `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
 | `miape` | MIAPE-AnnData export (draft) | Protein, peptide and peptidoform fields and the `raw` layer of the MIAPE-AnnData 0.4.0 draft |
 
 Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a rule nobody reviewed raises. See [Catalogues](catalogues.md) for every entry.

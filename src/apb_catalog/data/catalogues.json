@@ -1,0 +1,10 @@
+{
+  "identification_confidence": {
+    "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, and Sage's MS1-peak q-value. Scores, protein-level confidence and vendor summaries are left out.",
+    "used_by": ["apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision"]
+  },
+  "miape": {
+    "purpose": "Retained APB fields that supply MIAPE-AnnData 0.4.0 draft schema fields on the protein, peptide and peptidoform modalities.",
+    "used_by": ["MIAPE-AnnData exports and compatibility reports"]
+  }
+}

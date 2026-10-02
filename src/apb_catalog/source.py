@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from functools import cache
 from importlib import resources
@@ -106,10 +107,16 @@ class ReviewedRule:
 class SourceCatalogues:
     """Source catalogues checked against one vocabulary and indexed by rule fingerprint."""
 
-    __slots__ = ("_by_fingerprint", "vocabulary")
+    __slots__ = ("_by_fingerprint", "description", "vocabulary")
 
-    def __init__(self, vocabulary: Vocabulary, catalogues: tuple[SourceCatalogue, ...]) -> None:
+    def __init__(
+        self,
+        vocabulary: Vocabulary,
+        catalogues: tuple[SourceCatalogue, ...],
+        description: CatalogueDescription,
+    ) -> None:
         self.vocabulary = vocabulary
+        self.description = description
         self._by_fingerprint: dict[str, ReviewedRule] = {}
         for catalogue in catalogues:
             for entry in catalogue.entries:
@@ -128,19 +135,33 @@ class SourceCatalogues:
         return self._by_fingerprint.get(fingerprint)
 
 
-CATALOGUES = ("aggregate", "miape")
-"""The packaged catalogue sets, each written for one consumer: apb-aggregate, MIAPE-AnnData."""
+class CatalogueDescription(FrozenModel):
+    """What one catalogue set holds and who uses it."""
+
+    purpose: str
+    used_by: tuple[str, ...]
+
+
+@cache
+def packaged_descriptions() -> dict[str, CatalogueDescription]:
+    """Return every packaged catalogue set's description, by set name."""
+    text = resources.files("apb_catalog").joinpath("data", "catalogues.json").read_text("utf-8")
+    return {
+        name: CatalogueDescription.model_validate(description)
+        for name, description in json.loads(text).items()
+    }
 
 
 @cache
 def packaged_catalogues(name: str, /) -> SourceCatalogues:
     """Load and cross-check one packaged catalogue set against the shared vocabulary."""
-    if name not in CATALOGUES:
-        raise ValueError(f"unknown catalogue {name!r}; packaged: {list(CATALOGUES)}")
+    descriptions = packaged_descriptions()
+    if name not in descriptions:
+        raise ValueError(f"unknown catalogue {name!r}; packaged: {list(descriptions)}")
     directory = resources.files("apb_catalog").joinpath("data", "sources", name)
     catalogues = tuple(
         SourceCatalogue.model_validate_json(path.read_text("utf-8"))
         for path in sorted(directory.iterdir(), key=lambda path: path.name)
         if path.name.endswith(".json")
     )
-    return SourceCatalogues(packaged_vocabulary(), catalogues)
+    return SourceCatalogues(packaged_vocabulary(), catalogues, descriptions[name])

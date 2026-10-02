@@ -7,7 +7,7 @@ from apb2.result_facade import read_parsed_levels
 from apb_catalog.catalog import Catalog
 
 parsed = read_parsed_levels(path)
-catalog = Catalog(parsed, "aggregate")
+catalog = Catalog(parsed, "identification_confidence")
 ```
 
 | Call | Returns |
@@ -38,8 +38,8 @@ catalog = Catalog(parsed, "aggregate")
 from apb_catalog.catalog import attach_snapshot, stale_levels, stored_snapshot
 
 annotated = attach_snapshot(parsed, catalog.snapshot())   # new result; data shared, not copied
-stored_snapshot(annotated, "aggregate")                   # read it back
+stored_snapshot(annotated, "identification_confidence")                   # read it back
 stale_levels(annotated, catalog.snapshot())               # levels whose rule changed since
 ```
 
-The snapshot is stored as JSON at `metadata["catalog"][<set>]`, beside other sets' snapshots, and persists in h5ad, h5mu, Parquet and DuckDB. It embeds concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.1.schema.json`.
+The snapshot is stored as JSON at `metadata["catalog"][<set>]`, beside other sets' snapshots, and persists in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.2.schema.json`.

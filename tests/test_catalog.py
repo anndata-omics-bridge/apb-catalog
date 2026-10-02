@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from importlib import resources
 from pathlib import Path
 from typing import Any
 
@@ -31,6 +32,7 @@ from apb_catalog.catalog import (
     stored_snapshot,
 )
 from apb_catalog.resolver import ReviewedBinding, UnresolvedField, UnreviewedBinding
+from apb_catalog.source import packaged_descriptions
 from tests.packaged_rules import declared_rule_json
 
 type VarColumns = Mapping[str, Sequence[float] | Sequence[str]]
@@ -102,23 +104,26 @@ def test_the_same_call_returns_each_vendors_layer() -> None:
     spectronaut = _result(*SPECTRONAUT)
     pep = {"concept": "confidence", "kind": "pep"}
     assert (
-        Catalog(maxquant, "aggregate").layer("ion", **pep) is maxquant.levels["ion"].layers["PEP"]
+        Catalog(maxquant, "identification_confidence").layer("ion", **pep)
+        is maxquant.levels["ion"].layers["PEP"]
     )
-    found = Catalog(spectronaut, "aggregate").layer("ion", **pep)
+    found = Catalog(spectronaut, "identification_confidence").layer("ion", **pep)
     assert found is spectronaut.levels["ion"].layers["EG_PEP"]
 
 
 def test_only_the_fields_the_consumer_needs_are_catalogued() -> None:
     """Spectronaut's EG and FG q-values agree; aggregation is given the EG one only."""
     parsed = _result(*SPECTRONAUT)
-    found = Catalog(parsed, "aggregate").layer("ion", concept="confidence", kind="q_value")
+    found = Catalog(parsed, "identification_confidence").layer(
+        "ion", concept="confidence", kind="q_value"
+    )
     assert found is parsed.levels["ion"].layers["EG_Qvalue"]
 
 
 def test_a_vendor_without_the_field_returns_none() -> None:
     """DIA-NN without its PEP layer is a reviewed absence, not an error."""
     parsed = _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"])
-    catalog = Catalog(parsed, "aggregate")
+    catalog = Catalog(parsed, "identification_confidence")
     assert catalog.layer("ion", concept="confidence", kind="pep") is None
     assert (
         catalog.layer("ion", concept="confidence", kind="q_value")
@@ -129,7 +134,7 @@ def test_a_vendor_without_the_field_returns_none() -> None:
 def test_quantification_confidence_is_found_only_when_asked_for() -> None:
     """Sage's q-value rates the MS1 peak, one value per feature."""
     parsed = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
-    catalog = Catalog(parsed, "aggregate")
+    catalog = Catalog(parsed, "identification_confidence")
     assert catalog.var("ion", concept="confidence", kind="q_value") is None
     column = catalog.var("ion", concept="confidence", kind="q_value", stage="quantification")
     assert column is not None
@@ -170,7 +175,7 @@ def test_an_unknown_catalogue_set_is_rejected() -> None:
 def test_an_unreviewed_level_raises() -> None:
     """Without a reviewed rule the catalogue cannot even claim absence."""
     with pytest.raises(UnresolvedField, match=r"unknown.*rule_json"):
-        Catalog(_result(None, ["Intensity"]), "aggregate").layer(
+        Catalog(_result(None, ["Intensity"]), "identification_confidence").layer(
             "ion", concept="confidence", kind="pep"
         )
 
@@ -178,18 +183,20 @@ def test_an_unreviewed_level_raises() -> None:
 def test_a_changed_rule_is_unreviewed() -> None:
     """A rule APB2 changed after review answers unknown until it is re-reviewed."""
     with pytest.raises(UnresolvedField, match="no source catalogue reviewed"):
-        Catalog(_edited_maxquant(), "aggregate").layer("ion", concept="confidence", kind="pep")
+        Catalog(_edited_maxquant(), "identification_confidence").layer(
+            "ion", concept="confidence", kind="pep"
+        )
 
 
 def test_an_absent_level_returns_none() -> None:
     """Asking about a level the result lacks is answered, not raised."""
-    catalog = Catalog(_result(*MAXQUANT), "aggregate")
+    catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
     assert catalog.layer("peptide", concept="confidence", kind="pep") is None
 
 
 def test_an_unknown_kind_or_concept_is_rejected() -> None:
     """Misspellings fail loudly instead of matching nothing."""
-    catalog = Catalog(_result(*MAXQUANT), "aggregate")
+    catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
     with pytest.raises(ValueError, match="does not admit"):
         catalog.layer("ion", concept="confidence", kind="pepp")
     with pytest.raises(ValueError, match="unknown concept"):
@@ -198,11 +205,14 @@ def test_an_unknown_kind_or_concept_is_rejected() -> None:
 
 def test_leaving_out_kind_lists_the_kinds_on_offer() -> None:
     """Without ``kind`` the catalogue says what a level holds for the concept."""
-    assert Catalog(_result(*MAXQUANT), "aggregate").layer("ion", concept="confidence") == ("pep",)
-    spectronaut = Catalog(_result(*SPECTRONAUT), "aggregate")
+    assert Catalog(_result(*MAXQUANT), "identification_confidence").layer(
+        "ion", concept="confidence"
+    ) == ("pep",)
+    spectronaut = Catalog(_result(*SPECTRONAUT), "identification_confidence")
     assert spectronaut.layer("ion", concept="confidence") == ("pep", "q_value")
     dia_nn = Catalog(
-        _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"]), "aggregate"
+        _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"]),
+        "identification_confidence",
     )
     assert dia_nn.layer("ion", concept="confidence") == ("q_value",)
     assert dia_nn.var("ion", concept="confidence") is None
@@ -210,48 +220,55 @@ def test_leaving_out_kind_lists_the_kinds_on_offer() -> None:
 
 def test_listing_kinds_on_an_absent_or_unreviewed_level() -> None:
     """An absent level offers nothing; an unreviewed one cannot say."""
-    assert Catalog(_result(*MAXQUANT), "aggregate").layer("peptide", concept="confidence") is None
+    assert (
+        Catalog(_result(*MAXQUANT), "identification_confidence").layer(
+            "peptide", concept="confidence"
+        )
+        is None
+    )
     with pytest.raises(UnresolvedField, match="unknown"):
-        Catalog(_result(None, ["Intensity"]), "aggregate").layer("ion", concept="confidence")
+        Catalog(_result(None, ["Intensity"]), "identification_confidence").layer(
+            "ion", concept="confidence"
+        )
 
 
 def test_listing_kinds_is_not_recorded_as_a_lookup() -> None:
     """Only lookups that return data enter the snapshot."""
-    catalog = Catalog(_result(*MAXQUANT), "aggregate")
+    catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
     catalog.layer("ion", concept="confidence")
     assert catalog.snapshot().resolutions == ()
 
 
 def test_fields_lists_what_the_result_holds() -> None:
     """One row per catalogued field, readable without knowing the vendor."""
-    fields = Catalog(_result(*MAXQUANT), "aggregate").fields()
+    fields = Catalog(_result(*MAXQUANT), "identification_confidence").fields()
     assert fields.select("location", "name", "kind").rows() == [("layers", "PEP", "pep")]
 
 
 def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
     """Every lookup is kept for the persisted record."""
-    catalog = Catalog(_result(*MAXQUANT), "aggregate")
+    catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
     catalog.layer("ion", concept="confidence", kind="pep")
     catalog.layer("ion", concept="confidence", kind="q_value")
     snapshot = catalog.snapshot()
-    assert snapshot.catalogue == "aggregate"
+    assert snapshot.catalogue == "identification_confidence"
     assert [resolution.status for resolution in snapshot.resolutions] == ["resolved", "missing"]
     binding = snapshot.levels[0]
     assert isinstance(binding, ReviewedBinding)
     assert (binding.software_name, binding.rule) == ("MaxQuant", "maxquant/rules.json")
-    unreviewed = Catalog(_result(None, ["Intensity"]), "aggregate").snapshot()
+    unreviewed = Catalog(_result(None, ["Intensity"]), "identification_confidence").snapshot()
     assert isinstance(unreviewed.levels[0], UnreviewedBinding)
 
 
 def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     """Attaching one set's snapshot keeps the other's, and the input stays unchanged."""
     parsed = _result(*MAXQUANT)
-    aggregate = Catalog(parsed, "aggregate").snapshot()
+    confidence = Catalog(parsed, "identification_confidence").snapshot()
     miape = Catalog(parsed, "miape").snapshot()
-    attached = attach_snapshot(attach_snapshot(parsed, aggregate), miape)
+    attached = attach_snapshot(attach_snapshot(parsed, confidence), miape)
     assert METADATA_KEY not in parsed.metadata
-    assert stored_snapshot(parsed, "aggregate") is None
-    assert stored_snapshot(attached, "aggregate") == aggregate
+    assert stored_snapshot(parsed, "identification_confidence") is None
+    assert stored_snapshot(attached, "identification_confidence") == confidence
     assert stored_snapshot(attached, "miape") == miape
     assert attached.levels is parsed.levels
 
@@ -260,7 +277,7 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
 def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) -> None:
     """Stored snapshots read back identically and leave the scientific data untouched."""
     parsed = _result(*MAXQUANT)
-    catalog = Catalog(parsed, "aggregate")
+    catalog = Catalog(parsed, "identification_confidence")
     catalog.layer("ion", concept="confidence", kind="pep")
     snapshot = catalog.snapshot()
     target = tmp_path / f"result{suffix}"
@@ -268,7 +285,7 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
 
     restored = read_parsed_levels(target)
 
-    assert stored_snapshot(restored, "aggregate") == snapshot
+    assert stored_snapshot(restored, "identification_confidence") == snapshot
     assert stale_levels(restored, snapshot) == ()
     for name, table in parsed.levels["ion"].layers.items():
         assert_frame_equal(restored.levels["ion"].layers[name].values, table.values)
@@ -277,7 +294,7 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
 def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     """Consumers can follow the contract with apb2 and the standard library alone."""
     parsed = _result(*MAXQUANT)
-    catalog = Catalog(parsed, "aggregate")
+    catalog = Catalog(parsed, "identification_confidence")
     catalog.layer("ion", concept="confidence", kind="pep")
     target = tmp_path / "result.h5mu"
     write_parsed_levels(attach_snapshot(parsed, catalog.snapshot()), target)
@@ -285,7 +302,7 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     namespace: dict[str, Any] = json.loads(
         json.dumps(read_parsed_levels(target).metadata["catalog"])
     )
-    stored = namespace["aggregate"]
+    stored = namespace["identification_confidence"]
 
     assert stored["contract"] == "apb-catalog-resolution"
     answer = stored["resolutions"][0]
@@ -297,6 +314,22 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
 
 def test_a_changed_rule_makes_the_snapshot_stale() -> None:
     """Snapshots record the effective rule they were resolved against."""
-    snapshot = Catalog(_result(*MAXQUANT), "aggregate").snapshot()
+    snapshot = Catalog(_result(*MAXQUANT), "identification_confidence").snapshot()
     assert stale_levels(_edited_maxquant(), snapshot) == ("ion",)
     assert stale_levels(ParsedLevels(levels={}, uns={}), snapshot) == ("ion",)
+
+
+def test_every_packaged_set_states_its_purpose_and_users() -> None:
+    """Each sources directory has a description, and each description a sources directory."""
+    sources = resources.files("apb_catalog").joinpath("data", "sources")
+    directories = {path.name for path in sources.iterdir() if path.is_dir()}
+    descriptions = packaged_descriptions()
+    assert set(descriptions) == directories
+    assert all(d.purpose and d.used_by for d in descriptions.values())
+
+
+def test_snapshot_embeds_the_set_description() -> None:
+    """A snapshot reader learns what the set is for without the package."""
+    catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
+    assert catalog.snapshot().description == catalog.description
+    assert "apb-aggregate" in catalog.description.used_by[0]
