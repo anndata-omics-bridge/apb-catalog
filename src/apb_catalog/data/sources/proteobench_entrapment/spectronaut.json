@@ -1,0 +1,118 @@
+{
+  "catalogue_id": "spectronaut",
+  "catalogue_version": "0.1",
+  "software_name": "Spectronaut",
+  "review": {
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
+  },
+  "variants": [
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:52879523de2c041662f8e6fbe8487ac0c74604313b9b01b3b4f5cfeeb225d709"
+      ]
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:30c20a679f1d56bb6528ec1e99b263dd6a7c8e418399588e47e22278462d1a47"
+      ]
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:6e8e9743eac0fbecbeed85c7b3c5f0fa28fe8d3f8c8fd5006eee3dffbf223194"
+      ]
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:7de187be6bcfb8398c542af4a8f377935bcfd372277692566eec786dbcda4542"
+      ]
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:0c005c2b6afee2a71d6bb6a2176ddf19aff81bf10c81e0d1fda1117a5e55d85d"
+      ]
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:9903c1248f9772c273aaf2dbbc2237b83eb44701feb04a2c63b8e8beb3b3235f"
+      ]
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "ion",
+      "fingerprints": [
+        "sha256:9debac98b176a1e82608ef0ea812a42386e86a909edfc5c0d45ab235d9889582"
+      ]
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "protein",
+      "fingerprints": [
+        "sha256:a6c206e1176ca77f6eb8a50d4e518621fd15758539ad0b649773f3bfe30fd72f"
+      ]
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "fragment",
+      "fingerprints": [
+        "sha256:19d3d1b2a0ae012e078b0376197a850fc287c4d83c13bf8afee97d6314936398"
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "spectronaut.ion.EG_Qvalue",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_Qvalue"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "Spectronaut report column EG.Qvalue: run-specific precursor q-value.",
+        "source": "https://github.com/Proteobench/ProteoBench/blob/main/proteobench/io/parsing/io_parse_settings/entrapment/DIA/ion/Astral/parse_settings_spectronaut.toml"
+      }
+    },
+    {
+      "entry_id": "spectronaut.v21.ion.EG_LibraryQvalue",
+      "rules": [
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_LibraryQvalue"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "library_q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "Spectronaut report column EG.LibraryQvalue: library-level precursor q-value; ProteoBench's entrapment module ranks Spectronaut uploads by it.",
+        "source": "https://github.com/Proteobench/ProteoBench/blob/main/proteobench/io/parsing/io_parse_settings/entrapment/DIA/ion/Astral/parse_settings_spectronaut.toml"
+      }
+    }
+  ]
+}

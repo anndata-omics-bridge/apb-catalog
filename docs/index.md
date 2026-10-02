@@ -20,12 +20,13 @@ A catalogue annotates only what one consumer needs, never every vendor column.
 | --- | --- | --- |
 | `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
 | `miape` | MIAPE-AnnData export (draft) | Protein, peptide and peptidoform fields and the `raw` layer of the MIAPE-AnnData 0.4.0 draft |
+| `proteobench_entrapment` | apb-proteobench entrapment scoring | Run, library and experiment-wide precursor q-values, each its own kind |
 
 Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a rule nobody reviewed raises. See [Catalogues](catalogues.md) for every entry.
 
 ## Catalogue or column role?
 
-APB2 rules already declare some meanings themselves: each column entry in `rules.json` can carry `roles` such as `abundance`, `protein_assignment` or `fasta_accessions`, and every result records them in `uns["column_roles"]`.
+APB2 rules already declare some meanings themselves: each column entry in `rules.json` can carry [semantic roles](https://anndata-omics-bridge.github.io/apb2/rule-based/#semantic-roles) such as `abundance`, `protein_assignment` or `fasta_accessions`, and every result records them in `uns["column_roles"]` and `uns["layer_roles"]`. The [role policy](https://github.com/anndata-omics-bridge/apb2/blob/main/src/apb2/parserV2/vendor_parse_rules/schema/role_policy.json) owns the vocabulary.
 
 Rule of thumb:
 

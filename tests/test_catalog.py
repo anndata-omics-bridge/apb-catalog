@@ -333,3 +333,22 @@ def test_snapshot_embeds_the_set_description() -> None:
     catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
     assert catalog.snapshot().description == catalog.description
     assert "apb-aggregate" in catalog.description.used_by[0]
+
+
+def test_proteobench_entrapment_offers_each_precursor_q_value_as_its_own_kind() -> None:
+    """Entrapment ranks by run, library or experiment-wide q-values; each is one kind."""
+    layers = ["Precursor_Normalised", "Q_Value", "Lib_Q_Value", "Global_Q_Value", "PEP"]
+    parsed = _result("diann/v2/rules.json", layers)
+    catalog = Catalog(parsed, "proteobench_entrapment")
+    assert catalog.layer("ion", concept="confidence") == (
+        "global_q_value",
+        "library_q_value",
+        "q_value",
+    )
+    found = catalog.layer("ion", concept="confidence", kind="library_q_value")
+    assert found is parsed.levels["ion"].layers["Lib_Q_Value"]
+    assert catalog.layer("ion", concept="confidence", kind="pep") is None, "PEP is not ranked by"
+    assert (
+        Catalog(_result(*MAXQUANT), "proteobench_entrapment").layer("ion", concept="confidence")
+        is None
+    )

@@ -34,6 +34,27 @@ Concept `confidence`, kinds:
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
 | WOMBAT-P | all | — | — | none relevant | — |
 
+## `proteobench_entrapment`
+
+The precursor q-values ProteoBench's entrapment scoring ranks by; used by apb-proteobench's `EntrapmentAnalyzer` and `run entrapment`. Each q-value is its own kind, so the scorer can score every one a result offers. Only the vendors ProteoBench's entrapment module accepts carry entries.
+
+Concept `confidence`, kinds:
+
+- `q_value`: The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better.
+- `library_q_value`: The q-value of the identification's spectral-library entry, built across all runs; lower is better.
+- `global_q_value`: The q-value of the identification across the whole experiment; lower is better.
+
+| Software | Rules | Level | Location | APB field | Kind |
+| --- | --- | --- | --- | --- | --- |
+| AlphaDIA | alphadia/v1_12 | ion | layers | `QValue` | `q_value` |
+| AlphaDIA | alphadia/v2 | ion | layers | `QValue` | `q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Q_Value` | `q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Lib_Q_Value` | `library_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Global_Q_Value` | `global_q_value` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
+| Spectronaut | spectronaut/v21 | ion | layers | `EG_LibraryQvalue` | `library_q_value` |
+| Every other vendor | all | — | — | none relevant | — |
+
 ## `miape`
 
 Draft mapping onto the MIAPE-AnnData Schema 0.4.0 draft of the HUPO-PSI AI Readiness Working Group. MIAPE-AnnData defines protein-group, peptide, peptidoform and site modalities; APB ion levels have no modality, so ion-only results gain MIAPE fields only after aggregation. Fields an exporter computes, such as `detection_rate` or `length`, are not catalogued. MIAPE-AnnData stores no per-feature confidence; it records FDR filtering as a provenance step.

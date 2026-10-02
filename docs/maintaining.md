@@ -18,7 +18,7 @@ Results converted before the change keep the old fingerprint and raise `Unresolv
 ## Adding a consumer
 
 1. Add a directory `src/apb_catalog/data/sources/<set>/` with one catalogue per vendor, listing every packaged rule level
-2. Add the set to `CATALOGUES` in `apb_catalog/source.py`
+2. Add the set's purpose and users to `apb_catalog/data/catalogues.json`
 3. Add its concept and kinds to `apb_catalog/data/vocabulary.json`
 4. Catalogue only the fields that consumer reads
 
