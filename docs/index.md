@@ -23,6 +23,16 @@ A catalogue annotates only what one consumer needs, never every vendor column.
 
 Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a rule nobody reviewed raises. See [Catalogues](catalogues.md) for every entry.
 
+## Catalogue or column role?
+
+APB2 rules already declare some meanings themselves: each column entry in `rules.json` can carry `roles` such as `abundance`, `protein_assignment` or `fasta_accessions`, and every result records them in `uns["column_roles"]`.
+
+Rule of thumb:
+
+- Meaning several tools need, or apb2 itself defines → role in `rules.json`
+- Meaning one consumer or an external standard needs → catalogue
+- A catalogue copy of a role would be a second source of truth
+
 ## How it stays correct
 
 - An entry holds only for the APB2 rule revisions it was reviewed against, identified by the SHA-256 of the effective rule stored in each level's `rule_json`
