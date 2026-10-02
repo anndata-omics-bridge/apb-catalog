@@ -3,15 +3,15 @@
   "catalogue_version": "0.1-draft",
   "software_name": "Proline Studio",
   "review": {
-    "date": "2026-10-01",
-    "apb2_revision": "fb5f5e1"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "prolinestudio/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:8a8cb96fc3093ca1578e3a33ba275c44251b01622b2580387c824fbfe7dc57b3"
+        "sha256:77c14c0aa6a421c6aac117e580eb7df92252433123c44dadd9dad622bf0ca509"
       ]
     }
   ],

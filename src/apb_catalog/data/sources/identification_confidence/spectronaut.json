@@ -3,71 +3,71 @@
   "catalogue_version": "0.1",
   "software_name": "Spectronaut",
   "review": {
-    "date": "2026-09-30",
-    "apb2_revision": "d25f295"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "spectronaut/v15/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:b10adfed14e1c9d97b433db175d3aaf61fd3aab96a639b08b9d833f4bbc51e79"
+        "sha256:52879523de2c041662f8e6fbe8487ac0c74604313b9b01b3b4f5cfeeb225d709"
       ]
     },
     {
       "rule": "spectronaut/v15/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:5f8d5711dd28a1a7c5ead89f76e2158f3f16e75eea72aa1051d5e13224bf5dcb"
+        "sha256:30c20a679f1d56bb6528ec1e99b263dd6a7c8e418399588e47e22278462d1a47"
       ]
     },
     {
       "rule": "spectronaut/v15/rules.json",
       "level": "fragment",
       "fingerprints": [
-        "sha256:18b39661a2e163592c144985bc579e07bb16a35cfc8ed4d4d4fd16cc0225b1fc"
+        "sha256:6e8e9743eac0fbecbeed85c7b3c5f0fa28fe8d3f8c8fd5006eee3dffbf223194"
       ]
     },
     {
       "rule": "spectronaut/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:5b2fade6276d13bb1b298f7af0f7715355f8c216195e5adf9fc21f2534a42db8"
+        "sha256:7de187be6bcfb8398c542af4a8f377935bcfd372277692566eec786dbcda4542"
       ]
     },
     {
       "rule": "spectronaut/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:667fa9dcebba5012d74d3912de4c9e32870ab954c49f900f178c420895a44657"
+        "sha256:0c005c2b6afee2a71d6bb6a2176ddf19aff81bf10c81e0d1fda1117a5e55d85d"
       ]
     },
     {
       "rule": "spectronaut/rules.json",
       "level": "fragment",
       "fingerprints": [
-        "sha256:9466342e5db27547bc383614049d3bfdfd47a92ea14063baf8c2379d3b890e8b"
+        "sha256:9903c1248f9772c273aaf2dbbc2237b83eb44701feb04a2c63b8e8beb3b3235f"
       ]
     },
     {
       "rule": "spectronaut/v21/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:1626829c610b82d79c8c94217475965f8ff3727fc6a80f5cc0dbfc29968d70ae"
+        "sha256:9debac98b176a1e82608ef0ea812a42386e86a909edfc5c0d45ab235d9889582"
       ]
     },
     {
       "rule": "spectronaut/v21/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:a23559040302678a14524ea822217ff07e4060759c2da66c62c29fcf0a6353d3"
+        "sha256:a6c206e1176ca77f6eb8a50d4e518621fd15758539ad0b649773f3bfe30fd72f"
       ]
     },
     {
       "rule": "spectronaut/v21/rules.json",
       "level": "fragment",
       "fingerprints": [
-        "sha256:dabd7ba78f496f64e5952ad2ef9aa3d7d9a57a81898d3d33604888579ae6ef1f"
+        "sha256:19d3d1b2a0ae012e078b0376197a850fc287c4d83c13bf8afee97d6314936398"
       ]
     }
   ],

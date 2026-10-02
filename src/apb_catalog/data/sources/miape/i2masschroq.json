@@ -3,15 +3,15 @@
   "catalogue_version": "0.1-draft",
   "software_name": "i2MassChroQ",
   "review": {
-    "date": "2026-10-01",
-    "apb2_revision": "fb5f5e1"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "i2masschroq/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:2a3c5950afd64b87f54b7986f31250178f480efc7b9816a2e7c28aadb81eba36"
+        "sha256:f8b7e12a071a58ed47c3d64ad7b5b0464591e80082c981c5c9e833ca617c1272"
       ]
     }
   ],

@@ -3,22 +3,22 @@
   "catalogue_version": "0.1-draft",
   "software_name": "WOMBAT-P",
   "review": {
-    "date": "2026-10-01",
-    "apb2_revision": "fb5f5e1"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "wombat/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:0831a476c8a7f6f5ce66b42e7677d7995e58b963ab6675a158639fe6f660b9fb"
+        "sha256:116e2ac983c30439a6cb652d98b2082d79bf9a3c2c4e5c8ecc54a876a49dd74d"
       ]
     },
     {
       "rule": "wombat/rules.json",
       "level": "peptidoform",
       "fingerprints": [
-        "sha256:eaca097dcf67996ef1e386a0eb68bda34465e348f5004173334a6ba438d1df1e"
+        "sha256:644140037578a903d4f76015e52c5294bc77b43332fa77f24cbfea98edeffee7"
       ]
     }
   ],

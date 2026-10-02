@@ -3,15 +3,15 @@
   "catalogue_version": "0.1-draft",
   "software_name": "quantms",
   "review": {
-    "date": "2026-10-01",
-    "apb2_revision": "fb5f5e1"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "quantms/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:4006b77cbbf5b2da65b12c2bca2af634771c0846c7da698bd64c6c6b22f430a4"
+        "sha256:f73e1ce2ca73cbc0f6b95171e7dc1de340afac18f3a4626b55c58d41ec674a99"
       ]
     }
   ],

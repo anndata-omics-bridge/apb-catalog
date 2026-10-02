@@ -3,15 +3,15 @@
   "catalogue_version": "0.1",
   "software_name": "AlphaPept",
   "review": {
-    "date": "2026-09-30",
-    "apb2_revision": "d25f295"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "alphapept/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:237dfd9df5d95a4c90aa1a056435872043c38fc40f7399f004ee439b5fda951a"
+        "sha256:fc0330626b476ae68db77ea8f245be8bb7b74793f24c1b91bf9aedccc36f8e2a"
       ]
     }
   ],

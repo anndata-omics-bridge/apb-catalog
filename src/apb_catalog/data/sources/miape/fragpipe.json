@@ -3,15 +3,15 @@
   "catalogue_version": "0.1-draft",
   "software_name": "FragPipe",
   "review": {
-    "date": "2026-10-01",
-    "apb2_revision": "fb5f5e1"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "fragpipe/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:50e1c5a602681faf761fb90d7f2c372c05def7cf1a7ec1cd42aede74271ebae2"
+        "sha256:8e4102406dd4588c743cf36fb1aef7691e08beedfee6fcc23eeb6e40bf232cde"
       ]
     }
   ],

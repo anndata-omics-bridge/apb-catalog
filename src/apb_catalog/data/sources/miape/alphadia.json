@@ -3,36 +3,36 @@
   "catalogue_version": "0.1-draft",
   "software_name": "AlphaDIA",
   "review": {
-    "date": "2026-10-01",
-    "apb2_revision": "fb5f5e1"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "alphadia/v1_10/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:695e3b2bb6f43c78f1a7fa8f5e79be93c81041133a05dbf2208aef205158a259"
+        "sha256:55d4254d4dd6c44b26d4fabb5ee9175fe0130bbcc0321ac94ff51c4af4e18abf"
       ]
     },
     {
       "rule": "alphadia/v1_12/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:68a3d8684021009f90baa913a0abfdd448f6503e7ee1974768c7e7aa3f356273"
+        "sha256:9989f2ca54122a6916c6afae0dc127a4c49cea683c99ff113846fe342629d7ad"
       ]
     },
     {
       "rule": "alphadia/v2/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:ce4a557025f1e3e031b9f935315adab61e40184ced6f312a95191ef8e3acf73b"
+        "sha256:18528c7114a1b60c106464ff9a911fa80ae7d6d2c934f0c84243801214daeace"
       ]
     },
     {
       "rule": "alphadia/v2/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:020b36e57a80c9268aec3f632060b91b17d31fa5229edef0eeb82e5c1b013a2c"
+        "sha256:b78376da8ea891c430e0f54d7cf2c82c133aac4ce364bb179f67b39a45724046"
       ]
     }
   ],
