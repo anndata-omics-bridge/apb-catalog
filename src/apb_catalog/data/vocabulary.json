@@ -1,5 +1,5 @@
 {
-  "vocabulary_version": "0.2",
+  "vocabulary_version": "0.3",
   "concepts": {
     "confidence": {
       "definition": "How likely an identification, or the signal quantified for it, is correct, as the producing software reports it.",
@@ -8,7 +8,9 @@
           "definition": "What the value measures.",
           "values": {
             "pep": "Posterior error probability: the probability that this single identification is wrong; lower is better.",
-            "q_value": "The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better."
+            "q_value": "The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better.",
+            "library_q_value": "The q-value of the identification's spectral-library entry, built across all runs; lower is better.",
+            "global_q_value": "The q-value of the identification across the whole experiment; lower is better."
           }
         },
         "stage": {

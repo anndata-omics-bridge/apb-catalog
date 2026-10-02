@@ -4,5 +4,11 @@
     "used_by": [
       "apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision"
     ]
+  },
+  "proteobench_entrapment": {
+    "purpose": "The precursor q-values ProteoBench's entrapment scoring ranks by: run, library and experiment-wide q-values on the ion level, each its own kind. Only the vendors ProteoBench's entrapment module accepts carry entries.",
+    "used_by": [
+      "apb-proteobench: EntrapmentAnalyzer and run entrapment"
+    ]
   }
 }
