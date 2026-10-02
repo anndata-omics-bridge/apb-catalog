@@ -3,22 +3,22 @@
   "catalogue_version": "0.1",
   "software_name": "Sage",
   "review": {
-    "date": "2026-09-30",
-    "apb2_revision": "d25f295"
+    "date": "2026-10-02",
+    "apb2_revision": "96a1f95"
   },
   "variants": [
     {
       "rule": "sage/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:0ffa7ba880605f860b48c1d903235c0dd852a9ffb0d9b2dbac875ebacbbdf904"
+        "sha256:8ca59a6ed2e0b1e12446a153d034d11afb7431c74c157f4e6b484b4302edc861"
       ]
     },
     {
       "rule": "sage/rules.json",
       "level": "peptidoform",
       "fingerprints": [
-        "sha256:8755a7465080dafa9f7a14170a038a674230d38b18c19e348ccc38a03ddfb157"
+        "sha256:c34d389f6fc1e337ce74193fa534f806140a1b6e83d157fae6a3f5c081fb0f03"
       ]
     }
   ],
