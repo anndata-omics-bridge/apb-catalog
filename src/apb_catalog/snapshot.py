@@ -10,11 +10,11 @@ from importlib import metadata, resources
 from typing import Literal
 
 from apb_catalog.resolver import ConceptRequest, LevelBinding, Resolution
-from apb_catalog.source import SourceEntry
+from apb_catalog.source import CatalogueDescription, SourceEntry
 from apb_catalog.vocabulary import Concept, FrozenModel
 
 CONTRACT = "apb-catalog-resolution"
-CONTRACT_VERSION = "0.1"
+CONTRACT_VERSION = "0.2"
 SCHEMA_FILE = f"{CONTRACT}-{CONTRACT_VERSION}.schema.json"
 
 
@@ -34,9 +34,10 @@ class ResolutionSnapshot(FrozenModel):
     """Level bindings, the retained entries they supply, and the answers to consumer requests."""
 
     contract: Literal["apb-catalog-resolution"] = CONTRACT
-    contract_version: Literal["0.1"] = CONTRACT_VERSION
+    contract_version: Literal["0.2"] = CONTRACT_VERSION
     producer: Producer
     catalogue: str
+    description: CatalogueDescription
     vocabulary_version: str
     concepts: dict[str, Concept]
     levels: tuple[LevelBinding, ...]

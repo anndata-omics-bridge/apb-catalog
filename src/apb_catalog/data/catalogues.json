@@ -1,0 +1,8 @@
+{
+  "identification_confidence": {
+    "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, and Sage's MS1-peak q-value. Scores, protein-level confidence and vendor summaries are left out.",
+    "used_by": [
+      "apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision"
+    ]
+  }
+}

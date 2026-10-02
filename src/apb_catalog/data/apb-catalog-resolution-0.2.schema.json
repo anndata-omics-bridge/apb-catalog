@@ -35,6 +35,29 @@
       "title": "Candidate",
       "type": "object"
     },
+    "CatalogueDescription": {
+      "additionalProperties": false,
+      "description": "What one catalogue set holds and who uses it.",
+      "properties": {
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        },
+        "used_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Used By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "purpose",
+        "used_by"
+      ],
+      "title": "CatalogueDescription",
+      "type": "object"
+    },
     "Concept": {
       "additionalProperties": false,
       "description": "One meaning a consumer can ask for, with every qualifier it must be described by.",
@@ -440,8 +463,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.1",
-      "default": "0.1",
+      "const": "0.2",
+      "default": "0.2",
       "title": "Contract Version",
       "type": "string"
     },
@@ -451,6 +474,9 @@
     "catalogue": {
       "title": "Catalogue",
       "type": "string"
+    },
+    "description": {
+      "$ref": "#/$defs/CatalogueDescription"
     },
     "vocabulary_version": {
       "title": "Vocabulary Version",
@@ -488,6 +514,7 @@
   "required": [
     "producer",
     "catalogue",
+    "description",
     "vocabulary_version",
     "concepts",
     "levels",

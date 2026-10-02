@@ -1,10 +1,10 @@
 # Catalogues
 
-A catalogue set annotates the fields one consumer needs, for every rule APB2 packages. The JSON files under `src/apb_catalog/data/sources/<set>/` are the source of truth; this page is generated from them.
+A catalogue set annotates fields of one kind of meaning, for every rule APB2 packages; `data/catalogues.json` states each set's purpose and users, and `Catalog.description` returns it. The JSON files under `src/apb_catalog/data/sources/<set>/` are the source of truth; this page is generated from them.
 
-## `aggregate`
+## `identification_confidence`
 
-Identification confidence that apb-aggregate can weight with: per-run PEP and q-value layers, per-feature PEP, and Sage's MS1-peak q-value (stage `quantification`). Scores, protein-level confidence and vendor summaries are deliberately left out.
+How likely each identification, or the signal quantified for it, is correct; used by apb-aggregate for confidence-weighted rollups: per-run PEP and q-value layers, per-feature PEP, and Sage's MS1-peak q-value (stage `quantification`). Scores, protein-level confidence and vendor summaries are deliberately left out.
 
 Concept `confidence`, kinds:
 
