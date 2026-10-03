@@ -4,14 +4,14 @@
   "software_name": "Proline Studio",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "prolinestudio/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:77c14c0aa6a421c6aac117e580eb7df92252433123c44dadd9dad622bf0ca509"
+        "sha256:0c67c5521fba8cac8d5235379a40da2771aacf9a7422001c8373f7260c5f0333"
       ]
     }
   ],

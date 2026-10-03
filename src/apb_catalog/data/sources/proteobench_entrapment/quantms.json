@@ -4,14 +4,14 @@
   "software_name": "quantms",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "quantms/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:f73e1ce2ca73cbc0f6b95171e7dc1de340afac18f3a4626b55c58d41ec674a99"
+        "sha256:03ed420d78620729c1b2ffcfcffa7b5f429da05f7fc97f24cc49846174d124ed"
       ]
     }
   ],

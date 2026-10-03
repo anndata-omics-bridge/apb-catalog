@@ -4,21 +4,21 @@
   "software_name": "WOMBAT-P",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "wombat/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:116e2ac983c30439a6cb652d98b2082d79bf9a3c2c4e5c8ecc54a876a49dd74d"
+        "sha256:0b44d071518af4096eab4a9df806649103d26619c552a7092c8f3ad5ab0e2e4e"
       ]
     },
     {
       "rule": "wombat/rules.json",
       "level": "peptidoform",
       "fingerprints": [
-        "sha256:644140037578a903d4f76015e52c5294bc77b43332fa77f24cbfea98edeffee7"
+        "sha256:866ac9a772e1ae6660053a13fb2e06771864e50b652fbd588a10c014a2964165"
       ]
     }
   ],

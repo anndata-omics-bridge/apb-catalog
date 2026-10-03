@@ -4,14 +4,14 @@
   "software_name": "AlphaPept",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "alphapept/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:fc0330626b476ae68db77ea8f245be8bb7b74793f24c1b91bf9aedccc36f8e2a"
+        "sha256:1332742bef5d4e3775916d6ce8f1dcd76361fd4cd11b5848d6b212a13cc3f941"
       ]
     }
   ],

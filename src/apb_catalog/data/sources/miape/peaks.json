@@ -4,14 +4,14 @@
   "software_name": "PEAKS",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "peaks/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:4521b0fa80a14169941305d119a698f40df6f6e5864b36aba90e03ab9cec3a0a"
+        "sha256:0bbf70ab13c5350a7bb4c7fd731dc88cafc9812fd1f216f51217595da53d47d3"
       ]
     }
   ],
