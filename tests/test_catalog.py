@@ -52,11 +52,13 @@ def _level(
     tables = {
         name: FinalLayerTable(
             layer_name=name,
-            var_key_columns=(key,),
-            values=features.select(key).with_columns(
-                pl.lit(float(offset + 1) / 10 + column).alias(label)
-                for column, label in enumerate(labels)
-            ),
+            values=(
+                features.select(key).with_columns(
+                    pl.lit(float(offset + 1) / 10 + column).alias(label)
+                    for column, label in enumerate(labels)
+                )
+            ).drop((key,), strict=False),
+            semantic_roles=("abundance",),
         )
         for offset, name in enumerate(layers)
     }

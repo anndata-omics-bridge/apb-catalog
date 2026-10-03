@@ -11,28 +11,28 @@
       "rule": "maxquant/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:01e651b84691ae768976ed161be042da91d0917df6ab39a0fbf664f70bba8b42"
+        "sha256:a0ade8629dadaf8d1adb6f57dff72212fcbdc5835181990231cac1b0470753fa"
       ]
     },
     {
       "rule": "maxquant/rules.json",
       "level": "peptidoform",
       "fingerprints": [
-        "sha256:b5edf164ba404a49f8edbb8723cdafd406d713d63289adce3d4b5053b7ee11bb"
+        "sha256:f5b75368366fb327018496db33b862b0858fce2f9eae161034c0fdcc9f17d467"
       ]
     },
     {
       "rule": "maxquant/rules.json",
       "level": "peptide",
       "fingerprints": [
-        "sha256:b81b4b377ef70fe5c0a041f0ca783bffe6016f1a109e3a6128671f052f8bd17d"
+        "sha256:ddcd24b41a189e7c0129d33dbacce15009c42ebfe9b8cdef329f5cd4f4c897d1"
       ]
     },
     {
       "rule": "maxquant/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:9937731f6e65daea68fbc587b711c6de5743c8186218c13805672cd5d09aac99"
+        "sha256:d7ad874f34899b2636ed16a6da1af7efb29960053cfc12fc9ff3ed87d511d38f"
       ]
     }
   ],

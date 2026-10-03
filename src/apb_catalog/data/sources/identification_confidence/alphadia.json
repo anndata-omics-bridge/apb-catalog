@@ -11,28 +11,28 @@
       "rule": "alphadia/v1_10/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:c9a521b58afb6e95fb5a5b0f4b924444bf7822087972661071afe6749e875d01"
+        "sha256:aa4f649bb2ce5822815d230d35b674872f018166295e83ae4e1c1659d9e98642"
       ]
     },
     {
       "rule": "alphadia/v1_12/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:4adfabf58ff2d5d812dd39c959c76e9f135471ccb14210f95c676ab0ed4c2ada"
+        "sha256:f373c99e02e6970085114c309ac578552c8e7fd78d5eeca9fd57bca11a01f473"
       ]
     },
     {
       "rule": "alphadia/v2/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:33764242c687820ed5e0343a65ba3f561ad0558d3c6e7e6eff6a4dce93ce5e1b"
+        "sha256:cc1a3d4966bc3acc4b51edc57d272e7bde3f02510b1391ed2e0d8b0a200c54a9"
       ]
     },
     {
       "rule": "alphadia/v2/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:3d06b9e9b1fd1ffa552c80b3cf3926dc02ff438d587c544e9efe8d3c4747d679"
+        "sha256:f079c3bec3ba20e32dcc020e1bd6dd36ffd2a37b7a481792587de41b9f04e64d"
       ]
     }
   ],
