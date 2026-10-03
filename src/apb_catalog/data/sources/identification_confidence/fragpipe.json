@@ -4,14 +4,14 @@
   "software_name": "FragPipe",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "fragpipe/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:8e4102406dd4588c743cf36fb1aef7691e08beedfee6fcc23eeb6e40bf232cde"
+        "sha256:821650a30ff3d46c1a7bdd08f1322a50b36d60639edfa6f7ea4d74f561effc4c"
       ]
     }
   ],

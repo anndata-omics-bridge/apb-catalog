@@ -4,14 +4,14 @@
   "software_name": "MS-Angel",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "msangel/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:8ea66a587ca34c87c6d826e280bb9261847dc61a672f24534e9dd1331637d9f4"
+        "sha256:de4d64e8cfe8e2f7ca278903095a14d42d77c79645b99fafc93098157b3976e9"
       ]
     }
   ],

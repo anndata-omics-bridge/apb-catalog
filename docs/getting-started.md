@@ -2,13 +2,13 @@
 
 ## Install
 
-APB Catalog requires Python 3.13 and APB2. The catalogue is reviewed against APB2 commit `fb5f5e1`; later APB2 rule changes need a catalogue re-review (see [Maintaining](maintaining.md)). Clone both repositories as siblings:
+APB Catalog requires Python 3.13 and APB2. The catalogue is reviewed against APB2 commit `8651e1f`; later APB2 rule changes need a catalogue re-review (see [Maintaining](maintaining.md)). Clone both repositories as siblings:
 
 ```bash
 mkdir anndata_bridge
 cd anndata_bridge
 git clone https://github.com/anndata-omics-bridge/apb2.git
-git -C apb2 checkout fb5f5e1e32057025d48a73ef6662570be2775a9b
+git -C apb2 checkout 8651e1fff4772e7c1c1fbb4efe754980799c342d
 git clone https://github.com/anndata-omics-bridge/apb-catalog.git
 cd apb-catalog
 uv sync --frozen

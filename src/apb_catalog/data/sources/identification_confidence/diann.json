@@ -4,64 +4,64 @@
   "software_name": "DIA-NN",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "diann/v1_7/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:9db1f6efdb1791b2a87e5bb422da038c5baa365f3e07ab6efde4b7445ffba445"
+        "sha256:b0dc1c5c568ad71775fef0dbcc8aa643299ab0f5e80e7913cdf6e7dea4dd9db0"
       ]
     },
     {
       "rule": "diann/v1_7/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:ab31bebfbef75b27885e3943191685af4b58aa0e035b0627bc20b74f426e6e76"
+        "sha256:5edace15a1b99cbbc4244ee47a533793434e019e5ff80bf1f9f52ed4e755adee"
       ]
     },
     {
       "rule": "diann/v1_7/rules.json",
       "level": "fragment",
       "fingerprints": [
-        "sha256:ec63f25fcbc25ae5fdc69e8c65a5f57effa6712ae3a93073a60358840d1e8f5a"
+        "sha256:15d8a2407ab4f9b73e3212a61fd2aa9faa89c6bfe9458a4d28596138e0282777"
       ]
     },
     {
       "rule": "diann/v1_8/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:9e6d8f191672387504e1a7013ecee56e86e90759fd237756df514f0173aef43b"
+        "sha256:b4c754cf4148300f14324145723fd4e4774c6baff0930e5a91fa091b8d95884e"
       ]
     },
     {
       "rule": "diann/v1_8/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:b8fb562ea6096cc26da5f77b0500f96b4c9cefbd336e01d4bec06e8483632396"
+        "sha256:ae9772bca7dcf3df38df5e4c2f74004e31bb2e956dab4c7f8cc02d9600aa2d4a"
       ]
     },
     {
       "rule": "diann/v1_8/rules.json",
       "level": "fragment",
       "fingerprints": [
-        "sha256:7f55bb15aa4320513460c1ad2db99a69a0b4a8bc11d3d4fd753871277eca4baa"
+        "sha256:1ed18f8beee5e898bf072de427e3f3c9159b6c4ba12f87b34162022301f4104b"
       ]
     },
     {
       "rule": "diann/v2/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:3eca988ae8acad6cfa67f8b0fcfd5407e70aa7abfa51ed8672f04c5c18f445a2",
-        "sha256:f534e5c1c90071c74d8e917246872625225ab49d9f208613f1c7ae4791f7dc51"
+        "sha256:1809d03cbc7b697b90f7819ac1a9634d3632f0f57282cfa64e36e8eeaa577677",
+        "sha256:227ff16423ed7d90d38e359a26958f76aa03161fa684dc72884898b6f6f26ee6"
       ]
     },
     {
       "rule": "diann/v2/rules.json",
       "level": "protein",
       "fingerprints": [
-        "sha256:5ca2f26bdc56cb62eb75945e55dc95c42700a8ac24472de12538ee00888a6ef2"
+        "sha256:4496e258ede1746b4baa3d3be83a309ff54106f4e12486cf0c8ed3242728e956"
       ]
     }
   ],

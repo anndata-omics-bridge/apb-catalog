@@ -4,14 +4,14 @@
   "software_name": "i2MassChroQ",
   "review": {
     "date": "2026-10-02",
-    "apb2_revision": "96a1f95"
+    "apb2_revision": "8651e1f"
   },
   "variants": [
     {
       "rule": "i2masschroq/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:f8b7e12a071a58ed47c3d64ad7b5b0464591e80082c981c5c9e833ca617c1272"
+        "sha256:a16a2acf37346581f22245f775e4ab2ab8a1bd469673447d28c09c0a6a6df67a"
       ]
     }
   ],
