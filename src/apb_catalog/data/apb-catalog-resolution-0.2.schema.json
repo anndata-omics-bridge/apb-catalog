@@ -173,13 +173,6 @@
       "type": "string"
     },
     "ParsedLevelName": {
-      "enum": [
-        "ion",
-        "peptidoform",
-        "peptide",
-        "protein",
-        "fragment"
-      ],
       "type": "string"
     },
     "Producer": {

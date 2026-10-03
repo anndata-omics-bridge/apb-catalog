@@ -11,7 +11,7 @@
       "rule": "alphapept/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:1332742bef5d4e3775916d6ce8f1dcd76361fd4cd11b5848d6b212a13cc3f941"
+        "sha256:4542c589a27590b8d9c06405964ef9dc7cf7a0e306bbed5be629021a7fc8e350"
       ]
     }
   ],

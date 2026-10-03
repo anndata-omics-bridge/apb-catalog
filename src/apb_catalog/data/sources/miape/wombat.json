@@ -11,14 +11,14 @@
       "rule": "wombat/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:0b44d071518af4096eab4a9df806649103d26619c552a7092c8f3ad5ab0e2e4e"
+        "sha256:f829ec6f123fa46af91586f941f7978e63aed59b5858dcb331b06e7dad0f6ca9"
       ]
     },
     {
       "rule": "wombat/rules.json",
       "level": "peptidoform",
       "fingerprints": [
-        "sha256:866ac9a772e1ae6660053a13fb2e06771864e50b652fbd588a10c014a2964165"
+        "sha256:9e47d4437586da785ce4e17fa3ab0c50fff80420aab731436134337393b551be"
       ]
     }
   ],

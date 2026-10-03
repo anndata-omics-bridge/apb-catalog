@@ -11,14 +11,14 @@
       "rule": "sage/rules.json",
       "level": "ion",
       "fingerprints": [
-        "sha256:0cd9140f2f40b3610b7081aed513d288cc0469a0ce550c3d06103002717ab36d"
+        "sha256:edc46abc33bb10c2fab76e58d735be54705cb39a46313bbe96402c51c6d85f75"
       ]
     },
     {
       "rule": "sage/rules.json",
       "level": "peptidoform",
       "fingerprints": [
-        "sha256:efd1231c6fcfbe229950527307149b94eb9f740a784b151faa5dcc070562e2cd"
+        "sha256:131dbc6076174724f53f570f3f38d29f78ec7a1d084d2802aedbf62931956add"
       ]
     }
   ],
