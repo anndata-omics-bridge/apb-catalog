@@ -11,9 +11,9 @@ import json
 from functools import cache
 from typing import Literal, cast
 
+from apb2.api import JsonValue
 from apb2.parserV2.vendor_parse_rules.document import RuleNotApplicable, SearchParameterEvidence
 from apb2.parserV2.vendor_parse_rules.loader import PACKAGED, load_rule_document
-from apb2.result_facade import JsonValue, ParsedLevelName
 
 from apb_catalog.fingerprint import fingerprint
 
@@ -26,9 +26,9 @@ def _relative(path: object) -> str:
 
 
 @cache
-def effective_rules() -> dict[tuple[str, ParsedLevelName], tuple[dict[str, JsonValue], ...]]:
+def effective_rules() -> dict[tuple[str, str], tuple[dict[str, JsonValue], ...]]:
     """Map each packaged (rule, level) to every distinct effective rule the evidence selects."""
-    rules: dict[tuple[str, ParsedLevelName], tuple[dict[str, JsonValue], ...]] = {}
+    rules: dict[tuple[str, str], tuple[dict[str, JsonValue], ...]] = {}
     for path in PACKAGED:
         document = load_rule_document(path)
         for level in document.levels:
@@ -47,17 +47,17 @@ def effective_rules() -> dict[tuple[str, ParsedLevelName], tuple[dict[str, JsonV
     return rules
 
 
-def current_fingerprints(rule: str, level: ParsedLevelName) -> set[str]:
+def current_fingerprints(rule: str, level: str) -> set[str]:
     """Return the fingerprints APB2 would store today for one packaged rule level."""
     return {fingerprint(payload) for payload in effective_rules()[(rule, level)]}
 
 
-def declared_rule_json(rule: str, level: ParsedLevelName) -> str:
+def declared_rule_json(rule: str, level: str) -> str:
     """Return a ``rule_json`` string exactly as conversion stores it for the first variant."""
     return json.dumps(effective_rules()[(rule, level)][0])
 
 
-def retained_sources(rule: str, level: ParsedLevelName) -> dict[tuple[str, str], str]:
+def retained_sources(rule: str, level: str) -> dict[tuple[str, str], str]:
     """Map every (location, APB name) a packaged rule level retains to its vendor source."""
     payload = effective_rules()[(rule, level)][0]
     measurements = cast(dict[str, list[dict[str, str]]], payload["measurements"])

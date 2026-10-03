@@ -8,7 +8,6 @@ from functools import cache
 from importlib import resources
 from typing import Literal
 
-from apb2.result_facade import ParsedLevelName
 from pydantic import model_validator
 
 from apb_catalog.vocabulary import FrozenModel, Vocabulary, packaged_vocabulary
@@ -19,7 +18,7 @@ type Location = Literal["layers", "var"]
 class Reference(FrozenModel):
     """Where one retained field lives in an APB result, by its APB output name."""
 
-    level: ParsedLevelName
+    level: str
     location: Location
     name: str
 
@@ -46,7 +45,7 @@ class RuleVariant(FrozenModel):
     """One packaged rule level and the effective-rule fingerprints reviewed for it."""
 
     rule: str
-    level: ParsedLevelName
+    level: str
     fingerprints: tuple[str, ...]
 
 

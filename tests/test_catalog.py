@@ -10,15 +10,10 @@ from typing import Any
 
 import polars as pl
 import pytest
-from apb2.result_facade import (
-    FinalLayerTable,
+from apb2.api import (
     JsonValue,
-    ObsFinal,
     ParsedLevel,
-    ParsedLevelName,
     ParsedLevels,
-    VarFinal,
-    observation_labels,
     read_parsed_levels,
     write_parsed_levels,
 )
@@ -37,44 +32,28 @@ from tests.packaged_rules import declared_rule_json
 
 type VarColumns = Mapping[str, Sequence[float] | Sequence[str]]
 
-KEYS: dict[ParsedLevelName, str] = {"ion": "ProForma_ion", "protein": "Protein_Group"}
+KEYS: dict[str, str] = {"ion": "ProForma_ion", "protein": "Protein_Group"}
 
 
 def _level(
-    level: ParsedLevelName, rule_json: str | None, layers: Sequence[str], var: VarColumns
+    level: str, rule_json: str | None, layers: Sequence[str], var: VarColumns
 ) -> ParsedLevel:
     obs = pl.DataFrame({"Run": ["R1", "R2", "R3"]})
     key = KEYS[level]
     features = pl.DataFrame(
         {key: ["F1", "F2"], **{name: list(values) for name, values in var.items()}}
     )
-    labels = observation_labels(obs.height, reserved=features.columns)
-    tables = {
-        name: FinalLayerTable(
-            layer_name=name,
-            values=(
-                features.select(key).with_columns(
-                    pl.lit(float(offset + 1) / 10 + column).alias(label)
-                    for column, label in enumerate(labels)
-                )
-            ).drop((key,), strict=False),
-            semantic_roles=("abundance",),
+    values = {
+        name: pl.DataFrame(
+            {f"c{column}": [float(offset + 1) / 10 + column] * 2 for column in range(obs.height)}
         )
         for offset, name in enumerate(layers)
     }
     uns: dict[str, JsonValue] = {"produced_by": "apb2", "quantification_level": level}
     if rule_json is not None:
         uns["rule_json"] = rule_json
-    return ParsedLevel(
-        obs=ObsFinal(frame=obs, key_columns=("Run",)),
-        var=VarFinal(frame=features, key_columns=(key,)),
-        primary_layer_name=layers[0],
-        uns=uns,
-        layers=tables,
-        obsm={},
-        varm={},
-        obsp={},
-        varp={},
+    return ParsedLevel.build(
+        obs, ("Run",), features, (key,), {}, primary_layer=layers[0], abundance=values, uns=uns
     )
 
 
@@ -82,7 +61,7 @@ def _result(
     rule: str | None,
     layers: Sequence[str],
     var: VarColumns | None = None,
-    level: ParsedLevelName = "ion",
+    level: str = "ion",
 ) -> ParsedLevels:
     rule_json = declared_rule_json(rule, level) if rule is not None else None
     return ParsedLevels(levels={level: _level(level, rule_json, layers, var or {})}, uns={})
