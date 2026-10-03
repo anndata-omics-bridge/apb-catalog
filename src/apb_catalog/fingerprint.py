@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from apb2.result_facade import JsonValue
+from apb2.api import JsonValue
 
 
 def canonical_json(value: JsonValue, /) -> str:

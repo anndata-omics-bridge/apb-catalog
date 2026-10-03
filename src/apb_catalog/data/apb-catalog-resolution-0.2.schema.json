@@ -90,7 +90,8 @@
           "type": "string"
         },
         "level": {
-          "$ref": "#/$defs/ParsedLevelName"
+          "title": "Level",
+          "type": "string"
         },
         "location": {
           "anyOf": [
@@ -172,9 +173,6 @@
       ],
       "type": "string"
     },
-    "ParsedLevelName": {
-      "type": "string"
-    },
     "Producer": {
       "additionalProperties": false,
       "description": "The package and version that wrote a snapshot.",
@@ -223,7 +221,8 @@
       "description": "Where one retained field lives in an APB result, by its APB output name.",
       "properties": {
         "level": {
-          "$ref": "#/$defs/ParsedLevelName"
+          "title": "Level",
+          "type": "string"
         },
         "location": {
           "$ref": "#/$defs/Location"
@@ -326,7 +325,8 @@
           "type": "string"
         },
         "level": {
-          "$ref": "#/$defs/ParsedLevelName"
+          "title": "Level",
+          "type": "string"
         },
         "fingerprint": {
           "title": "Fingerprint",
@@ -419,7 +419,8 @@
           "type": "string"
         },
         "level": {
-          "$ref": "#/$defs/ParsedLevelName"
+          "title": "Level",
+          "type": "string"
         },
         "fingerprint": {
           "anyOf": [

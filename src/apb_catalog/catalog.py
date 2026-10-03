@@ -7,7 +7,7 @@ from dataclasses import replace
 from typing import overload
 
 import polars as pl
-from apb2.result_facade import FinalLayerTable, ParsedLevel, ParsedLevelName, ParsedLevels
+from apb2.api import FinalLayerTable, ParsedLevel, ParsedLevels
 
 from apb_catalog.fingerprint import fingerprint
 from apb_catalog.resolver import (
@@ -48,7 +48,7 @@ class Catalog:
         self._parsed = parsed
         self._name = catalogue
         self._catalogues = packaged_catalogues(catalogue)
-        self._views: dict[ParsedLevelName, ReviewedLevel | UnreviewedLevel] = {
+        self._views: dict[str, ReviewedLevel | UnreviewedLevel] = {
             name: level_view(name, level, self._catalogues) for name, level in parsed.levels.items()
         }
         self._resolutions: list[Resolution] = []
@@ -60,16 +60,16 @@ class Catalog:
 
     @overload
     def layer(
-        self, level: ParsedLevelName, /, *, concept: str, kind: str, **qualifiers: str
+        self, level: str, /, *, concept: str, kind: str, **qualifiers: str
     ) -> FinalLayerTable | None: ...
 
     @overload
     def layer(
-        self, level: ParsedLevelName, /, *, concept: str, kind: None = None, **qualifiers: str
+        self, level: str, /, *, concept: str, kind: None = None, **qualifiers: str
     ) -> tuple[str, ...] | None: ...
 
     def layer(
-        self, level: ParsedLevelName, /, *, concept: str, kind: str | None = None, **qualifiers: str
+        self, level: str, /, *, concept: str, kind: str | None = None, **qualifiers: str
     ) -> FinalLayerTable | tuple[str, ...] | None:
         """Return the sample-by-feature layer with this meaning, or the kinds on offer."""
         if kind is None:
@@ -79,16 +79,16 @@ class Catalog:
 
     @overload
     def var(
-        self, level: ParsedLevelName, /, *, concept: str, kind: str, **qualifiers: str
+        self, level: str, /, *, concept: str, kind: str, **qualifiers: str
     ) -> pl.Series | None: ...
 
     @overload
     def var(
-        self, level: ParsedLevelName, /, *, concept: str, kind: None = None, **qualifiers: str
+        self, level: str, /, *, concept: str, kind: None = None, **qualifiers: str
     ) -> tuple[str, ...] | None: ...
 
     def var(
-        self, level: ParsedLevelName, /, *, concept: str, kind: str | None = None, **qualifiers: str
+        self, level: str, /, *, concept: str, kind: str | None = None, **qualifiers: str
     ) -> pl.Series | tuple[str, ...] | None:
         """Return the per-feature column with this meaning, or the kinds on offer."""
         if kind is None:
@@ -137,7 +137,7 @@ class Catalog:
 
     def _find(
         self,
-        level: ParsedLevelName,
+        level: str,
         location: Location,
         concept: str,
         qualifiers: dict[str, str],
@@ -146,7 +146,7 @@ class Catalog:
 
     def _kinds(
         self,
-        level: ParsedLevelName,
+        level: str,
         location: Location,
         concept: str,
         qualifiers: dict[str, str],
@@ -156,7 +156,7 @@ class Catalog:
 
     def _request(
         self,
-        level: ParsedLevelName,
+        level: str,
         location: Location,
         concept: str,
         qualifiers: dict[str, str],
@@ -185,7 +185,7 @@ def rule_fingerprint(level: ParsedLevel, /) -> str | None:
 
 
 def level_view(
-    name: ParsedLevelName, level: ParsedLevel, catalogues: SourceCatalogues, /
+    name: str, level: ParsedLevel, catalogues: SourceCatalogues, /
 ) -> ReviewedLevel | UnreviewedLevel:
     """Bind one level to its reviewed rule, keeping only entries whose fields it retains."""
     level_fingerprint = rule_fingerprint(level)

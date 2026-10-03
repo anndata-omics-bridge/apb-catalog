@@ -3,7 +3,7 @@
 ## Lookups
 
 ```python
-from apb2.result_facade import read_parsed_levels
+from apb2.api import read_parsed_levels
 from apb_catalog.catalog import Catalog
 
 parsed = read_parsed_levels(path)

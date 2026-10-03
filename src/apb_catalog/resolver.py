@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Annotated, Literal
 
-from apb2.result_facade import ParsedLevelName
 from pydantic import Field, model_validator
 
 from apb_catalog.source import Location, Reference, Review, ReviewedRule, SourceEntry
@@ -23,7 +22,7 @@ class ConceptRequest(FrozenModel):
     """
 
     concept: str
-    level: ParsedLevelName
+    level: str
     location: Location | None = None
     qualifiers: dict[str, tuple[str, ...]] = Field(default_factory=dict)
 
@@ -107,7 +106,7 @@ class ReviewedBinding(FrozenModel):
     """A level whose effective rule matches a reviewed catalogue variant."""
 
     status: Literal["reviewed"] = "reviewed"
-    level: ParsedLevelName
+    level: str
     fingerprint: str
     catalogue_id: str
     catalogue_version: str
@@ -120,7 +119,7 @@ class UnreviewedBinding(FrozenModel):
     """A level no catalogue describes, and why."""
 
     status: Literal["unreviewed"] = "unreviewed"
-    level: ParsedLevelName
+    level: str
     fingerprint: str | None
     reason: str
 
@@ -132,7 +131,7 @@ type LevelBinding = Annotated[ReviewedBinding | UnreviewedBinding, Field(discrim
 class ReviewedLevel:
     """A level with a reviewed rule; ``entries`` are those whose fields the result retains."""
 
-    level: ParsedLevelName
+    level: str
     fingerprint: str
     rule: ReviewedRule
     entries: tuple[SourceEntry, ...]
@@ -201,7 +200,7 @@ class ReviewedLevel:
 class UnreviewedLevel:
     """A level whose meanings cannot be established, so every answer is ``unknown``."""
 
-    level: ParsedLevelName
+    level: str
     fingerprint: str | None
     reason: str
 
@@ -223,7 +222,7 @@ class UnreviewedLevel:
 class AbsentLevel:
     """A requested level the result does not contain."""
 
-    level: ParsedLevelName
+    level: str
 
     def resolve(self, request: ConceptRequest, /) -> Resolution:
         """Report that the level itself is missing."""

@@ -27,7 +27,7 @@ Any APB2 result works: h5ad, h5mu, Parquet or DuckDB. The outputs below come fro
 ```python
 from pathlib import Path
 
-from apb2.result_facade import read_parsed_levels
+from apb2.api import read_parsed_levels
 from apb_catalog.catalog import Catalog
 
 parsed = read_parsed_levels(Path("converted.h5mu"))
@@ -137,7 +137,7 @@ It is raised when the result was converted with an APB2 rule revision nobody rev
 ## Record what was looked up
 
 ```python
-from apb2.result_facade import write_parsed_levels
+from apb2.api import write_parsed_levels
 from apb_catalog.catalog import attach_snapshot, stored_snapshot
 
 write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
