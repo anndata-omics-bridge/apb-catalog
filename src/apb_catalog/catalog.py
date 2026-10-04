@@ -44,7 +44,7 @@ class Catalog:
 
     __slots__ = ("_catalogues", "_name", "_parsed", "_resolutions", "_views")
 
-    def __init__(self, parsed: ParsedLevels, catalogue: str, /) -> None:
+    def __init__(self, parsed: ParsedLevels, catalogue: str) -> None:
         self._parsed = parsed
         self._name = catalogue
         self._catalogues = packaged_catalogues(catalogue)
@@ -60,16 +60,16 @@ class Catalog:
 
     @overload
     def layer(
-        self, level: str, /, *, concept: str, kind: str, **qualifiers: str
+        self, level: str, concept: str, kind: str, **qualifiers: str
     ) -> FinalLayerTable | None: ...
 
     @overload
     def layer(
-        self, level: str, /, *, concept: str, kind: None = None, **qualifiers: str
+        self, level: str, concept: str, kind: None = None, **qualifiers: str
     ) -> tuple[str, ...] | None: ...
 
     def layer(
-        self, level: str, /, *, concept: str, kind: str | None = None, **qualifiers: str
+        self, level: str, concept: str, kind: str | None = None, **qualifiers: str
     ) -> FinalLayerTable | tuple[str, ...] | None:
         """Return the sample-by-feature layer with this meaning, or the kinds on offer."""
         if kind is None:
@@ -78,17 +78,15 @@ class Catalog:
         return None if reference is None else self._parsed.levels[level].layers[reference.name]
 
     @overload
-    def var(
-        self, level: str, /, *, concept: str, kind: str, **qualifiers: str
-    ) -> pl.Series | None: ...
+    def var(self, level: str, concept: str, kind: str, **qualifiers: str) -> pl.Series | None: ...
 
     @overload
     def var(
-        self, level: str, /, *, concept: str, kind: None = None, **qualifiers: str
+        self, level: str, concept: str, kind: None = None, **qualifiers: str
     ) -> tuple[str, ...] | None: ...
 
     def var(
-        self, level: str, /, *, concept: str, kind: str | None = None, **qualifiers: str
+        self, level: str, concept: str, kind: str | None = None, **qualifiers: str
     ) -> pl.Series | tuple[str, ...] | None:
         """Return the per-feature column with this meaning, or the kinds on offer."""
         if kind is None:
@@ -112,7 +110,7 @@ class Catalog:
             ]
         )
 
-    def resolve(self, request: ConceptRequest, /) -> Resolution:
+    def resolve(self, request: ConceptRequest) -> Resolution:
         """Answer one explicit request and record it for the snapshot."""
         resolution = self._answer(request)
         self._resolutions.append(resolution)
@@ -206,7 +204,7 @@ def level_view(
     return ReviewedLevel(name, level_fingerprint, reviewed, entries)
 
 
-def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot, /) -> ParsedLevels:
+def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> ParsedLevels:
     """Return a new result carrying the snapshot beside other catalogues' snapshots.
 
     Scientific data is shared, not copied.
@@ -217,7 +215,7 @@ def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot, /) -> Pa
     return replace(parsed, metadata={**parsed.metadata, METADATA_KEY: snapshots})
 
 
-def stored_snapshot(parsed: ParsedLevels, catalogue: str, /) -> ResolutionSnapshot | None:
+def stored_snapshot(parsed: ParsedLevels, catalogue: str) -> ResolutionSnapshot | None:
     """Return the snapshot one catalogue set left on a result, if any."""
     namespace = parsed.metadata.get(METADATA_KEY)
     stored = namespace.get(catalogue) if isinstance(namespace, dict) else None
@@ -226,7 +224,7 @@ def stored_snapshot(parsed: ParsedLevels, catalogue: str, /) -> ResolutionSnapsh
     return ResolutionSnapshot.model_validate(stored)
 
 
-def stale_levels(parsed: ParsedLevels, snapshot: ResolutionSnapshot, /) -> tuple[str, ...]:
+def stale_levels(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> tuple[str, ...]:
     """Return the snapshot's levels whose current effective rule differs from the recorded one."""
     return tuple(
         binding.level

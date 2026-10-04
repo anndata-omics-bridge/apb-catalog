@@ -44,7 +44,7 @@ class ResolutionSnapshot(FrozenModel):
     entries: tuple[SourceEntry, ...]
     resolutions: tuple[Resolution, ...]
 
-    def resolution(self, request: ConceptRequest, /) -> Resolution:
+    def resolution(self, request: ConceptRequest) -> Resolution:
         """Return the stored answer to one request."""
         for resolution in self.resolutions:
             if resolution.request == request:

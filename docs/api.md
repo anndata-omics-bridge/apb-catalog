@@ -35,8 +35,7 @@ catalog = Catalog(parsed, "identification_confidence")
 ## Snapshots
 
 ```python
-from apb_catalog.api import attach_snapshot
-from apb_catalog.catalog import stale_levels, stored_snapshot
+from apb_catalog.api import attach_snapshot, stale_levels, stored_snapshot
 
 annotated = attach_snapshot(parsed, catalog.snapshot())   # new result; data shared, not copied
 stored_snapshot(annotated, "identification_confidence")                   # read it back

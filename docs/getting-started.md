@@ -138,8 +138,7 @@ It is raised when the result was converted with an APB2 rule revision nobody rev
 
 ```python
 from apb2.api import write_parsed_levels
-from apb_catalog.api import attach_snapshot
-from apb_catalog.catalog import stored_snapshot
+from apb_catalog.api import attach_snapshot, stored_snapshot
 
 write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
 stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_confidence").resolutions
