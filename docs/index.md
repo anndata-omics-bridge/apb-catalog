@@ -3,7 +3,7 @@
 APB Catalog tells a consumer which field of an [APB2](https://github.com/anndata-omics-bridge/apb2) result carries the meaning it needs, so the consumer never names vendor columns such as MaxQuant's `PEP`, Spectronaut's `EG_PEP` or DIA-NN's `Q_Value`.
 
 ```python
-from apb_catalog.catalog import Catalog
+from apb_catalog.api import Catalog
 
 catalog = Catalog(parsed, "identification_confidence")
 catalog.layer("ion", concept="confidence")              # ('pep', 'q_value')

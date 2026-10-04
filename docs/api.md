@@ -4,7 +4,7 @@
 
 ```python
 from apb2.api import read_parsed_levels
-from apb_catalog.catalog import Catalog
+from apb_catalog.api import Catalog
 
 parsed = read_parsed_levels(path)
 catalog = Catalog(parsed, "identification_confidence")
@@ -25,7 +25,7 @@ catalog = Catalog(parsed, "identification_confidence")
 
 ## When there is no single answer
 
-`apb_catalog.resolver.UnresolvedField` is raised, naming the reason and the candidates, when:
+`UnresolvedField` (from `apb_catalog.api`) is raised, naming the reason and the candidates, when:
 
 - two catalogued fields fit equally well, or
 - the level's rule was never reviewed, for example a result converted before an APB2 rule change, or a level produced by another tool
@@ -35,7 +35,8 @@ catalog = Catalog(parsed, "identification_confidence")
 ## Snapshots
 
 ```python
-from apb_catalog.catalog import attach_snapshot, stale_levels, stored_snapshot
+from apb_catalog.api import attach_snapshot
+from apb_catalog.catalog import stale_levels, stored_snapshot
 
 annotated = attach_snapshot(parsed, catalog.snapshot())   # new result; data shared, not copied
 stored_snapshot(annotated, "identification_confidence")                   # read it back
