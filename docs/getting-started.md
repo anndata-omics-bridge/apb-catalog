@@ -28,7 +28,7 @@ Any APB2 result works: h5ad, h5mu, Parquet or DuckDB. The outputs below come fro
 from pathlib import Path
 
 from apb2.api import read_parsed_levels
-from apb_catalog.catalog import Catalog
+from apb_catalog.api import Catalog
 
 parsed = read_parsed_levels(Path("converted.h5mu"))
 confidence = Catalog(parsed, "identification_confidence")
@@ -124,7 +124,7 @@ raw = miape.layer("protein", concept="miape", kind="raw")   # PG_MaxLFQ for DIA-
 ## When there is no single answer
 
 ```python
-from apb_catalog.resolver import UnresolvedField
+from apb_catalog.api import UnresolvedField
 
 try:
     pep = confidence.layer("ion", concept="confidence", kind="pep")
@@ -138,7 +138,8 @@ It is raised when the result was converted with an APB2 rule revision nobody rev
 
 ```python
 from apb2.api import write_parsed_levels
-from apb_catalog.catalog import attach_snapshot, stored_snapshot
+from apb_catalog.api import attach_snapshot
+from apb_catalog.catalog import stored_snapshot
 
 write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
 stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_confidence").resolutions

@@ -7,7 +7,7 @@ Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omic
 ## Use
 
 ```python
-from apb_catalog.catalog import Catalog
+from apb_catalog.api import Catalog
 
 confidence = Catalog(parsed, "identification_confidence")                     # parsed: apb2 ParsedLevels
 confidence.layer("ion", concept="confidence")                 # ('pep', 'q_value') — kinds on offer, or None
