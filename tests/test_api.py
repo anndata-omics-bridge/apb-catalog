@@ -11,4 +11,6 @@ def test_api_exports_exactly_the_approved_names() -> None:
         "ResolutionSnapshot",
         "UnresolvedField",
         "attach_snapshot",
+        "stale_levels",
+        "stored_snapshot",
     ]
