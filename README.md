@@ -1,5 +1,7 @@
 # APB Catalog
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23151456.svg)](https://doi.org/10.5281/zenodo.23151456)
+
 Catalogues of what APB result fields mean, one set per kind of meaning, each stating its purpose and users, so the consumer asks for a meaning instead of vendor columns such as `PEP`, `EG_PEP` or `Q_Value`.
 
 Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/), built from [docs/](https://github.com/anndata-omics-bridge/apb-catalog/tree/main/docs) with `make docs`; start with [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/).
