@@ -103,14 +103,14 @@ class UnresolvedField(LookupError):
 
 
 class ReviewedBinding(FrozenModel):
-    """A level whose effective rule matches a reviewed catalogue variant."""
+    """A level whose rule's software and version match a reviewed catalogue variant."""
 
     status: Literal["reviewed"] = "reviewed"
     level: str
-    fingerprint: str
     catalogue_id: str
     catalogue_version: str
     software_name: str
+    software_version_pattern: str
     rule: str
     review: Review
 
@@ -120,7 +120,8 @@ class UnreviewedBinding(FrozenModel):
 
     status: Literal["unreviewed"] = "unreviewed"
     level: str
-    fingerprint: str | None
+    software_name: str | None
+    software_version_pattern: str | None
     reason: str
 
 
@@ -132,7 +133,6 @@ class ReviewedLevel:
     """A level with a reviewed rule; ``entries`` are those whose fields the result retains."""
 
     level: str
-    fingerprint: str
     rule: ReviewedRule
     entries: tuple[SourceEntry, ...]
 
@@ -141,10 +141,10 @@ class ReviewedLevel:
         catalogue = self.rule.catalogue
         return ReviewedBinding(
             level=self.level,
-            fingerprint=self.fingerprint,
             catalogue_id=catalogue.catalogue_id,
             catalogue_version=catalogue.catalogue_version,
             software_name=catalogue.software_name,
+            software_version_pattern=self.rule.variant.software_version_pattern,
             rule=self.rule.variant.rule,
             review=catalogue.review,
         )
@@ -201,7 +201,8 @@ class UnreviewedLevel:
     """A level whose meanings cannot be established, so every answer is ``unknown``."""
 
     level: str
-    fingerprint: str | None
+    software_name: str | None
+    software_version_pattern: str | None
     reason: str
 
     @property
@@ -211,7 +212,12 @@ class UnreviewedLevel:
 
     def binding(self) -> UnreviewedBinding:
         """Describe why this level has no catalogue."""
-        return UnreviewedBinding(level=self.level, fingerprint=self.fingerprint, reason=self.reason)
+        return UnreviewedBinding(
+            level=self.level,
+            software_name=self.software_name,
+            software_version_pattern=self.software_version_pattern,
+            reason=self.reason,
+        )
 
     def resolve(self, request: ConceptRequest, /) -> Resolution:
         """Report that no reviewed catalogue describes this level."""

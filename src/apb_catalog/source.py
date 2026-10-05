@@ -42,11 +42,11 @@ class SourceEntry(FrozenModel):
 
 
 class RuleVariant(FrozenModel):
-    """One packaged rule level and the effective-rule fingerprints reviewed for it."""
+    """One packaged rule level, bound by the software version pattern its rule declares."""
 
     rule: str
     level: str
-    fingerprints: tuple[str, ...]
+    software_version_pattern: str
 
 
 class Review(FrozenModel):
@@ -93,7 +93,7 @@ class SourceCatalogue(FrozenModel):
 
 @dataclass(frozen=True, slots=True)
 class ReviewedRule:
-    """The catalogue and rule variant an effective-rule fingerprint was reviewed as."""
+    """The catalogue and rule variant one software version's level was reviewed as."""
 
     catalogue: SourceCatalogue
     variant: RuleVariant
@@ -104,9 +104,9 @@ class ReviewedRule:
 
 
 class SourceCatalogues:
-    """Source catalogues checked against one vocabulary and indexed by rule fingerprint."""
+    """Source catalogues checked against one vocabulary and indexed by software and version."""
 
-    __slots__ = ("_by_fingerprint", "description", "vocabulary")
+    __slots__ = ("_by_version", "description", "vocabulary")
 
     def __init__(
         self,
@@ -116,7 +116,7 @@ class SourceCatalogues:
     ) -> None:
         self.vocabulary = vocabulary
         self.description = description
-        self._by_fingerprint: dict[str, ReviewedRule] = {}
+        self._by_version: dict[tuple[str, str, str], ReviewedRule] = {}
         for catalogue in catalogues:
             for entry in catalogue.entries:
                 try:
@@ -124,14 +124,16 @@ class SourceCatalogues:
                 except ValueError as error:
                     raise ValueError(f"{entry.entry_id}: {error}") from error
             for variant in catalogue.variants:
-                for fingerprint in variant.fingerprints:
-                    if fingerprint in self._by_fingerprint:
-                        raise ValueError(f"fingerprint {fingerprint} is reviewed more than once")
-                    self._by_fingerprint[fingerprint] = ReviewedRule(catalogue, variant)
+                key = (catalogue.software_name, variant.software_version_pattern, variant.level)
+                if key in self._by_version:
+                    raise ValueError(f"{' '.join(key)} is reviewed more than once")
+                self._by_version[key] = ReviewedRule(catalogue, variant)
 
-    def reviewed(self, fingerprint: str, /) -> ReviewedRule | None:
-        """Return the reviewed rule for a fingerprint, or ``None`` when it was never reviewed."""
-        return self._by_fingerprint.get(fingerprint)
+    def reviewed(
+        self, software_name: str, software_version_pattern: str, level: str
+    ) -> ReviewedRule | None:
+        """Return the rule reviewed for one software version's level, or ``None`` if none was."""
+        return self._by_version.get((software_name, software_version_pattern, level))
 
 
 class CatalogueDescription(FrozenModel):

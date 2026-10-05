@@ -22,7 +22,7 @@ from apb_catalog.source import (
 )
 from apb_catalog.vocabulary import Qualifier, packaged_vocabulary
 
-VARIANT = RuleVariant(rule="vendor/rules.json", level="ion", fingerprints=("sha256:ion",))
+VARIANT = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^1\\.")
 
 
 def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntry:
@@ -48,7 +48,7 @@ def _level(*entries: SourceEntry) -> ReviewedLevel:
         variants=(VARIANT,),
         entries=entries,
     )
-    return ReviewedLevel("ion", "sha256:ion", ReviewedRule(catalogue, VARIANT), entries)
+    return ReviewedLevel("ion", ReviewedRule(catalogue, VARIANT), entries)
 
 
 def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> ConceptRequest:
@@ -126,9 +126,9 @@ def test_location_restricts_candidates() -> None:
 
 def test_an_unreviewed_level_answers_unknown_with_its_reason() -> None:
     """Without a reviewed rule no meaning can be asserted, not even absence."""
-    answer = UnreviewedLevel("ion", "sha256:x", "never reviewed").resolve(_request())
+    answer = UnreviewedLevel("ion", "Vendor", "^1\\.", "never reviewed").resolve(_request())
     assert (answer.status, answer.reasons) == ("unknown", ("never reviewed",))
-    assert UnreviewedLevel("ion", None, "none").entries == ()
+    assert UnreviewedLevel("ion", None, None, "none").entries == ()
 
 
 def test_an_absent_level_answers_missing() -> None:

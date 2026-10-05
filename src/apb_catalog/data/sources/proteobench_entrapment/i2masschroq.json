@@ -10,9 +10,7 @@
     {
       "rule": "i2masschroq/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:5eac5691cd97e07be8fff25ff39e9b78f645be44577d40579929fd46a844d8dd"
-      ]
+      "software_version_pattern": "^1\\..*"
     }
   ],
   "entries": []

@@ -2,18 +2,11 @@
 
 ## After an APB2 rule change
 
-A changed rule document changes the fingerprint of its effective rules, and the drift test fails with the new fingerprints:
-
-```bash
-make test
-```
+A level binds by the `software_name` and `software_version_pattern` its rule declares, plus the level, so editing a rule within a version keeps its entries.
 
 1. Check that the change leaves the catalogued fields' meaning intact; update or remove entries otherwise
-2. Replace the variant's `fingerprints` in each affected `src/apb_catalog/data/sources/<set>/<vendor>.json` with the ones the test reports
+2. A new rule version, or a changed name or version pattern, needs its own variant in each `src/apb_catalog/data/sources/<set>/<vendor>.json`; the variant test reports any variant that disagrees with its rule
 3. Update the vendor catalogue's `review` date and APB2 revision
-4. Bump the APB2 revision pinned in `.github/workflows/quality.yml`, which the full CI job checks out beside this package
-
-Results converted before the change keep the old fingerprint and raise `UnresolvedField` until they are reconverted.
 
 ## Adding a consumer
 

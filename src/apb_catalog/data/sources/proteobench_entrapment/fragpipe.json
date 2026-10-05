@@ -10,9 +10,7 @@
     {
       "rule": "fragpipe/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:5c4040b0d870d6ba208faa51057b35ea42692933ebab540dffd621a54667ed94"
-      ]
+      "software_version_pattern": "^2[23]\\."
     }
   ],
   "entries": []

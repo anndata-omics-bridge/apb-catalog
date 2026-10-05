@@ -19,12 +19,12 @@ from apb_catalog.source import (
     packaged_descriptions,
 )
 from apb_catalog.vocabulary import packaged_vocabulary
-from tests.packaged_rules import current_fingerprints, effective_rules, retained_sources
+from tests.packaged_rules import declared_software_versions, effective_rules, retained_sources
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
 REVIEW = Review(date="2026-10-01", apb2_revision="test")
-ION = RuleVariant(rule="vendor/rules.json", level="ion", fingerprints=("sha256:ion",))
+ION = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^1\\.")
 
 
 def _catalogues(name: str) -> list[SourceCatalogue]:
@@ -61,7 +61,7 @@ def _catalogue(*entries: SourceEntry, **overrides: object) -> SourceCatalogue:
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_packaged_catalogues_load_against_the_vocabulary(name: str) -> None:
     """Every packaged entry names a declared concept with fully described qualifiers."""
-    assert packaged_catalogues(name).reviewed("sha256:not-reviewed") is None
+    assert packaged_catalogues(name).reviewed("Vendor", "^0\\.", "ion") is None
 
 
 def test_an_unknown_catalogue_set_is_rejected() -> None:
@@ -71,15 +71,18 @@ def test_an_unknown_catalogue_set_is_rejected() -> None:
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_reviewed_fingerprints_match_the_rules_apb2_ships(name: str) -> None:
-    """A changed APB2 rule must be re-reviewed before its fields regain catalogued meaning."""
-    drift = {
-        (variant.rule, variant.level): sorted(current_fingerprints(variant.rule, variant.level))
+def test_variants_name_the_software_and_version_their_rules_declare(name: str) -> None:
+    """Levels bind by software name and version, so each variant states its rule's pair."""
+    wrong = {
+        (variant.rule, variant.level): sorted(
+            declared_software_versions(variant.rule, variant.level)
+        )
         for catalogue in _catalogues(name)
         for variant in catalogue.variants
-        if set(variant.fingerprints) != current_fingerprints(variant.rule, variant.level)
+        if declared_software_versions(variant.rule, variant.level)
+        != {(catalogue.software_name, variant.software_version_pattern)}
     }
-    assert drift == {}, f"re-review these rule variants; current fingerprints: {drift}"
+    assert wrong == {}, f"these variants disagree with their rules: {wrong}"
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
@@ -98,9 +101,22 @@ def test_entries_name_fields_the_rules_retain(name: str) -> None:
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
-    """A new APB2 rule needs a catalogue, even one recording that nothing in it is relevant."""
-    reviewed = {(variant.rule, variant.level) for c in _catalogues(name) for variant in c.variants}
-    assert set(effective_rules()) - reviewed == set()
+    """A new software version needs a catalogue, even one recording that nothing is relevant.
+
+    Levels bind by software name and version, so two rules declaring both, such as MaxQuant's
+    ``maxquant`` and ``maxquant_wide``, share one variant.
+    """
+    reviewed = {
+        (c.software_name, variant.software_version_pattern, variant.level)
+        for c in _catalogues(name)
+        for variant in c.variants
+    }
+    packaged = {
+        (software, version, level)
+        for rule, level in effective_rules()
+        for software, version in declared_software_versions(rule, level)
+    }
+    assert packaged - reviewed == set()
 
 
 def test_an_entry_must_use_a_declared_rule_variant() -> None:
@@ -134,8 +150,8 @@ def test_entry_qualifier_values_must_be_admitted() -> None:
         )
 
 
-def test_a_fingerprint_is_reviewed_by_one_catalogue_only() -> None:
-    """One effective rule cannot be bound to two vendor catalogues of one set."""
+def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
+    """One software version's level cannot be bound to two vendor catalogues of one set."""
     first = _catalogue(_entry("PEP"))
     second = _catalogue(_entry("PEP"), catalogue_id="other")
     with pytest.raises(ValueError, match="reviewed more than once"):

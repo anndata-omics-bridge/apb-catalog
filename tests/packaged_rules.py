@@ -1,4 +1,4 @@
-"""The effective rules APB2 currently packages, for drift checks and result fixtures."""
+"""The effective rules APB2 currently packages, for consistency checks and result fixtures."""
 
 from __future__ import annotations
 
@@ -7,8 +7,6 @@ from functools import cache
 from typing import cast
 
 from apb2.api import JsonValue, packaged_rule_declarations
-
-from apb_catalog.fingerprint import fingerprint
 
 
 @cache
@@ -25,9 +23,12 @@ def effective_rules() -> dict[tuple[str, str], tuple[dict[str, JsonValue], ...]]
     }
 
 
-def current_fingerprints(rule: str, level: str) -> set[str]:
-    """Return the fingerprints APB2 would store today for one packaged rule level."""
-    return {fingerprint(payload) for payload in effective_rules()[(rule, level)]}
+def declared_software_versions(rule: str, level: str) -> set[tuple[str, str]]:
+    """Return the software name and version pattern one packaged rule level declares."""
+    return {
+        (str(payload["software_name"]), str(payload["software_version_pattern"]))
+        for payload in effective_rules()[(rule, level)]
+    }
 
 
 def declared_rule_json(rule: str, level: str) -> str:

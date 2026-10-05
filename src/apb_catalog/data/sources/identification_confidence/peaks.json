@@ -10,9 +10,7 @@
     {
       "rule": "peaks/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:cca785144eb3de977062d41cfb64569f48425152da800e1e2f089d2b333d6e05"
-      ]
+      "software_version_pattern": "^13(?:\\.|\\s|$)"
     }
   ],
   "entries": []

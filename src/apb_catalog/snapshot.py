@@ -14,7 +14,7 @@ from apb_catalog.source import CatalogueDescription, SourceEntry
 from apb_catalog.vocabulary import Concept, FrozenModel
 
 CONTRACT = "apb-catalog-resolution"
-CONTRACT_VERSION = "0.2"
+CONTRACT_VERSION = "0.3"
 SCHEMA_FILE = f"{CONTRACT}-{CONTRACT_VERSION}.schema.json"
 
 
@@ -34,7 +34,7 @@ class ResolutionSnapshot(FrozenModel):
     """Level bindings, the retained entries they supply, and the answers to consumer requests."""
 
     contract: Literal["apb-catalog-resolution"] = CONTRACT
-    contract_version: Literal["0.2"] = CONTRACT_VERSION
+    contract_version: Literal["0.3"] = CONTRACT_VERSION
     producer: Producer
     catalogue: str
     description: CatalogueDescription

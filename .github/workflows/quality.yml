@@ -66,12 +66,10 @@ jobs:
         with:
           path: apb-catalog
 
-      # Catalogue fingerprints are reviewed against this APB2 revision; bump it with a re-review.
-      - name: Check out reviewed APB2
+      - name: Check out APB2
         uses: actions/checkout@v6
         with:
           repository: anndata-omics-bridge/apb2
-          ref: e17bdd26aff10850d6ca418bc7a1d16e28ff4924
           path: apb2
 
       - name: Set up Python

@@ -10,9 +10,7 @@
     {
       "rule": "alphapept/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:4542c589a27590b8d9c06405964ef9dc7cf7a0e306bbed5be629021a7fc8e350"
-      ]
+      "software_version_pattern": "^0\\.5\\."
     }
   ],
   "entries": []

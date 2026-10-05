@@ -10,59 +10,42 @@
     {
       "rule": "diann/v1_7/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:de9ad34971d85ab2652e029e290035d6c8d71665ed63858221f7c435af09f5f2"
-      ]
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
     },
     {
       "rule": "diann/v1_7/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:597ea770ee9e9193a0a269c9ba8a07cdbf2c0dbe8ac3715299daaa47248d582c"
-      ]
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
     },
     {
       "rule": "diann/v1_7/rules.json",
       "level": "fragment",
-      "fingerprints": [
-        "sha256:6f6434f641434b796436c77f673732e6f20d14a3ed315e42da752b7f1f9565f9"
-      ]
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
     },
     {
       "rule": "diann/v1_8/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:13b514acd3459d2990b0efbb61f984c2fe14dca98a12ac5d0d5fb8ef0d69102a"
-      ]
+      "software_version_pattern": "^1\\.[89](\\.|$)"
     },
     {
       "rule": "diann/v1_8/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:9fc3be27e5342d9588021aca1f124180bbf4e7c46164150bee02b8ecd28ff52c"
-      ]
+      "software_version_pattern": "^1\\.[89](\\.|$)"
     },
     {
       "rule": "diann/v1_8/rules.json",
       "level": "fragment",
-      "fingerprints": [
-        "sha256:9862ee305836982a097e4261d65489fcd00268662a58e18487bbdccc26dfb66e"
-      ]
+      "software_version_pattern": "^1\\.[89](\\.|$)"
     },
     {
       "rule": "diann/v2/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:b72e5d2eb7249175683548bb27cbd63caaf8a1262e8a4df9bbb70f1867e885f0",
-        "sha256:5394611fd8cc6d1faf0971bb9d22ffdba9f938faca169aac809c2edbb194e904"
-      ]
+      "software_version_pattern": "^2\\..*"
     },
     {
       "rule": "diann/v2/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:09e55c17a55ecc72a5bf0a0dd8e0cdb4c6938417f4bef57363f39fc63d207432"
-      ]
+      "software_version_pattern": "^2\\..*"
     }
   ],
   "entries": [

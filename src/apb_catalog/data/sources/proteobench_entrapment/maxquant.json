@@ -3,37 +3,29 @@
   "catalogue_version": "0.1",
   "software_name": "MaxQuant",
   "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
+    "date": "2026-10-05",
+    "apb2_revision": "5fb76cb"
   },
   "variants": [
     {
-      "rule": "maxquant/rules.json",
+      "rule": "maxquant_wide/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:a0ade8629dadaf8d1adb6f57dff72212fcbdc5835181990231cac1b0470753fa"
-      ]
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
     },
     {
-      "rule": "maxquant/rules.json",
+      "rule": "maxquant_wide/rules.json",
       "level": "peptidoform",
-      "fingerprints": [
-        "sha256:f5b75368366fb327018496db33b862b0858fce2f9eae161034c0fdcc9f17d467"
-      ]
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
     },
     {
-      "rule": "maxquant/rules.json",
+      "rule": "maxquant_wide/rules.json",
       "level": "peptide",
-      "fingerprints": [
-        "sha256:ddcd24b41a189e7c0129d33dbacce15009c42ebfe9b8cdef329f5cd4f4c897d1"
-      ]
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
     },
     {
-      "rule": "maxquant/rules.json",
+      "rule": "maxquant_wide/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:d7ad874f34899b2636ed16a6da1af7efb29960053cfc12fc9ff3ed87d511d38f"
-      ]
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
     }
   ],
   "entries": []

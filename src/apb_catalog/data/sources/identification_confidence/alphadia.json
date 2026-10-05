@@ -10,30 +10,22 @@
     {
       "rule": "alphadia/v1_10/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:aa4f649bb2ce5822815d230d35b674872f018166295e83ae4e1c1659d9e98642"
-      ]
+      "software_version_pattern": "^1\\.10(?:\\.|-|$)"
     },
     {
       "rule": "alphadia/v1_12/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:f373c99e02e6970085114c309ac578552c8e7fd78d5eeca9fd57bca11a01f473"
-      ]
+      "software_version_pattern": "^1\\.12(?:\\.|-|$)"
     },
     {
       "rule": "alphadia/v2/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:cc1a3d4966bc3acc4b51edc57d272e7bde3f02510b1391ed2e0d8b0a200c54a9"
-      ]
+      "software_version_pattern": "^2\\."
     },
     {
       "rule": "alphadia/v2/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:f079c3bec3ba20e32dcc020e1bd6dd36ffd2a37b7a481792587de41b9f04e64d"
-      ]
+      "software_version_pattern": "^2\\."
     }
   ],
   "entries": [
