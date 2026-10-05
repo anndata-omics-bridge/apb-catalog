@@ -2,7 +2,13 @@
 
 Catalogues of what APB result fields mean, one set per kind of meaning, each stating its purpose and users, so the consumer asks for a meaning instead of vendor columns such as `PEP`, `EG_PEP` or `Q_Value`.
 
-Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/), built from [docs/](docs/) with `make docs`; start with [Get started](docs/getting-started.md).
+Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/), built from [docs/](https://github.com/anndata-omics-bridge/apb-catalog/tree/main/docs) with `make docs`; start with [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/).
+
+## Installation
+
+```bash
+pip install apb-catalog
+```
 
 ## Use
 
@@ -18,7 +24,7 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 genes = miape.var("protein", concept="miape", kind="gene_name")  # the column MIAPE-AnnData calls gene_name
 ```
 
-- [Every entry](docs/catalogues.md) of both sets
+- [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of both sets
 - `layer` returns the apb2 layer table, `var` the column; `None` means the vendor has no such field
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Confidence lookups mean identification unless `stage="quantification"` says otherwise
@@ -36,7 +42,7 @@ genes = miape.var("protein", concept="miape", kind="gene_name")  # the column MI
 
 ## Snapshot contract
 
-`attach_snapshot` stores `apb-catalog-resolution` 0.2 as JSON at `ParsedLevels.metadata["catalog"][<catalogue>]`; APB2 persists it in every format, including AnnData `uns` from HDF5 result format 5. It embeds the set's description, concept definitions, level bindings, retained entries and every answer, so readers need neither this package nor its catalogues. The [JSON Schema](src/apb_catalog/data/apb-catalog-resolution-0.2.schema.json) is published with the package; `make schema` regenerates it.
+`attach_snapshot` stores `apb-catalog-resolution` 0.2 as JSON at `ParsedLevels.metadata["catalog"][<catalogue>]`; APB2 persists it in every format, including AnnData `uns` from HDF5 result format 5. It embeds the set's description, concept definitions, level bindings, retained entries and every answer, so readers need neither this package nor its catalogues. The [JSON Schema](https://github.com/anndata-omics-bridge/apb-catalog/blob/main/src/apb_catalog/data/apb-catalog-resolution-0.2.schema.json) is published with the package; `make schema` regenerates it.
 
 ## Development
 

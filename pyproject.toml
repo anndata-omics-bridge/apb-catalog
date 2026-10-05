@@ -13,11 +13,25 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Witold Wolski", email = "wew@fgcz.ethz.ch" },
 ]
+keywords = ["proteomics", "anndata", "metadata", "catalogue", "mass spectrometry"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Typing :: Typed",
+]
 dependencies = [
-    "apb2",
+    "apb2>=0.1,<0.2",
     "polars>=1.43,<2",
     "pydantic>=2.10",
 ]
+
+[project.urls]
+Documentation = "https://anndata-omics-bridge.github.io/apb-catalog/"
+Repository = "https://github.com/anndata-omics-bridge/apb-catalog"
 
 [tool.uv.sources]
 apb2 = { path = "../apb2", editable = true }
