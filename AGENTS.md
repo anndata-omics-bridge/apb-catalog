@@ -6,7 +6,7 @@ The closest `AGENTS.md` wins. Explicit user instructions override this file.
 
 | Task | Command |
 | --- | --- |
-| Synchronize | `uv sync --frozen --group dev` |
+| Synchronize | `uv sync --group dev` |
 | Format | `.venv/bin/ruff format src tests && .venv/bin/ruff check --fix src tests` |
 | Lint | `.venv/bin/ruff check src tests` |
 | Typecheck | `.venv/bin/pyright` |
@@ -34,7 +34,7 @@ The closest `AGENTS.md` wins. Explicit user instructions override this file.
 - Declare every imported runtime dependency directly in `[project.dependencies]`.
 - Put tests, linting, typing, building, and documentation tools in dependency
   groups; optional user-facing capabilities belong in extras.
-- Update `pyproject.toml` and `uv.lock` together and run `make check`.
+- Update `pyproject.toml` and run `make check`; the repository commits no `uv.lock`.
 
 ### SHOULD
 

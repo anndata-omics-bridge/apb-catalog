@@ -11,7 +11,7 @@ git clone https://github.com/anndata-omics-bridge/apb2.git
 git -C apb2 checkout 8651e1fff4772e7c1c1fbb4efe754980799c342d
 git clone https://github.com/anndata-omics-bridge/apb-catalog.git
 cd apb-catalog
-uv sync --frozen
+uv sync
 ```
 
 ```text

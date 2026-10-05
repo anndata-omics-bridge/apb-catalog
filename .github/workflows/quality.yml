@@ -20,12 +20,13 @@ jobs:
         with:
           version: "0.9.8"
           enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Install Python
         run: uv python install 3.13
 
       - name: Synchronize documentation environment
-        run: uv sync --frozen --only-group docs
+        run: uv sync --only-group docs
 
       - name: Build documentation
         run: uv run --no-sync zensical build --clean --strict
@@ -46,9 +47,10 @@ jobs:
         with:
           version: "0.9.8"
           enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Synchronize standalone quality environment
-        run: uv sync --frozen --only-group dev
+        run: uv sync --only-group dev
 
       - name: Run standalone quality gates
         run: make format-check lint deps build
@@ -82,9 +84,10 @@ jobs:
         with:
           version: "0.9.8"
           enable-cache: true
+          cache-dependency-glob: "**/pyproject.toml"
 
       - name: Synchronize complete environment
-        run: uv sync --frozen --group dev --group docs
+        run: uv sync --group dev --group docs
 
       - name: Run complete quality gate
         run: make check

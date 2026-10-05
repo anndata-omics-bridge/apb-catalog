@@ -8,7 +8,7 @@ help:  ## Show developer commands
 		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
 sync:  ## Synchronize the locked development environment
-	uv sync --frozen --group dev
+	uv sync --group dev
 
 format:  ## Format and autofix source and tests
 	$(VENV_BIN)/ruff format src tests
@@ -37,10 +37,9 @@ build:  ## Build and validate source and wheel distributions
 	$(VENV_BIN)/twine check dist/*
 
 docs:  ## Build user documentation with strict warnings
-	uv run --frozen --group docs zensical build --clean --strict
+	uv run --group docs zensical build --clean --strict
 
 check:  ## Run every merge-blocking quality gate
-	uv lock --check
 	$(MAKE) format-check lint typecheck deps test build docs
 
 clean:  ## Remove generated build and quality artifacts
