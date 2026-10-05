@@ -10,16 +10,12 @@
     {
       "rule": "sage/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:edc46abc33bb10c2fab76e58d735be54705cb39a46313bbe96402c51c6d85f75"
-      ]
+      "software_version_pattern": "^0\\."
     },
     {
       "rule": "sage/rules.json",
       "level": "peptidoform",
-      "fingerprints": [
-        "sha256:131dbc6076174724f53f570f3f38d29f78ec7a1d084d2802aedbf62931956add"
-      ]
+      "software_version_pattern": "^0\\."
     }
   ],
   "entries": []

@@ -22,7 +22,7 @@ A catalogue annotates only what one consumer needs, never every vendor column.
 | `miape` | MIAPE-AnnData export (draft) | Protein, peptide and peptidoform fields and the `raw` layer of the MIAPE-AnnData 0.4.0 draft |
 | `proteobench_entrapment` | apb-proteobench entrapment scoring | Run, library and experiment-wide precursor q-values, each its own kind |
 
-Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a rule nobody reviewed raises. See [Catalogues](catalogues.md) for every entry.
+Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry.
 
 ## Catalogue or column role?
 
@@ -36,7 +36,7 @@ Rule of thumb:
 
 ## How it stays correct
 
-- An entry holds only for the APB2 rule revisions it was reviewed against, identified by the SHA-256 of the effective rule stored in each level's `rule_json`
+- An entry holds for the software versions it was reviewed against: the `software_name` and `software_version_pattern` each level's stored `rule_json` declares
 - Tests fail when an APB2 rule changes or a new rule appears, until a reviewer updates the catalogue
 - Lookups never transform values; the consumer reads the layer or column it is handed
 - A snapshot of every lookup can be stored in the result, readable without this package

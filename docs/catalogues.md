@@ -4,7 +4,7 @@ A catalogue set annotates fields of one kind of meaning, for every rule APB2 pac
 
 ## `identification_confidence`
 
-How likely each identification, or the signal quantified for it, is correct; used by apb-aggregate for confidence-weighted rollups: per-run PEP and q-value layers, per-feature PEP, and Sage's MS1-peak q-value (stage `quantification`). Scores, protein-level confidence and vendor summaries are deliberately left out.
+How likely each identification, or the signal quantified for it, is correct; used by apb-aggregate for confidence-weighted rollups and by apb-export's prolfqua target: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value (stage `quantification`), and DIA-NN's and Spectronaut's protein-group q-values. Scores, vendor summaries and other vendors' protein-level confidence are deliberately left out.
 
 Concept `confidence`, kinds:
 
@@ -18,21 +18,27 @@ Concept `confidence`, kinds:
 | AlphaPept | alphapept | ion | layers | `Q_Value` | `q_value` |
 | DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Q_Value` | `q_value` |
 | DIA-NN | diann/v1_8, diann/v2 | ion | layers | `PEP` | `pep` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | layers | `PG_Q_Value` | `q_value` |
+| DIA-NN | diann/v1_8, diann/v2 | protein | layers | `Lib_PG_Q_Value` | `library_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | layers | `Global_PG_Q_Value` | `global_q_value` |
 | FragPipe | all | — | — | none relevant | — |
 | i2MassChroQ | all | — | — | none relevant | — |
-| MaxQuant | maxquant | ion | layers | `PEP` | `pep` |
-| MaxQuant | maxquant | peptidoform | var | `PEP` | `pep` |
-| MaxQuant | maxquant | peptide | var | `PEP` | `pep` |
-| MS-Angel | all | — | — | none relevant | — |
-| ProteoBench custom | all | — | — | none relevant | — |
+| MaxQuant | maxquant_wide | ion | layers | `PEP` | `pep` |
+| MaxQuant | maxquant_wide | peptidoform | var | `PEP` | `pep` |
+| MaxQuant | maxquant_wide | peptide | var | `PEP` | `pep` |
+| MSAngel | all | — | — | none relevant | — |
+| pb_custom | all | — | — | none relevant | — |
 | PEAKS | all | — | — | none relevant | — |
-| Proline Studio | all | — | — | none relevant | — |
+| ProlineStudio | all | — | — | none relevant | — |
 | quantms | all | — | — | none relevant | — |
 | Sage | sage | ion | var | `Q_Value` | `q_value` (quantification) |
 | Sage | sage | peptidoform | var | `Q_Value` | `q_value` (quantification) |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_PEP` | `pep` |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
-| WOMBAT-P | all | — | — | none relevant | — |
+| Spectronaut | spectronaut, spectronaut/v21 | protein | layers | `PG_QValue_Run_Wise` | `q_value` |
+| Spectronaut | spectronaut, spectronaut/v21 | protein | var | `PG_Qvalue` | `global_q_value` |
+| Spectronaut | spectronaut/v21 | protein | layers | `PG_LibraryQvalue` | `library_q_value` |
+| WOMBAT | all | — | — | none relevant | — |
 
 ## `proteobench_entrapment`
 
@@ -84,24 +90,24 @@ Concept `miape`, kinds and their requirement level:
 | DIA-NN | diann/v1_8, diann/v2 | protein | layers | `PG_MaxLFQ` | `raw` |
 | FragPipe | all | — | — | none relevant | — |
 | i2MassChroQ | all | — | — | none relevant | — |
-| MaxQuant | maxquant | protein | var | `Protein_IDs` | `protein_group` |
-| MaxQuant | maxquant | protein | var | `Gene_Names` | `gene_name` |
-| MaxQuant | maxquant | protein | var | `Protein_Names` | `protein_description` |
-| MaxQuant | maxquant | protein | var | `Razor_Unique_Peptides` | `n_peptides_used` |
-| MaxQuant | maxquant | protein | var | `Potential_Contaminant` | `is_contaminant` |
-| MaxQuant | maxquant | protein | layers | `Intensity` | `raw` |
-| MaxQuant | maxquant | peptide | var | `ProForma_peptide` | `sequence` |
-| MaxQuant | maxquant | peptide | var | `Leading_Razor_Protein` | `protein_group` |
-| MaxQuant | maxquant | peptide | var | `Unique_Groups` | `is_unique` |
-| MaxQuant | maxquant | peptide | layers | `Intensity` | `raw` |
-| MaxQuant | maxquant | peptidoform | var | `ProForma_peptide` | `sequence` |
-| MaxQuant | maxquant | peptidoform | var | `Proteins` | `protein_group` |
-| MaxQuant | maxquant | peptidoform | var | `Unique_Groups` | `is_unique` |
-| MaxQuant | maxquant | peptidoform | layers | `Intensity` | `raw` |
-| MS-Angel | all | — | — | none relevant | — |
-| ProteoBench custom | all | — | — | none relevant | — |
+| MaxQuant | maxquant_wide | protein | var | `Protein_IDs` | `protein_group` |
+| MaxQuant | maxquant_wide | protein | var | `Gene_Names` | `gene_name` |
+| MaxQuant | maxquant_wide | protein | var | `Protein_Names` | `protein_description` |
+| MaxQuant | maxquant_wide | protein | var | `Razor_Unique_Peptides` | `n_peptides_used` |
+| MaxQuant | maxquant_wide | protein | var | `Potential_Contaminant` | `is_contaminant` |
+| MaxQuant | maxquant_wide | protein | layers | `Intensity` | `raw` |
+| MaxQuant | maxquant_wide | peptide | var | `ProForma_peptide` | `sequence` |
+| MaxQuant | maxquant_wide | peptide | var | `Leading_Razor_Protein` | `protein_group` |
+| MaxQuant | maxquant_wide | peptide | var | `Unique_Groups` | `is_unique` |
+| MaxQuant | maxquant_wide | peptide | layers | `Intensity` | `raw` |
+| MaxQuant | maxquant_wide | peptidoform | var | `ProForma_peptide` | `sequence` |
+| MaxQuant | maxquant_wide | peptidoform | var | `Proteins` | `protein_group` |
+| MaxQuant | maxquant_wide | peptidoform | var | `Unique_Groups` | `is_unique` |
+| MaxQuant | maxquant_wide | peptidoform | layers | `Intensity` | `raw` |
+| MSAngel | all | — | — | none relevant | — |
+| pb_custom | all | — | — | none relevant | — |
 | PEAKS | all | — | — | none relevant | — |
-| Proline Studio | all | — | — | none relevant | — |
+| ProlineStudio | all | — | — | none relevant | — |
 | quantms | all | — | — | none relevant | — |
 | Sage | sage | peptidoform | var | `ProForma_peptidoform` | `peptidoform` |
 | Sage | sage | peptidoform | var | `ProForma_peptide` | `sequence` |
@@ -111,7 +117,7 @@ Concept `miape`, kinds and their requirement level:
 | Spectronaut | spectronaut/v15 | protein | var | `PG_Genes` | `gene_name` |
 | Spectronaut | spectronaut/v15 | protein | var | `PG_Organisms` | `organism` |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | protein | layers | `PG_Quantity` | `raw` |
-| WOMBAT-P | wombat | peptidoform | var | `ProForma_peptidoform` | `peptidoform` |
-| WOMBAT-P | wombat | peptidoform | var | `ProForma_peptide` | `sequence` |
-| WOMBAT-P | wombat | peptidoform | var | `protein_group` | `protein_group` |
-| WOMBAT-P | wombat | peptidoform | layers | `Abundance` | `raw` |
+| WOMBAT | wombat | peptidoform | var | `ProForma_peptidoform` | `peptidoform` |
+| WOMBAT | wombat | peptidoform | var | `ProForma_peptide` | `sequence` |
+| WOMBAT | wombat | peptidoform | var | `protein_group` | `protein_group` |
+| WOMBAT | wombat | peptidoform | layers | `Abundance` | `raw` |

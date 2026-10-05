@@ -28,9 +28,9 @@ catalog = Catalog(parsed, "identification_confidence")
 `UnresolvedField` (from `apb_catalog.api`) is raised, naming the reason and the candidates, when:
 
 - two catalogued fields fit equally well, or
-- the level's rule was never reviewed, for example a result converted before an APB2 rule change, or a level produced by another tool
+- no catalogue variant names the level's software version, for example a new rule version, or a level produced by another tool
 
-`None` always means the rule was reviewed and the field is not there.
+`None` always means the software version was reviewed and the field is not there.
 
 ## Snapshots
 
@@ -42,4 +42,4 @@ stored_snapshot(annotated, "identification_confidence")                   # read
 stale_levels(annotated, catalog.snapshot())               # levels whose rule changed since
 ```
 
-The snapshot is stored as JSON at `metadata["catalog"][<set>]`, beside other sets' snapshots, and persists in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.2.schema.json`.
+The snapshot is stored as JSON at `metadata["catalog"][<set>]`, beside other sets' snapshots, and persists in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.3.schema.json`.

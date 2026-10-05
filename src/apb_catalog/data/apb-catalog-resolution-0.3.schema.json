@@ -316,7 +316,7 @@
     },
     "ReviewedBinding": {
       "additionalProperties": false,
-      "description": "A level whose effective rule matches a reviewed catalogue variant.",
+      "description": "A level whose rule's software and version match a reviewed catalogue variant.",
       "properties": {
         "status": {
           "const": "reviewed",
@@ -326,10 +326,6 @@
         },
         "level": {
           "title": "Level",
-          "type": "string"
-        },
-        "fingerprint": {
-          "title": "Fingerprint",
           "type": "string"
         },
         "catalogue_id": {
@@ -344,6 +340,10 @@
           "title": "Software Name",
           "type": "string"
         },
+        "software_version_pattern": {
+          "title": "Software Version Pattern",
+          "type": "string"
+        },
         "rule": {
           "title": "Rule",
           "type": "string"
@@ -354,10 +354,10 @@
       },
       "required": [
         "level",
-        "fingerprint",
         "catalogue_id",
         "catalogue_version",
         "software_name",
+        "software_version_pattern",
         "rule",
         "review"
       ],
@@ -422,7 +422,7 @@
           "title": "Level",
           "type": "string"
         },
-        "fingerprint": {
+        "software_name": {
           "anyOf": [
             {
               "type": "string"
@@ -431,7 +431,18 @@
               "type": "null"
             }
           ],
-          "title": "Fingerprint"
+          "title": "Software Name"
+        },
+        "software_version_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Version Pattern"
         },
         "reason": {
           "title": "Reason",
@@ -440,7 +451,8 @@
       },
       "required": [
         "level",
-        "fingerprint",
+        "software_name",
+        "software_version_pattern",
         "reason"
       ],
       "title": "UnreviewedBinding",
@@ -457,8 +469,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.2",
-      "default": "0.2",
+      "const": "0.3",
+      "default": "0.3",
       "title": "Contract Version",
       "type": "string"
     },

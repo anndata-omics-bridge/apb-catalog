@@ -1,7 +1,7 @@
 {
   "catalogue_id": "wombat",
   "catalogue_version": "0.1-draft",
-  "software_name": "WOMBAT-P",
+  "software_name": "WOMBAT",
   "review": {
     "date": "2026-10-02",
     "apb2_revision": "8651e1f"
@@ -10,16 +10,12 @@
     {
       "rule": "wombat/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:f829ec6f123fa46af91586f941f7978e63aed59b5858dcb331b06e7dad0f6ca9"
-      ]
+      "software_version_pattern": "^0\\.9\\.11$"
     },
     {
       "rule": "wombat/rules.json",
       "level": "peptidoform",
-      "fingerprints": [
-        "sha256:9e47d4437586da785ce4e17fa3ab0c50fff80420aab731436134337393b551be"
-      ]
+      "software_version_pattern": "^0\\.9\\.11$"
     }
   ],
   "entries": [

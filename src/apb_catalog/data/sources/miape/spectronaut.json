@@ -10,65 +10,47 @@
     {
       "rule": "spectronaut/v15/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:b5884d5c8531c3ea2876425dba3dae8de28f1e340a68295c020bd8a840e4c531"
-      ]
+      "software_version_pattern": "^15\\..*"
     },
     {
       "rule": "spectronaut/v15/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:8af8ec781257f1e6e0d7ad0c5a8afd6ba2cdc22e1c1012101982eed2286d5db2"
-      ]
+      "software_version_pattern": "^15\\..*"
     },
     {
       "rule": "spectronaut/v15/rules.json",
       "level": "fragment",
-      "fingerprints": [
-        "sha256:544dc6e49e187eb3061165afb8059ba48fc9bec9847f95730d574b330005f0ef"
-      ]
+      "software_version_pattern": "^15\\..*"
     },
     {
       "rule": "spectronaut/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:3b25d61b7cbd88b875bf862d0f143edf8f040a2efbd923a1b4734fcd5a67c391"
-      ]
+      "software_version_pattern": "^(19|20)\\..*"
     },
     {
       "rule": "spectronaut/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:1e71d0cfac1cc23beb13802639712dfd0e149fedbda6aa99c0f104c9bb1e864c"
-      ]
+      "software_version_pattern": "^(19|20)\\..*"
     },
     {
       "rule": "spectronaut/rules.json",
       "level": "fragment",
-      "fingerprints": [
-        "sha256:268699ca945464e433e983f589ccc33e2ebd65697f41f61be0002c0da4f4a1fc"
-      ]
+      "software_version_pattern": "^(19|20)\\..*"
     },
     {
       "rule": "spectronaut/v21/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:935d8f4a05a4b8bbd9656971615edb324cc06530fca2d9c17236b44d336185d0"
-      ]
+      "software_version_pattern": "^21\\..*"
     },
     {
       "rule": "spectronaut/v21/rules.json",
       "level": "protein",
-      "fingerprints": [
-        "sha256:47a632e96575f6ba02ddcf3c1145b7ec411ee8780751d1fac8cba6dc30a0ab34"
-      ]
+      "software_version_pattern": "^21\\..*"
     },
     {
       "rule": "spectronaut/v21/rules.json",
       "level": "fragment",
-      "fingerprints": [
-        "sha256:246773e9949a3226dbae5651bdaacde15ca483fae978e974639a037bff186b6f"
-      ]
+      "software_version_pattern": "^21\\..*"
     }
   ],
   "entries": [

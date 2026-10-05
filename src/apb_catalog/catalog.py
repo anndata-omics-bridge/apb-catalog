@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
-from typing import overload
+from typing import cast, overload
 
 import polars as pl
 from apb2.api import FinalLayerTable, ParsedLevel, ParsedLevels
 
-from apb_catalog.fingerprint import fingerprint
 from apb_catalog.resolver import (
     AbsentLevel,
     ConceptRequest,
@@ -174,25 +173,37 @@ class Catalog:
         return self._views.get(request.level, AbsentLevel(request.level)).resolve(request)
 
 
-def rule_fingerprint(level: ParsedLevel, /) -> str | None:
-    """Return the fingerprint of a level's stored effective rule, if it records one."""
+def rule_version(level: ParsedLevel) -> tuple[str, str, str] | None:
+    """Return the software name, version pattern and level a level's stored rule declares."""
     rule_json = level.uns.get("rule_json")
     if not isinstance(rule_json, str):
         return None
-    return fingerprint(json.loads(rule_json))
+    rule = cast(dict[str, object], json.loads(rule_json))
+    software, version, rule_level = (
+        rule.get(key)
+        for key in ("software_name", "software_version_pattern", "quantification_level")
+    )
+    if isinstance(software, str) and isinstance(version, str) and isinstance(rule_level, str):
+        return software, version, rule_level
+    return None
 
 
 def level_view(
     name: str, level: ParsedLevel, catalogues: SourceCatalogues, /
 ) -> ReviewedLevel | UnreviewedLevel:
-    """Bind one level to its reviewed rule, keeping only entries whose fields it retains."""
-    level_fingerprint = rule_fingerprint(level)
-    if level_fingerprint is None:
-        return UnreviewedLevel(name, None, "the level records no rule_json provenance")
-    reviewed = catalogues.reviewed(level_fingerprint)
+    """Bind one level to the rule reviewed for its software and version, keeping only entries
+    whose fields it retains."""
+    version = rule_version(level)
+    if version is None:
+        return UnreviewedLevel(name, None, None, "the level records no rule_json software version")
+    software, pattern, rule_level = version
+    reviewed = catalogues.reviewed(software, pattern, rule_level)
     if reviewed is None:
         return UnreviewedLevel(
-            name, level_fingerprint, "no source catalogue reviewed this effective rule"
+            name,
+            software,
+            pattern,
+            f"no source catalogue reviewed {software} {pattern} {rule_level}",
         )
     retained = {("layers", layer) for layer in level.layers}
     retained |= {("var", column) for column in level.var.frame.columns}
@@ -201,7 +212,7 @@ def level_view(
         for entry in reviewed.entries()
         if (entry.reference.location, entry.reference.name) in retained
     )
-    return ReviewedLevel(name, level_fingerprint, reviewed, entries)
+    return ReviewedLevel(name, reviewed, entries)
 
 
 def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> ParsedLevels:
@@ -225,10 +236,16 @@ def stored_snapshot(parsed: ParsedLevels, catalogue: str) -> ResolutionSnapshot 
 
 
 def stale_levels(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> tuple[str, ...]:
-    """Return the snapshot's levels whose current effective rule differs from the recorded one."""
+    """Return the snapshot's levels whose current software or version differs from the recorded."""
     return tuple(
         binding.level
         for binding in snapshot.levels
         if binding.level not in parsed.levels
-        or rule_fingerprint(parsed.levels[binding.level]) != binding.fingerprint
+        or _software_version(parsed.levels[binding.level])
+        != (binding.software_name, binding.software_version_pattern)
     )
+
+
+def _software_version(level: ParsedLevel) -> tuple[str | None, str | None]:
+    version = rule_version(level)
+    return (None, None) if version is None else (version[0], version[1])

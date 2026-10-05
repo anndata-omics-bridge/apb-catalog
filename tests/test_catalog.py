@@ -67,15 +67,15 @@ def _result(
     return ParsedLevels(levels={level: _level(level, rule_json, layers, var or {})}, uns={})
 
 
-def _edited_maxquant() -> ParsedLevels:
-    edited = json.loads(declared_rule_json("maxquant/rules.json", "ion"))
-    edited["file_version"] = -1
+def _edited_maxquant(**changes: object) -> ParsedLevels:
+    edited = json.loads(declared_rule_json("maxquant_wide/rules.json", "ion"))
+    edited.update(changes)
     return ParsedLevels(
-        levels={"ion": _level("ion", json.dumps(edited), ["Intensity"], {})}, uns={}
+        levels={"ion": _level("ion", json.dumps(edited), ["Intensity", "PEP"], {})}, uns={}
     )
 
 
-MAXQUANT = ("maxquant/rules.json", ["Intensity", "PEP", "Score"])
+MAXQUANT = ("maxquant_wide/rules.json", ["Intensity", "PEP", "Score"])
 SPECTRONAUT = ("spectronaut/rules.json", ["FG_Quantity", "EG_PEP", "EG_Qvalue", "FG_Qvalue"])
 
 
@@ -161,12 +161,21 @@ def test_an_unreviewed_level_raises() -> None:
         )
 
 
-def test_a_changed_rule_is_unreviewed() -> None:
-    """A rule APB2 changed after review answers unknown until it is re-reviewed."""
+def test_an_unreviewed_software_version_is_unknown() -> None:
+    """A software version no catalogue variant names answers unknown."""
     with pytest.raises(UnresolvedField, match="no source catalogue reviewed"):
-        Catalog(_edited_maxquant(), "identification_confidence").layer(
-            "ion", concept="confidence", kind="pep"
-        )
+        Catalog(
+            _edited_maxquant(software_version_pattern="^99\\."), "identification_confidence"
+        ).layer("ion", concept="confidence", kind="pep")
+
+
+def test_an_edited_rule_keeps_its_entries() -> None:
+    """Levels bind by software and version, so editing a rule within a version changes nothing."""
+    parsed = _edited_maxquant(file_version=-1)
+    pep = Catalog(parsed, "identification_confidence").layer(
+        "ion", concept="confidence", kind="pep"
+    )
+    assert pep is parsed.levels["ion"].layers["PEP"]
 
 
 def test_an_absent_level_returns_none() -> None:
@@ -236,7 +245,7 @@ def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
     assert [resolution.status for resolution in snapshot.resolutions] == ["resolved", "missing"]
     binding = snapshot.levels[0]
     assert isinstance(binding, ReviewedBinding)
-    assert (binding.software_name, binding.rule) == ("MaxQuant", "maxquant/rules.json")
+    assert (binding.software_name, binding.rule) == ("MaxQuant", "maxquant_wide/rules.json")
     unreviewed = Catalog(_result(None, ["Intensity"]), "identification_confidence").snapshot()
     assert isinstance(unreviewed.levels[0], UnreviewedBinding)
 
@@ -293,10 +302,12 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     assert entry["qualifiers"]["kind"] == "pep"
 
 
-def test_a_changed_rule_makes_the_snapshot_stale() -> None:
-    """Snapshots record the effective rule they were resolved against."""
+def test_a_changed_software_version_makes_the_snapshot_stale() -> None:
+    """Snapshots record the software and version they were resolved against."""
     snapshot = Catalog(_result(*MAXQUANT), "identification_confidence").snapshot()
-    assert stale_levels(_edited_maxquant(), snapshot) == ("ion",)
+    assert stale_levels(_edited_maxquant(file_version=-1), snapshot) == ()
+    stale = _edited_maxquant(software_version_pattern="^99\\.")
+    assert stale_levels(stale, snapshot) == ("ion",)
     assert stale_levels(ParsedLevels(levels={}, uns={}), snapshot) == ("ion",)
 
 

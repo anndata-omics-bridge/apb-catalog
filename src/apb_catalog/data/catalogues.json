@@ -1,8 +1,9 @@
 {
   "identification_confidence": {
-    "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, and Sage's MS1-peak q-value. Scores, protein-level confidence and vendor summaries are left out.",
+    "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's and Spectronaut's protein-group q-values per run, per library and across the experiment. Scores, vendor summaries and other vendors' protein-level confidence are left out.",
     "used_by": [
-      "apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision"
+      "apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision",
+      "apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers"
     ]
   },
   "miape": {

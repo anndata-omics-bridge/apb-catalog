@@ -2,13 +2,12 @@
 
 ## Install
 
-APB Catalog requires Python 3.13 and APB2. The catalogue is reviewed against APB2 commit `8651e1f`; later APB2 rule changes need a catalogue re-review (see [Maintaining](maintaining.md)). Clone both repositories as siblings:
+APB Catalog requires Python 3.13 and APB2. A new APB2 rule version needs its own catalogue variant (see [Maintaining](maintaining.md)). Clone both repositories as siblings:
 
 ```bash
 mkdir anndata_bridge
 cd anndata_bridge
 git clone https://github.com/anndata-omics-bridge/apb2.git
-git -C apb2 checkout 8651e1fff4772e7c1c1fbb4efe754980799c342d
 git clone https://github.com/anndata-omics-bridge/apb-catalog.git
 cd apb-catalog
 uv sync
@@ -132,7 +131,7 @@ except UnresolvedField as error:
     print(error)    # names the reason and any candidate fields
 ```
 
-It is raised when the result was converted with an APB2 rule revision nobody reviewed, typically a file converted before a rule change, or when a level was produced by another tool. Reconvert the file, or re-review the rule as described in [Maintaining](maintaining.md).
+It is raised when no catalogue variant names the level's software version, typically a new APB2 rule version, or when a level was produced by another tool. Add the variant as described in [Maintaining](maintaining.md).
 
 ## Record what was looked up
 

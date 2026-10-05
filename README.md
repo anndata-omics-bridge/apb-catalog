@@ -36,16 +36,16 @@ genes = miape.var("protein", concept="miape", kind="gene_name")  # the column MI
 
 ## Catalogues
 
-- `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP and Sage's MS1-peak q-value; used by apb-aggregate's confidence-weighted rollups; 12 entries
+- `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's and Spectronaut's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 18 entries
 - `miape`: draft mapping onto the MIAPE-AnnData Schema 0.4.0 draft (HUPO-PSI AI Readiness Working Group): protein, peptide and peptidoform fields and the `raw` layer; ion levels have no MIAPE modality; 32 entries
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`, never `unknown`
-- Entries bind to reviewed effective-rule fingerprints (SHA-256 of canonical `rule_json`); any APB2 rule change needs re-review, enforced by the drift tests
+- A level binds by the software name and version pattern its APB2 rule declares, plus the level; editing a rule within a version keeps its entries, and a new rule version needs its own variant
 - Vocabulary: `confidence` with `kind` (pep, q_value) and `stage`; `miape` with `kind` naming the MIAPE-AnnData field and its requirement level
 
 ## Snapshot contract
 
-`attach_snapshot` stores `apb-catalog-resolution` 0.2 as JSON at `ParsedLevels.metadata["catalog"][<catalogue>]`; APB2 persists it in every format, including AnnData `uns` from HDF5 result format 5. It embeds the set's description, concept definitions, level bindings, retained entries and every answer, so readers need neither this package nor its catalogues. The [JSON Schema](https://github.com/anndata-omics-bridge/apb-catalog/blob/main/src/apb_catalog/data/apb-catalog-resolution-0.2.schema.json) is published with the package; `make schema` regenerates it.
+`attach_snapshot` stores `apb-catalog-resolution` 0.3 as JSON at `ParsedLevels.metadata["catalog"][<catalogue>]`; APB2 persists it in every format, including AnnData `uns` from HDF5 result format 5. It embeds the set's description, concept definitions, level bindings, retained entries and every answer, so readers need neither this package nor its catalogues. The [JSON Schema](https://github.com/anndata-omics-bridge/apb-catalog/blob/main/src/apb_catalog/data/apb-catalog-resolution-0.3.schema.json) is published with the package; `make schema` regenerates it.
 
 ## Development
 

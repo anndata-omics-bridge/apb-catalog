@@ -1,7 +1,7 @@
 {
   "catalogue_id": "msangel",
   "catalogue_version": "0.1",
-  "software_name": "MS-Angel",
+  "software_name": "MSAngel",
   "review": {
     "date": "2026-10-02",
     "apb2_revision": "8651e1f"
@@ -10,9 +10,7 @@
     {
       "rule": "msangel/rules.json",
       "level": "ion",
-      "fingerprints": [
-        "sha256:85b4a23e6d3ef24bf4389750e05ef70317576e367c4595a02db5ba0ae007fe96"
-      ]
+      "software_version_pattern": "^2\\..*"
     }
   ],
   "entries": []
