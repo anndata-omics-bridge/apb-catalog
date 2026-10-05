@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "apb-catalog"
-version = "0.1.0"
+version = "0.1.1"
 description = "Semantic source catalogues and column resolution for APB results"
 readme = "README.md"
 requires-python = ">=3.13"

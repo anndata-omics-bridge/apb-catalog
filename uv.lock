@@ -43,7 +43,7 @@ wheels = [
 
 [[package]]
 name = "apb-catalog"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "apb2" },
@@ -92,7 +92,7 @@ docs = [
 
 [[package]]
 name = "apb2"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "../apb2" }
 dependencies = [
     { name = "anndata" },
