@@ -37,7 +37,7 @@ jobs:
         run: uv python install 3.13
 
       - name: Synchronize documentation environment
-        run: uv sync --only-group docs
+        run: uv sync --only-group docs --no-sources
 
       - name: Build documentation
         run: uv run --no-sync zensical build --clean --strict

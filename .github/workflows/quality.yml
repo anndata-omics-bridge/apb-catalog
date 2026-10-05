@@ -26,7 +26,7 @@ jobs:
         run: uv python install 3.13
 
       - name: Synchronize documentation environment
-        run: uv sync --only-group docs
+        run: uv sync --only-group docs --no-sources
 
       - name: Build documentation
         run: uv run --no-sync zensical build --clean --strict
@@ -50,7 +50,7 @@ jobs:
           cache-dependency-glob: "**/pyproject.toml"
 
       - name: Synchronize standalone quality environment
-        run: uv sync --only-group dev
+        run: uv sync --only-group dev --no-sources
 
       - name: Run standalone quality gates
         run: make format-check lint deps build
