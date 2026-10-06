@@ -4,7 +4,7 @@ A catalogue set annotates fields of one kind of meaning, for every rule APB2 pac
 
 ## `identification_confidence`
 
-How likely each identification, or the signal quantified for it, is correct; used by apb-aggregate for confidence-weighted rollups and by apb-export's prolfqua target: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value (stage `quantification`), and DIA-NN's and Spectronaut's protein-group q-values. Scores, vendor summaries and other vendors' protein-level confidence are deliberately left out.
+How likely each identification, or the signal quantified for it, is correct; used by apb-aggregate for confidence-weighted rollups and by apb-export's prolfqua target: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value (stage `quantification`), and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values. Scores, vendor summaries and other vendors' protein-level confidence are deliberately left out.
 
 Concept `confidence`, kinds:
 
@@ -26,6 +26,7 @@ Concept `confidence`, kinds:
 | MaxQuant | maxquant_wide | ion | layers | `PEP` | `pep` |
 | MaxQuant | maxquant_wide | peptidoform | var | `PEP` | `pep` |
 | MaxQuant | maxquant_wide | peptide | var | `PEP` | `pep` |
+| MaxQuant | maxquant_wide | protein | var | `Q_Value` | `global_q_value` |
 | MSAngel | all | — | — | none relevant | — |
 | pb_custom | all | — | — | none relevant | — |
 | PEAKS | all | — | — | none relevant | — |

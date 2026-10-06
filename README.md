@@ -35,7 +35,7 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 
 ## Catalogues
 
-- `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's and Spectronaut's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 18 entries
+- `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 19 entries
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`, never `unknown`
 - A level binds by the software name and version pattern its APB2 rule declares, plus the level; editing a rule within a version keeps its entries, and a new rule version needs its own variant
