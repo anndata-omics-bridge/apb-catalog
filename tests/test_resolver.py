@@ -14,7 +14,6 @@ from apb_catalog.resolver import (
 from apb_catalog.source import (
     Evidence,
     Reference,
-    Review,
     ReviewedRule,
     RuleVariant,
     SourceCatalogue,
@@ -44,7 +43,6 @@ def _level(*entries: SourceEntry) -> ReviewedLevel:
         catalogue_id="vendor",
         catalogue_version="0.1",
         software_name="Vendor",
-        review=Review(date="2026-09-30", apb2_revision="test"),
         variants=(VARIANT,),
         entries=entries,
     )

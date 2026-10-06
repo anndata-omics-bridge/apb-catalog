@@ -10,7 +10,6 @@ from apb_catalog.source import (
     CatalogueDescription,
     Evidence,
     Reference,
-    Review,
     RuleVariant,
     SourceCatalogue,
     SourceCatalogues,
@@ -23,7 +22,6 @@ from tests.packaged_rules import declared_software_versions, effective_rules, re
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
-REVIEW = Review(date="2026-10-01", apb2_revision="test")
 ION = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^1\\.")
 
 
@@ -51,7 +49,6 @@ def _catalogue(*entries: SourceEntry, **overrides: object) -> SourceCatalogue:
         "catalogue_id": "vendor",
         "catalogue_version": "0.1",
         "software_name": "Vendor",
-        "review": REVIEW,
         "variants": (ION,),
         "entries": entries,
     } | overrides

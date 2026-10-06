@@ -294,26 +294,6 @@
       ],
       "type": "string"
     },
-    "Review": {
-      "additionalProperties": false,
-      "description": "When a catalogue was reviewed and against which APB2 revision.",
-      "properties": {
-        "date": {
-          "title": "Date",
-          "type": "string"
-        },
-        "apb2_revision": {
-          "title": "Apb2 Revision",
-          "type": "string"
-        }
-      },
-      "required": [
-        "date",
-        "apb2_revision"
-      ],
-      "title": "Review",
-      "type": "object"
-    },
     "ReviewedBinding": {
       "additionalProperties": false,
       "description": "A level whose rule's software and version match a reviewed catalogue variant.",
@@ -347,9 +327,6 @@
         "rule": {
           "title": "Rule",
           "type": "string"
-        },
-        "review": {
-          "$ref": "#/$defs/Review"
         }
       },
       "required": [
@@ -358,8 +335,7 @@
         "catalogue_version",
         "software_name",
         "software_version_pattern",
-        "rule",
-        "review"
+        "rule"
       ],
       "title": "ReviewedBinding",
       "type": "object"

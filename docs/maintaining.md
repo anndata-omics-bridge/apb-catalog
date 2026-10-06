@@ -6,7 +6,6 @@ A level binds by the `software_name` and `software_version_pattern` its rule dec
 
 1. Check that the change leaves the catalogued fields' meaning intact; update or remove entries otherwise
 2. A new rule version, or a changed name or version pattern, needs its own variant in each `src/apb_catalog/data/sources/<set>/<vendor>.json`; the variant test reports any variant that disagrees with its rule
-3. Update the vendor catalogue's `review` date and APB2 revision
 
 ## Adding a consumer
 
