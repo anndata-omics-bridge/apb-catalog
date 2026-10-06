@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23151456.svg)](https://doi.org/10.5281/zenodo.23151456)
 [![PyPI](https://img.shields.io/pypi/v/apb-catalog.svg)](https://pypi.org/project/apb-catalog/)
 
-Catalogues of what APB result fields mean, one set per kind of meaning, each stating its purpose and users, so the consumer asks for a meaning instead of vendor columns such as `PEP`, `EG_PEP` or `Q_Value`.
+APB Catalog finds APB result fields by reviewed meaning, one catalogue set per consumer, so the consumer asks for a meaning instead of vendor columns such as `PEP`, `EG_PEP` or `Q_Value`.
 
 Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/), built from [docs/](https://github.com/anndata-omics-bridge/apb-catalog/tree/main/docs) with `make docs`; start with [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/).
 
@@ -27,7 +27,7 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 genes = miape.var("protein", concept="miape", kind="gene_name")  # the column MIAPE-AnnData calls gene_name
 ```
 
-- [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of both sets
+- [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of all three sets
 - `layer` returns the apb2 layer table, `var` the column; `None` means the vendor has no such field
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Confidence lookups mean identification unless `stage="quantification"` says otherwise
@@ -38,6 +38,7 @@ genes = miape.var("protein", concept="miape", kind="gene_name")  # the column MI
 
 - `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 19 entries
 - `miape`: draft mapping onto the MIAPE-AnnData Schema 0.4.0 draft (HUPO-PSI AI Readiness Working Group): protein, peptide and peptidoform fields and the `raw` layer; ion levels have no MIAPE modality; 32 entries
+- `proteobench_entrapment`: run, library and experiment-wide precursor q-values, each its own kind; used by apb-proteobench's entrapment scoring; 7 entries
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`, never `unknown`
 - A level binds by the software name and version pattern its APB2 rule declares, plus the level; editing a rule within a version keeps its entries, and a new rule version needs its own variant

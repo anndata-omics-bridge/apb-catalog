@@ -1,6 +1,6 @@
 # Catalogues
 
-A catalogue set annotates fields of one kind of meaning, for every rule APB2 packages; `data/catalogues.json` states each set's purpose and users, and `Catalog.description` returns it. The JSON files under `src/apb_catalog/data/sources/<set>/` are the source of truth; this page is generated from them.
+A catalogue set annotates fields of one kind of meaning, for every rule APB2 packages; `data/catalogues.json` states each set's purpose and users, and `Catalog.description` returns it. The JSON files under `src/apb_catalog/data/sources/<set>/` are the source of truth; this page summarises them by hand.
 
 ## `identification_confidence`
 

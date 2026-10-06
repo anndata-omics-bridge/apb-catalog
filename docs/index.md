@@ -37,13 +37,13 @@ Rule of thumb:
 ## How it stays correct
 
 - An entry holds for the software versions it was reviewed against: the `software_name` and `software_version_pattern` each level's stored `rule_json` declares
-- Tests fail when an APB2 rule changes or a new rule appears, until a reviewer updates the catalogue
+- Tests fail when APB2 adds a rule version or level, until a reviewer adds its variant; editing a rule within a version keeps its entries
 - Lookups never transform values; the consumer reads the layer or column it is handed
 - A snapshot of every lookup can be stored in the result, readable without this package
 
 ## Pages
 
 - [Get started](getting-started.md): install, look up, use the data, map to MIAPE
-- [Catalogues](catalogues.md): every entry of both sets
+- [Catalogues](catalogues.md): every entry of all three sets
 - [Python API](api.md): lookups, errors and snapshots
-- [Maintaining](maintaining.md): re-reviewing after an APB2 rule change
+- [Maintaining](maintaining.md): APB2 rule changes, new consumers, a worked catalogue example
