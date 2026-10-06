@@ -49,20 +49,12 @@ class RuleVariant(FrozenModel):
     software_version_pattern: str
 
 
-class Review(FrozenModel):
-    """When a catalogue was reviewed and against which APB2 revision."""
-
-    date: str
-    apb2_revision: str
-
-
 class SourceCatalogue(FrozenModel):
     """Every reviewed rule variant of one vendor and the entries one consumer needs from it."""
 
     catalogue_id: str
     catalogue_version: str
     software_name: str
-    review: Review
     variants: tuple[RuleVariant, ...]
     entries: tuple[SourceEntry, ...]
 

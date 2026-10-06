@@ -2,10 +2,6 @@
   "catalogue_id": "i2masschroq",
   "catalogue_version": "0.1",
   "software_name": "i2MassChroQ",
-  "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
-  },
   "variants": [
     {
       "rule": "i2masschroq/rules.json",

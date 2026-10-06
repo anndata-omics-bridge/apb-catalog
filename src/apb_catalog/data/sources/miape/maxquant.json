@@ -2,10 +2,6 @@
   "catalogue_id": "maxquant",
   "catalogue_version": "0.1-draft",
   "software_name": "MaxQuant",
-  "review": {
-    "date": "2026-10-05",
-    "apb2_revision": "5fb76cb"
-  },
   "variants": [
     {
       "rule": "maxquant_wide/rules.json",

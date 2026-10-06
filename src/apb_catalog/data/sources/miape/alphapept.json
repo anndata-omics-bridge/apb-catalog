@@ -2,10 +2,6 @@
   "catalogue_id": "alphapept",
   "catalogue_version": "0.1-draft",
   "software_name": "AlphaPept",
-  "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
-  },
   "variants": [
     {
       "rule": "alphapept/rules.json",

@@ -2,10 +2,6 @@
   "catalogue_id": "diann",
   "catalogue_version": "0.1-draft",
   "software_name": "DIA-NN",
-  "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
-  },
   "variants": [
     {
       "rule": "diann/v1_7/rules.json",

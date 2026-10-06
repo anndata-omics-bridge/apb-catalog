@@ -2,10 +2,6 @@
   "catalogue_id": "wombat",
   "catalogue_version": "0.1-draft",
   "software_name": "WOMBAT",
-  "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
-  },
   "variants": [
     {
       "rule": "wombat/rules.json",

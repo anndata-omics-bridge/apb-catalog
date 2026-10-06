@@ -2,10 +2,6 @@
   "catalogue_id": "fragpipe",
   "catalogue_version": "0.1-draft",
   "software_name": "FragPipe",
-  "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
-  },
   "variants": [
     {
       "rule": "fragpipe/rules.json",

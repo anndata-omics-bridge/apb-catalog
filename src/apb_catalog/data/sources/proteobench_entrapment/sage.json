@@ -2,10 +2,6 @@
   "catalogue_id": "sage",
   "catalogue_version": "0.1",
   "software_name": "Sage",
-  "review": {
-    "date": "2026-10-02",
-    "apb2_revision": "8651e1f"
-  },
   "variants": [
     {
       "rule": "sage/rules.json",
