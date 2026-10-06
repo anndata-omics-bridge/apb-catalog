@@ -30,7 +30,7 @@ catalog = Catalog(parsed, "identification_confidence")
 - two catalogued fields fit equally well, or
 - no catalogue variant names the level's software version, for example a new rule version, or a level produced by another tool
 
-`None` always means the software version was reviewed and the field is not there.
+`None` means the result lacks the level, or its software version was reviewed and the field is not there.
 
 ## Snapshots
 
@@ -39,7 +39,7 @@ from apb_catalog.api import attach_snapshot, stale_levels, stored_snapshot
 
 annotated = attach_snapshot(parsed, catalog.snapshot())   # new result; data shared, not copied
 stored_snapshot(annotated, "identification_confidence")                   # read it back
-stale_levels(annotated, catalog.snapshot())               # levels whose rule changed since
+stale_levels(annotated, catalog.snapshot())               # levels whose software name or version changed since
 ```
 
 The snapshot is stored as JSON at `metadata["catalog"][<set>]`, beside other sets' snapshots, and persists in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.3.schema.json`.
