@@ -36,7 +36,7 @@ genes = miape.var("protein", concept="miape", kind="gene_name")  # the column MI
 
 ## Catalogues
 
-- `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's and Spectronaut's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 18 entries
+- `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 19 entries
 - `miape`: draft mapping onto the MIAPE-AnnData Schema 0.4.0 draft (HUPO-PSI AI Readiness Working Group): protein, peptide and peptidoform fields and the `raw` layer; ion levels have no MIAPE modality; 32 entries
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`, never `unknown`

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from dataclasses import replace
 from importlib import resources
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ from apb2.api import (
     write_parsed_levels,
 )
 from polars.testing import assert_frame_equal
+from pydantic import ValidationError
 
 from apb_catalog.catalog import (
     METADATA_KEY,
@@ -261,6 +263,61 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     assert stored_snapshot(attached, "identification_confidence") == confidence
     assert stored_snapshot(attached, "miape") == miape
     assert attached.levels is parsed.levels
+
+
+def _with_namespace(parsed: ParsedLevels, namespace: JsonValue) -> ParsedLevels:
+    return replace(parsed, metadata={**parsed.metadata, METADATA_KEY: namespace})
+
+
+def test_attaching_keeps_unrelated_namespace_entries() -> None:
+    """Attaching adds this catalogue's snapshot and leaves every other entry as it was."""
+    parsed = _with_namespace(_result(*MAXQUANT), {"other": {"contract": "elsewhere"}})
+    snapshot = Catalog(parsed, "identification_confidence").snapshot()
+
+    attached = attach_snapshot(parsed, snapshot)
+
+    assert attached.metadata[METADATA_KEY] == {
+        "other": {"contract": "elsewhere"},
+        "identification_confidence": snapshot.model_dump(mode="json"),
+    }
+    assert parsed.metadata[METADATA_KEY] == {"other": {"contract": "elsewhere"}}
+
+
+@pytest.mark.parametrize("namespace", [["prior-evidence"], "prior-evidence", 3, None])
+def test_a_malformed_namespace_raises_instead_of_being_replaced(namespace: JsonValue) -> None:
+    """A present namespace that is not an object is never read as absent or overwritten."""
+    parsed = _with_namespace(_result(*MAXQUANT), namespace)
+    snapshot = Catalog(parsed, "identification_confidence").snapshot()
+
+    with pytest.raises(ValueError, match="not snapshots by catalogue"):
+        attach_snapshot(parsed, snapshot)
+    with pytest.raises(ValueError, match="not snapshots by catalogue"):
+        stored_snapshot(parsed, "identification_confidence")
+    assert parsed.metadata[METADATA_KEY] == namespace
+
+
+@pytest.mark.parametrize(
+    "stored", [None, ["prior-evidence"], {"contract": "apb-catalog-resolution"}]
+)
+def test_a_malformed_selected_snapshot_fails_validation(stored: JsonValue) -> None:
+    """A catalogue's own entry is validated, so a null or broken snapshot is not absent."""
+    parsed = _with_namespace(_result(*MAXQUANT), {"identification_confidence": stored})
+
+    with pytest.raises(ValidationError):
+        stored_snapshot(parsed, "identification_confidence")
+
+
+@pytest.mark.parametrize("suffix", [".h5ad", ".h5mu", ".parquet", ".duckdb"])
+def test_a_stored_malformed_namespace_still_raises(tmp_path: Path, suffix: str) -> None:
+    """Valid JSON of the wrong shape survives storage, so reading it back must still raise."""
+    target = tmp_path / f"result{suffix}"
+    write_parsed_levels(_with_namespace(_result(*MAXQUANT), ["prior-evidence"]), target)
+    restored = read_parsed_levels(target)
+    snapshot = Catalog(restored, "identification_confidence").snapshot()
+
+    with pytest.raises(ValueError, match="not snapshots by catalogue"):
+        attach_snapshot(restored, snapshot)
+    assert restored.metadata[METADATA_KEY] == ["prior-evidence"]
 
 
 @pytest.mark.parametrize("suffix", [".h5ad", ".h5mu", ".parquet", ".duckdb"])

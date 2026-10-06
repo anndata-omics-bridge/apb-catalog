@@ -81,6 +81,25 @@
       "evidence": {
         "basis": "peptides.txt PEP. Retained by the rule as a var column: one value per feature across the experiment. How MaxQuant combines per-run PEPs is not reviewed."
       }
+    },
+    {
+      "entry_id": "maxquant.protein.Q_Value",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "Q_Value"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "global_q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "proteinGroups.txt Q-value: one value per protein group across the experiment, reverse groups included. Fixture zenodo/directlfq MaxQuant_boxcar (6,882 groups, 105 reverse): 0 to 1, 98.0% at most 0.01. Fixture zenodo/maxquant_entrapment maxquant_v2.8.1.0 (MaxDIA 2.8.1.0, 43,807 groups): all 0."
+      }
     }
   ]
 }

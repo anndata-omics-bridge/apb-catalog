@@ -220,19 +220,34 @@ def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> Parse
 
     Scientific data is shared, not copied.
     """
-    namespace = parsed.metadata.get(METADATA_KEY)
-    snapshots = dict(namespace) if isinstance(namespace, dict) else {}
+    snapshots = _snapshots(parsed)
     snapshots[snapshot.catalogue] = snapshot.model_dump(mode="json")
     return replace(parsed, metadata={**parsed.metadata, METADATA_KEY: snapshots})
 
 
 def stored_snapshot(parsed: ParsedLevels, catalogue: str) -> ResolutionSnapshot | None:
     """Return the snapshot one catalogue set left on a result, if any."""
-    namespace = parsed.metadata.get(METADATA_KEY)
-    stored = namespace.get(catalogue) if isinstance(namespace, dict) else None
-    if stored is None:
+    snapshots = _snapshots(parsed)
+    if catalogue not in snapshots:
         return None
-    return ResolutionSnapshot.model_validate(stored)
+    return ResolutionSnapshot.model_validate(snapshots[catalogue])
+
+
+def _snapshots(parsed: ParsedLevels) -> dict[str, object]:
+    """Return a copy of the result's snapshots by catalogue; an absent namespace holds none.
+
+    A present namespace that is not an object raises rather than being treated as absent, so
+    attaching a snapshot never replaces evidence it cannot read.
+    """
+    if METADATA_KEY not in parsed.metadata:
+        return {}
+    namespace = parsed.metadata[METADATA_KEY]
+    if not isinstance(namespace, dict):
+        raise ValueError(
+            f"metadata[{METADATA_KEY!r}] holds {type(namespace).__name__}, "
+            "not snapshots by catalogue"
+        )
+    return dict(cast(dict[str, object], namespace))
 
 
 def stale_levels(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> tuple[str, ...]:
