@@ -42,4 +42,4 @@ stored_snapshot(annotated, "identification_confidence")                   # read
 stale_levels(annotated, catalog.snapshot())               # levels whose software name or version changed since
 ```
 
-The snapshot is stored as JSON at `metadata["catalog"][<set>]`, beside other sets' snapshots, and persists in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.3.schema.json`.
+The snapshot is stored as JSON at `metadata["catalog"][<set>]["result"]`, beside other sets' snapshots, with each level's request counts in that level's `metadata["catalog"][<set>]["summary"]`. Both persist in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.3.schema.json`.

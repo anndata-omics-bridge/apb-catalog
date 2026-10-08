@@ -31,7 +31,7 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Confidence lookups mean identification unless `stage="quantification"` says otherwise
 - Two equally good fields, or a rule nobody reviewed, raise `UnresolvedField` naming the candidates
-- `attach_snapshot(parsed, catalog.snapshot())` records bindings and lookups in `metadata["catalog"][<catalogue>]`
+- `attach_snapshot(parsed, catalog.snapshot())` records bindings and lookups in `metadata["catalog"][<catalogue>]["result"]`, and each level's request counts in its `metadata["catalog"][<catalogue>]["summary"]`
 
 ## Catalogues
 
@@ -43,7 +43,7 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 
 ## Snapshot contract
 
-`attach_snapshot` stores `apb-catalog-resolution` 0.3 as JSON at `ParsedLevels.metadata["catalog"][<catalogue>]`; APB2 persists it in every format, including AnnData `uns` from HDF5 result format 5. It embeds the set's description, concept definitions, level bindings, retained entries and every answer, so readers need neither this package nor its catalogues. The [JSON Schema](https://github.com/anndata-omics-bridge/apb-catalog/blob/main/src/apb_catalog/data/apb-catalog-resolution-0.3.schema.json) is published with the package; `make schema` regenerates it.
+`attach_snapshot` stores `apb-catalog-resolution` 0.3 as JSON at `ParsedLevels.metadata["catalog"][<catalogue>]["result"]`; APB2 persists it in every format, including AnnData `uns` from HDF5 result format 6. Each level's record of the same name summarizes the resolved, missing and unresolved requests for that level. It embeds the set's description, concept definitions, level bindings, retained entries and every answer, so readers need neither this package nor its catalogues. The [JSON Schema](https://github.com/anndata-omics-bridge/apb-catalog/blob/main/src/apb_catalog/data/apb-catalog-resolution-0.3.schema.json) is published with the package; `make schema` regenerates it.
 
 ## Development
 
