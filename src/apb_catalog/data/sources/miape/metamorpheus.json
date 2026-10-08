@@ -1,0 +1,13 @@
+{
+  "catalogue_id": "metamorpheus",
+  "catalogue_version": "0.1-draft",
+  "software_name": "MetaMorpheus",
+  "variants": [
+    {
+      "rule": "metamorpheus/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\."
+    }
+  ],
+  "entries": []
+}
