@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import replace
 from typing import cast, overload
 
 import polars as pl
-from apb2.api import FinalLayerTable, ParsedLevel, ParsedLevels
+from apb2.api import FinalLayerTable, JsonValue, ParsedLevel, ParsedLevels
 
 from apb_catalog.resolver import (
     AbsentLevel,
@@ -175,7 +176,8 @@ class Catalog:
 
 def rule_version(level: ParsedLevel) -> tuple[str, str, str] | None:
     """Return the software name, version pattern and level a level's stored rule declares."""
-    rule_json = level.uns.get("rule_json")
+    provenance = level.uns.get("provenance")
+    rule_json = provenance.get("rule_json") if isinstance(provenance, dict) else None
     if not isinstance(rule_json, str):
         return None
     rule = cast(dict[str, object], json.loads(rule_json))
@@ -218,36 +220,79 @@ def level_view(
 def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> ParsedLevels:
     """Return a new result carrying the snapshot beside other catalogues' snapshots.
 
+    The root record ``catalog.<catalogue>`` holds the snapshot as its ``result``; each level the
+    snapshot answered a request for gets a record of the same name summarizing those requests.
     Scientific data is shared, not copied.
     """
-    snapshots = _snapshots(parsed)
-    snapshots[snapshot.catalogue] = snapshot.model_dump(mode="json")
-    return replace(parsed, metadata={**parsed.metadata, METADATA_KEY: snapshots})
+    snapshots = _records(parsed.metadata)
+    snapshots[snapshot.catalogue] = {"result": snapshot.model_dump(mode="json")}
+    levels = {
+        name: replace(level, metadata=_with_level_summary(level.metadata, name, snapshot))
+        for name, level in parsed.levels.items()
+    }
+    return replace(parsed, levels=levels, metadata={**parsed.metadata, METADATA_KEY: snapshots})
 
 
 def stored_snapshot(parsed: ParsedLevels, catalogue: str) -> ResolutionSnapshot | None:
     """Return the snapshot one catalogue set left on a result, if any."""
-    snapshots = _snapshots(parsed)
+    snapshots = _records(parsed.metadata)
     if catalogue not in snapshots:
         return None
-    return ResolutionSnapshot.model_validate(snapshots[catalogue])
+    record = snapshots[catalogue]
+    return ResolutionSnapshot.model_validate(
+        record.get("result") if isinstance(record, dict) else record
+    )
 
 
-def _snapshots(parsed: ParsedLevels) -> dict[str, object]:
-    """Return a copy of the result's snapshots by catalogue; an absent namespace holds none.
+def _records(metadata: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    """Return a copy of one part's records by catalogue; an absent namespace holds none.
 
     A present namespace that is not an object raises rather than being treated as absent, so
     attaching a snapshot never replaces evidence it cannot read.
     """
-    if METADATA_KEY not in parsed.metadata:
+    if METADATA_KEY not in metadata:
         return {}
-    namespace = parsed.metadata[METADATA_KEY]
+    namespace = metadata[METADATA_KEY]
     if not isinstance(namespace, dict):
         raise ValueError(
             f"metadata[{METADATA_KEY!r}] holds {type(namespace).__name__}, "
             "not snapshots by catalogue"
         )
-    return dict(cast(dict[str, object], namespace))
+    return dict(namespace)
+
+
+def _with_level_summary(
+    metadata: dict[str, JsonValue], level: str, snapshot: ResolutionSnapshot
+) -> dict[str, JsonValue]:
+    """One level's metadata with its count of resolved, missing and unresolved requests.
+
+    A level the snapshot answered no request for keeps its metadata unchanged.
+    """
+    statuses = Counter(
+        resolution.status
+        for resolution in snapshot.resolutions
+        if resolution.request.level == level
+    )
+    if not statuses:
+        return metadata
+    unresolved = statuses["ambiguous"] + statuses["unknown"]
+    counts = (
+        ("resolved_requests", "Resolved catalogue requests", statuses["resolved"], "ok"),
+        ("missing_requests", "Missing catalogue requests", statuses["missing"], "ok"),
+        (
+            "unresolved_requests",
+            "Ambiguous or unknown catalogue requests",
+            unresolved,
+            "attention" if unresolved else "ok",
+        ),
+    )
+    summary: list[JsonValue] = [
+        {"name": name, "label": label, "value": value, "unit": "requests", "status": status}
+        for name, label, value, status in counts
+    ]
+    records = _records(metadata)
+    records[snapshot.catalogue] = {"summary": summary}
+    return {**metadata, METADATA_KEY: records}
 
 
 def stale_levels(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> tuple[str, ...]:

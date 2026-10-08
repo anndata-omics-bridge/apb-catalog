@@ -1,4 +1,4 @@
-"""The self-contained resolution record stored under ``ParsedLevels.metadata["catalog"]``.
+"""The self-contained resolution record stored as ``ParsedLevels.metadata["catalog"][name]["result"]``.
 
 Readers implementing this contract need neither this package nor its catalogues: concept
 definitions, entry meanings and every answer are embedded.

@@ -144,4 +144,4 @@ stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_conf
 # one resolved lookup, referencing layer 'PEP'
 ```
 
-The snapshot sits at `metadata["catalog"]["identification_confidence"]` and can be read as plain JSON without APB Catalog installed.
+The snapshot sits at `metadata["catalog"]["identification_confidence"]["result"]` and can be read as plain JSON without APB Catalog installed.

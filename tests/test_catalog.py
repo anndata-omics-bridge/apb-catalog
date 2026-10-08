@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import replace
 from importlib import resources
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import polars as pl
 import pytest
@@ -51,9 +51,9 @@ def _level(
         )
         for offset, name in enumerate(layers)
     }
-    uns: dict[str, JsonValue] = {"produced_by": "apb2", "quantification_level": level}
+    uns: dict[str, JsonValue] = {}
     if rule_json is not None:
-        uns["rule_json"] = rule_json
+        uns["provenance"] = {"rule_json": rule_json}
     return ParsedLevel.build(
         obs, ("Run",), features, (key,), {}, primary_layer=layers[0], abundance=values, uns=uns
     )
@@ -262,7 +262,8 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     assert stored_snapshot(parsed, "identification_confidence") is None
     assert stored_snapshot(attached, "identification_confidence") == confidence
     assert stored_snapshot(attached, "miape") == miape
-    assert attached.levels is parsed.levels
+    assert attached.levels["ion"].layers is parsed.levels["ion"].layers
+    assert METADATA_KEY not in attached.levels["ion"].metadata, "no request, no level summary"
 
 
 def _with_namespace(parsed: ParsedLevels, namespace: JsonValue) -> ParsedLevels:
@@ -278,7 +279,7 @@ def test_attaching_keeps_unrelated_namespace_entries() -> None:
 
     assert attached.metadata[METADATA_KEY] == {
         "other": {"contract": "elsewhere"},
-        "identification_confidence": snapshot.model_dump(mode="json"),
+        "identification_confidence": {"result": snapshot.model_dump(mode="json")},
     }
     assert parsed.metadata[METADATA_KEY] == {"other": {"contract": "elsewhere"}}
 
@@ -349,7 +350,7 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     namespace: dict[str, Any] = json.loads(
         json.dumps(read_parsed_levels(target).metadata["catalog"])
     )
-    stored = namespace["identification_confidence"]
+    stored = namespace["identification_confidence"]["result"]
 
     assert stored["contract"] == "apb-catalog-resolution"
     answer = stored["resolutions"][0]
@@ -401,3 +402,22 @@ def test_proteobench_entrapment_offers_each_precursor_q_value_as_its_own_kind() 
         Catalog(_result(*MAXQUANT), "proteobench_entrapment").layer("ion", concept="confidence")
         is None
     )
+
+
+def test_each_level_counts_the_requests_its_snapshot_answered() -> None:
+    """A level record says how many lookups resolved, were missing, or stayed unresolved."""
+    catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
+    catalog.layer("ion", concept="confidence", kind="pep")
+    catalog.layer("ion", concept="confidence", kind="q_value")
+
+    attached = attach_snapshot(_result(*MAXQUANT), catalog.snapshot())
+
+    records = cast(dict[str, Any], attached.levels["ion"].metadata[METADATA_KEY])
+    assert [
+        (entry["name"], entry["value"], entry["status"])
+        for entry in records["identification_confidence"]["summary"]
+    ] == [
+        ("resolved_requests", 1, "ok"),
+        ("missing_requests", 1, "ok"),
+        ("unresolved_requests", 0, "ok"),
+    ]
