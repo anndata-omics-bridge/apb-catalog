@@ -9,6 +9,7 @@ import pytest
 from apb_catalog.source import (
     CatalogueDescription,
     Evidence,
+    ProducerCatalogue,
     Reference,
     RuleVariant,
     SourceCatalogue,
@@ -18,7 +19,12 @@ from apb_catalog.source import (
     packaged_descriptions,
 )
 from apb_catalog.vocabulary import packaged_vocabulary
-from tests.packaged_rules import declared_software_versions, effective_rules, retained_sources
+from tests.packaged_rules import (
+    declared_software_versions,
+    declared_var_column,
+    effective_rules,
+    retained_sources,
+)
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
@@ -150,6 +156,132 @@ def test_entry_qualifier_values_must_be_admitted() -> None:
 def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
     """One software version's level cannot be bound to two vendor catalogues of one set."""
     first = _catalogue(_entry("PEP"))
-    second = _catalogue(_entry("PEP"), catalogue_id="other")
+    second = _catalogue(catalogue_id="other")
     with pytest.raises(ValueError, match="reviewed more than once"):
         SourceCatalogues(packaged_vocabulary(), (first, second), DESCRIPTION)
+
+
+def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
+    """Vendor and producer entries share one id space, so a snapshot names each unambiguously."""
+    later = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^2\\.")
+    first = _catalogue(_entry("PEP"))
+    second = _catalogue(_entry("PEP"), catalogue_id="other", variants=(later,))
+    with pytest.raises(ValueError, match="repeats"):
+        SourceCatalogues(packaged_vocabulary(), (first, second), DESCRIPTION)
+
+
+def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:
+    fields: dict[str, object] = {
+        "catalogue_id": "tool",
+        "catalogue_version": "0.1",
+        "producer": "tool",
+        "requires": ("tool", "provenance"),
+        "instruction": "run `tool`",
+        "entries": entries,
+    } | overrides
+    return ProducerCatalogue.model_validate(fields)
+
+
+def test_producer_entries_apply_to_every_rule() -> None:
+    """A producer writes its fields whatever the vendor, so its entries name no rule."""
+    with pytest.raises(ValueError, match="apply to every rule"):
+        _producer(_entry("PEP"))
+    assert _producer(_entry("PEP").model_copy(update={"rules": ()})).entries_on("ion")
+
+
+def test_a_required_run_comes_with_an_instruction() -> None:
+    """A pending answer must say what to run."""
+    with pytest.raises(ValueError, match="instruction"):
+        _producer(instruction=None)
+    with pytest.raises(ValueError, match="instruction"):
+        _producer(requires=())
+
+
+def test_a_producer_ran_when_the_result_records_it() -> None:
+    """The run is read from the metadata path the producer records it at."""
+    producer = _producer()
+    assert producer.ran({"tool": {"provenance": {}}})
+    assert not producer.ran({})
+    assert not producer.ran({"tool": ["provenance"]})
+    assert _producer(requires=(), instruction=None).ran({})
+    assert producer.pending_reason() == "tool has not run on this result; run `tool`"
+
+
+def test_a_varm_reference_names_its_table() -> None:
+    """A varm field lives in one named table; a var or layer field in none."""
+    Reference(level="ion", location="varm", name="flag", table="fasta_validation")
+    with pytest.raises(ValueError, match="table"):
+        Reference(level="ion", location="varm", name="flag")
+    with pytest.raises(ValueError, match="table"):
+        Reference(level="ion", location="var", name="flag", table="fasta_validation")
+
+
+def _producers(name: str) -> list[ProducerCatalogue]:
+    directory = resources.files("apb_catalog").joinpath("data", "producers", name)
+    if not directory.is_dir():
+        return []
+    return [
+        ProducerCatalogue.model_validate_json(path.read_text("utf-8"))
+        for path in sorted(directory.iterdir(), key=lambda path: path.name)
+    ]
+
+
+def test_each_miape_entry_declares_the_origin_of_its_file() -> None:
+    """Vendor files hold the vendor's fields; each producer file holds its producer's."""
+    wrong = [
+        entry.entry_id
+        for catalogue in _catalogues("miape")
+        for entry in catalogue.entries
+        if entry.qualifiers["origin"] != "vendor"
+    ]
+    wrong += [
+        entry.entry_id
+        for producer in _producers("miape")
+        for entry in producer.entries
+        if entry.qualifiers["origin"] != producer.catalogue_id
+    ]
+    assert wrong == []
+
+
+@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
+def test_vendor_files_hold_no_apb2_columns(name: str) -> None:
+    """APB2's canonical ProForma columns are not the vendor's; the APB2 catalogue holds them."""
+    canonical = [
+        entry.entry_id
+        for catalogue in _catalogues(name)
+        for entry in catalogue.entries
+        if entry.reference.name.startswith("ProForma_")
+    ]
+    assert canonical == []
+
+
+@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
+def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> None:
+    """A decoy or contaminant flag with no vendor input is false by declaration, not reported."""
+    constant = [
+        f"{entry.entry_id} under {rule}"
+        for catalogue in _catalogues(name)
+        for entry in catalogue.entries
+        if entry.reference.name in ("apb_Decoy", "apb_Contaminant")
+        for rule in entry.rules
+        if not declared_var_column(rule, entry.reference.level, entry.reference.name).get("inputs")
+    ]
+    assert constant == []
+
+
+@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
+def test_apb2_entries_name_columns_the_rules_write(name: str) -> None:
+    """Every APB2 entry names a canonical column some packaged rule writes on its level."""
+    unwritten = [
+        entry.entry_id
+        for producer in _producers(name)
+        if producer.catalogue_id == "apb2"
+        for entry in producer.entries
+        if not entry.reference.name.startswith("ProForma_")
+        or not any(
+            ("var", entry.reference.name) in retained_sources(rule, level)
+            for rule, level in effective_rules()
+            if level == entry.reference.level
+        )
+    ]
+    assert unwritten == []

@@ -1,0 +1,13 @@
+/* Coverage tables on the Catalogues page: field headers run vertically so every column fits. */
+.md-typeset .coverage-matrix table:not([class]) th,
+.md-typeset .coverage-matrix table:not([class]) td {
+  min-width: 0;
+  padding: 0.5em 0.5em;
+}
+
+.md-typeset .coverage-matrix table:not([class]) th:nth-child(n + 3) {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  vertical-align: middle;
+}

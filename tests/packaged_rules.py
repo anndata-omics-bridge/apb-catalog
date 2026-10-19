@@ -36,6 +36,14 @@ def declared_rule_json(rule: str, level: str) -> str:
     return _declarations()[(rule, level)][0]
 
 
+def declared_var_column(rule: str, level: str, name: str) -> dict[str, JsonValue]:
+    """Return one var column's declaration, as the first effective rule of a level states it."""
+    columns = cast(
+        dict[str, list[dict[str, JsonValue]]], effective_rules()[(rule, level)][0]["columns"]
+    )
+    return next(column for column in columns.get("var", []) if column["name"] == name)
+
+
 def retained_sources(rule: str, level: str) -> dict[tuple[str, str], str]:
     """Map every (location, APB name) a packaged rule level retains to its vendor source."""
     payload = effective_rules()[(rule, level)][0]

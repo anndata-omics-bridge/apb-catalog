@@ -13,12 +13,20 @@ from apb_catalog.vocabulary import UNKNOWN, FrozenModel
 
 type ResolutionStatus = Literal["resolved", "missing", "ambiguous", "unknown"]
 
+_READS: dict[Location, tuple[Location, ...]] = {
+    "layers": ("layers",),
+    "var": ("var", "varm"),
+    "varm": ("varm",),
+}
+"""The locations a request reads: ``var`` and ``varm`` both hold one value per feature."""
+
 
 class ConceptRequest(FrozenModel):
     """A consumer's question: one concept on one level, constrained by accepted qualifier values.
 
     Qualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer
-    could not establish that qualifier.
+    could not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``
+    tables.
     """
 
     concept: str
@@ -29,8 +37,12 @@ class ConceptRequest(FrozenModel):
     def selects(self, entry: SourceEntry, /) -> bool:
         """Whether an entry answers this concept at this level and location."""
         return entry.concept == self.concept and (
-            self.location is None or entry.reference.location == self.location
+            self.location is None or entry.reference.location in _READS[self.location]
         )
+
+    def admits(self, entry: SourceEntry) -> bool:
+        """Whether an entry answers this request apart from qualifiers it leaves unknown."""
+        return self.selects(entry) and not self.mismatched(entry.qualifiers)
 
     def mismatched(self, qualifiers: Mapping[str, str], /) -> tuple[str, ...]:
         """Return the requested qualifiers an entry's known values contradict."""
@@ -128,12 +140,25 @@ type LevelBinding = Annotated[ReviewedBinding | UnreviewedBinding, Field(discrim
 
 
 @dataclass(frozen=True, slots=True)
+class PendingEntry:
+    """An entry whose producer has not run on the result yet, and why it cannot answer."""
+
+    entry: SourceEntry
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
 class ReviewedLevel:
-    """A level with a reviewed rule; ``entries`` are those whose fields the result retains."""
+    """A level with a reviewed rule; ``entries`` are those whose fields the result retains.
+
+    ``pending`` entries belong to producers that have not run; a request they would answer is
+    ``unknown`` until the producer runs.
+    """
 
     level: str
     rule: ReviewedRule
     entries: tuple[SourceEntry, ...]
+    pending: tuple[PendingEntry, ...] = ()
 
     def binding(self) -> ReviewedBinding:
         """Describe how this level was bound to its catalogue."""
@@ -148,7 +173,7 @@ class ReviewedLevel:
         )
 
     def resolve(self, request: ConceptRequest, /) -> Resolution:
-        """Resolve only when exactly one entry matches and none is undecided."""
+        """Resolve only when exactly one entry matches, none is undecided and none is pending."""
         compatible = [
             Candidate(
                 entry_id=entry.entry_id,
@@ -157,11 +182,22 @@ class ReviewedLevel:
                 undecided=request.undecided(entry.qualifiers),
             )
             for entry in self.entries
-            if request.selects(entry) and not request.mismatched(entry.qualifiers)
+            if request.admits(entry)
         ]
+        waiting = [pending for pending in self.pending if request.admits(pending.entry)]
         matches = [candidate for candidate in compatible if not candidate.undecided]
         undecided = [candidate for candidate in compatible if candidate.undecided]
-        candidates = tuple(compatible)
+        candidates = (
+            *compatible,
+            *(
+                Candidate(
+                    entry_id=pending.entry.entry_id,
+                    reference=pending.entry.reference,
+                    qualifiers=pending.entry.qualifiers,
+                )
+                for pending in waiting
+            ),
+        )
         if len(matches) > 1:
             names = ", ".join(candidate.reference.name for candidate in matches)
             return Resolution(
@@ -169,6 +205,13 @@ class ReviewedLevel:
                 status="ambiguous",
                 candidates=candidates,
                 reasons=(f"{len(matches)} entries match: {names}",),
+            )
+        if waiting:
+            return Resolution(
+                request=request,
+                status="unknown",
+                candidates=candidates,
+                reasons=tuple(dict.fromkeys(pending.reason for pending in waiting)),
             )
         if undecided:
             return Resolution(

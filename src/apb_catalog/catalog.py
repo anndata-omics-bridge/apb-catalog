@@ -13,12 +13,14 @@ from apb2.api import FinalLayerTable, JsonValue, ParsedLevel, ParsedLevels
 from apb_catalog.resolver import (
     AbsentLevel,
     ConceptRequest,
+    PendingEntry,
     Resolution,
     ReviewedLevel,
     UnreviewedLevel,
 )
 from apb_catalog.snapshot import ResolutionSnapshot, this_producer
 from apb_catalog.source import (
+    Address,
     CatalogueDescription,
     Location,
     Reference,
@@ -48,7 +50,8 @@ class Catalog:
         self._name = catalogue
         self._catalogues = packaged_catalogues(catalogue)
         self._views: dict[str, ReviewedLevel | UnreviewedLevel] = {
-            name: level_view(name, level, self._catalogues) for name, level in parsed.levels.items()
+            name: level_view(name, level, self._catalogues, parsed.metadata)
+            for name, level in parsed.levels.items()
         }
         self._resolutions: list[Resolution] = []
 
@@ -87,11 +90,19 @@ class Catalog:
     def var(
         self, level: str, concept: str, kind: str | None = None, **qualifiers: str
     ) -> pl.Series | tuple[str, ...] | None:
-        """Return the per-feature column with this meaning, or the kinds on offer."""
+        """Return the per-feature column with this meaning, or the kinds on offer.
+
+        The column lives in ``var`` or in a feature-aligned ``varm`` table.
+        """
         if kind is None:
             return self._kinds(level, "var", concept, qualifiers)
         reference = self._find(level, "var", concept, qualifiers | {"kind": kind})
-        return None if reference is None else self._parsed.levels[level].var.frame[reference.name]
+        if reference is None:
+            return None
+        found = self._parsed.levels[level]
+        if reference.table is None:
+            return found.var.frame[reference.name]
+        return found.varm[reference.table][reference.name]
 
     def fields(self) -> pl.DataFrame:
         """List every catalogued field the result retains, one row per field."""
@@ -100,6 +111,7 @@ class Catalog:
                 {
                     "level": entry.reference.level,
                     "location": entry.reference.location,
+                    "table": entry.reference.table,
                     "name": entry.reference.name,
                     "concept": entry.concept,
                     **entry.qualifiers,
@@ -190,10 +202,17 @@ def rule_version(level: ParsedLevel) -> tuple[str, str, str] | None:
 
 
 def level_view(
-    name: str, level: ParsedLevel, catalogues: SourceCatalogues, /
+    name: str,
+    level: ParsedLevel,
+    catalogues: SourceCatalogues,
+    metadata: dict[str, JsonValue],
 ) -> ReviewedLevel | UnreviewedLevel:
     """Bind one level to the rule reviewed for its software and version, keeping only entries
-    whose fields it retains."""
+    whose fields it retains.
+
+    The vendor's entries come with every producer's entries for the level; a producer whose run
+    the result's ``metadata`` does not record leaves its entries pending.
+    """
     version = rule_version(level)
     if version is None:
         return UnreviewedLevel(name, None, None, "the level records no rule_json software version")
@@ -206,14 +225,20 @@ def level_view(
             pattern,
             f"no source catalogue reviewed {software} {pattern} {rule_level}",
         )
-    retained = {("layers", layer) for layer in level.layers}
-    retained |= {("var", column) for column in level.var.frame.columns}
-    entries = tuple(
-        entry
-        for entry in reviewed.entries()
-        if (entry.reference.location, entry.reference.name) in retained
-    )
-    return ReviewedLevel(name, reviewed, entries)
+    retained: set[Address] = {("layers", None, layer) for layer in level.layers}
+    retained |= {("var", None, column) for column in level.var.frame.columns}
+    retained |= {
+        ("varm", table, column) for table, frame in level.varm.items() for column in frame.columns
+    }
+    entries = [entry for entry in reviewed.entries() if entry.reference.address() in retained]
+    pending: list[PendingEntry] = []
+    for producer in catalogues.producers:
+        offered = producer.entries_on(rule_level)
+        if producer.ran(metadata):
+            entries.extend(entry for entry in offered if entry.reference.address() in retained)
+        else:
+            pending.extend(PendingEntry(entry, producer.pending_reason()) for entry in offered)
+    return ReviewedLevel(name, reviewed, tuple(entries), tuple(pending))
 
 
 def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> ParsedLevels:

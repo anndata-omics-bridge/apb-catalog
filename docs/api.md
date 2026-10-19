@@ -21,6 +21,8 @@ catalog = Catalog(parsed, "identification_confidence")
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Per run versus per feature is the choice between `layer` and `var`
 - Confidence lookups mean identification; pass `stage="quantification"` for Sage's MS1-peak q-value
+- `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`
+- In `miape`, `origin="vendor"`, `"apb2"` or `"apb_fasta"` chooses where two origins answer one kind
 - Misspelled concepts, kinds or catalogue names raise `ValueError`
 
 ## When there is no single answer
@@ -28,7 +30,8 @@ catalog = Catalog(parsed, "identification_confidence")
 `UnresolvedField` (from `apb_catalog.api`) is raised, naming the reason and the candidates, when:
 
 - two catalogued fields fit equally well, or
-- no catalogue variant names the level's software version, for example a new rule version, or a level produced by another tool
+- no catalogue variant names the level's software version, for example a new rule version, or a level produced by another tool, or
+- the field is apb-fasta's and `apb-fasta verify-peptides` has not run; the message names that command
 
 `None` means the result lacks the level, or its software version was reviewed and the field is not there.
 

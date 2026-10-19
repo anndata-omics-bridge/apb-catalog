@@ -18,6 +18,10 @@ A level binds to a catalogue variant by the `software_name` and `software_versio
 4. Catalogue only the fields that consumer reads
 5. List the set on [Catalogues](catalogues.md), in the [home page](index.md) table and in the README
 
+## APB's own fields
+
+Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/producers/<set>/<producer>.json`, not in the vendor files: APB2's canonical `ProForma_*` columns in `apb2.json`, apb-fasta's flags in `apb_fasta.json`. A producer entry lists no rules; it applies to every reviewed level that retains its column. A producer that runs after conversion declares `requires`, the metadata path recording its run, and `instruction`; until the result records that run, its entries answer `unknown` with the instruction. In `miape`, every entry declares `origin`: `vendor` in vendor files, the producer's id in producer files.
+
 ## Worked example
 
 ### Catalogue files
@@ -120,8 +124,13 @@ No test catches this. Fix: give each field its own kind, as `proteobench_entrapm
 | Entries: `test_entries_name_fields_the_rules_retain` | an entry's `reference` names a layer or var column one of its `rules` does not retain |
 | Vocabulary: `test_packaged_catalogues_load_against_the_vocabulary` | qualifiers miss one the concept declares or use a value it does not admit; an entry id repeats; an entry names an undeclared variant; two catalogues review one software version |
 | Descriptions: `test_every_packaged_set_states_its_purpose_and_users` | a set directory and `catalogues.json` disagree |
+| Origin: `test_each_miape_entry_declares_the_origin_of_its_file` | a `miape` entry's `origin` differs from the file it sits in |
+| Vendor columns: `test_vendor_files_hold_no_apb2_columns` | a vendor file names an APB2 `ProForma_*` column |
+| Vendor flags: `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | a vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
+| APB2 columns: `test_apb2_entries_name_columns_the_rules_write` | an APB2 entry names a column no packaged rule writes on its level |
+| Page: `test_the_catalogue_page_matches_the_generator` | the Catalogues page differs from `make docs-tables` |
 
-The first four live in `tests/test_source.py`, the last in `tests/test_catalog.py`.
+Descriptions live in `tests/test_catalog.py`, the page check in `tests/test_docs.py`, the others in `tests/test_source.py`.
 
 ```bash
 .venv/bin/pytest tests/test_source.py   # catalogue checks alone, while editing
@@ -129,4 +138,4 @@ make check     # format, lint, types, dependencies, tests, build, documentation
 make schema    # regenerate the snapshot JSON Schema after changing the snapshot model
 ```
 
-[Catalogues](catalogues.md) and the entry counts in the README are written by hand; no script generates them. Update them with every entry change.
+`make docs-tables` regenerates the kinds, coverage and entry tables of [Catalogues](catalogues.md) from the JSON; `tests/test_docs.py` fails until it has run. The prose on that page and the entry counts in the README are written by hand.

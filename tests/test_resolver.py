@@ -7,6 +7,7 @@ import pytest
 from apb_catalog.resolver import (
     AbsentLevel,
     ConceptRequest,
+    PendingEntry,
     Resolution,
     ReviewedLevel,
     UnreviewedLevel,
@@ -164,3 +165,37 @@ def test_unknown_is_a_reserved_qualifier_value() -> None:
     """The vocabulary cannot redefine ``unknown`` as an ordinary value."""
     with pytest.raises(ValueError, match="reserved"):
         Qualifier(definition="test", values={"unknown": "not allowed"})
+
+
+def test_a_pending_entry_makes_its_answer_unknown_with_the_reason() -> None:
+    """A field a producer has not written yet is not absent; the answer says what to run."""
+    pending = PendingEntry(_entry("Tool_Q", "var", kind="q_value"), "tool has not run; run `tool`")
+    catalogue = SourceCatalogue(
+        catalogue_id="vendor",
+        catalogue_version="0.1",
+        software_name="Vendor",
+        variants=(VARIANT,),
+        entries=(_entry("PEP"),),
+    )
+    level = ReviewedLevel("ion", ReviewedRule(catalogue, VARIANT), (_entry("PEP"),), (pending,))
+    answer = level.resolve(_request(location="var", kind=("q_value",)))
+    assert (answer.status, answer.reasons) == ("unknown", ("tool has not run; run `tool`",))
+    assert answer.offered("kind") == ("q_value",)
+    assert level.resolve(_request(kind=("pep",))).status == "resolved"
+
+
+def test_a_var_request_reads_varm_tables_too() -> None:
+    """var and varm both hold one value per feature, so a var request reads either."""
+    flag = SourceEntry.model_validate(
+        {
+            "entry_id": "vendor.ion.flag",
+            "rules": ("vendor/rules.json",),
+            "reference": {"level": "ion", "location": "varm", "name": "flag", "table": "checks"},
+            "concept": "confidence",
+            "qualifiers": {"kind": "pep", "stage": "identification"},
+            "evidence": Evidence(basis="test"),
+        }
+    )
+    level = _level(flag)
+    assert level.resolve(_request(location="var")).status == "resolved"
+    assert level.resolve(_request(location="layers")).status == "missing"

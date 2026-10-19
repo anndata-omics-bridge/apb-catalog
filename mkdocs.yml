@@ -33,6 +33,9 @@ nav:
   - Python API: api.md
   - Maintaining: maintaining.md
 
+extra_css:
+  - stylesheets/extra.css
+
 markdown_extensions:
   - admonition
   - attr_list

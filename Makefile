@@ -1,24 +1,24 @@
 VENV_BIN := .venv/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help sync format format-check lint typecheck deps test build docs check clean schema
+.PHONY: help sync format format-check lint typecheck deps test build docs docs-tables check clean schema
 
 help:  ## Show developer commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
-sync:  ## Synchronize the locked development environment
+sync:  ## Synchronize the development environment
 	uv sync --group dev
 
 format:  ## Format and autofix source and tests
-	$(VENV_BIN)/ruff format src tests
-	$(VENV_BIN)/ruff check --fix src tests
+	$(VENV_BIN)/ruff format src tests scripts
+	$(VENV_BIN)/ruff check --fix src tests scripts
 
 format-check:  ## Check formatting without changing files
-	$(VENV_BIN)/ruff format --check src tests
+	$(VENV_BIN)/ruff format --check src tests scripts
 
 lint:  ## Run Ruff lint checks
-	$(VENV_BIN)/ruff check src tests
+	$(VENV_BIN)/ruff check src tests scripts
 
 typecheck:  ## Run standard Pyright in strict mode
 	$(VENV_BIN)/pyright
@@ -35,6 +35,9 @@ schema:  ## Regenerate the published snapshot JSON Schema
 build:  ## Build and validate source and wheel distributions
 	uv build
 	$(VENV_BIN)/twine check dist/*
+
+docs-tables:  ## Regenerate the Catalogues page tables from the packaged catalogues
+	$(VENV_BIN)/python -m scripts.coverage_tables
 
 docs:  ## Build user documentation with strict warnings
 	uv run --group docs zensical build --clean --strict

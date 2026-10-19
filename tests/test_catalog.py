@@ -32,13 +32,21 @@ from apb_catalog.resolver import ReviewedBinding, UnresolvedField, UnreviewedBin
 from apb_catalog.source import packaged_descriptions
 from tests.packaged_rules import declared_rule_json
 
-type VarColumns = Mapping[str, Sequence[float] | Sequence[str]]
+type VarColumns = Mapping[str, Sequence[float] | Sequence[str] | Sequence[bool]]
 
 KEYS: dict[str, str] = {"ion": "ProForma_ion", "protein": "Protein_Group"}
+FASTA_RAN: dict[str, JsonValue] = {"fasta": {"provenance": {"peptide_verification": {}}}}
+FASTA_CONTAMINANTS = {
+    "fasta_validation": pl.DataFrame({"fasta_matches_contaminant": [True, False]})
+}
 
 
 def _level(
-    level: str, rule_json: str | None, layers: Sequence[str], var: VarColumns
+    level: str,
+    rule_json: str | None,
+    layers: Sequence[str],
+    var: VarColumns,
+    varm: Mapping[str, pl.DataFrame] | None = None,
 ) -> ParsedLevel:
     obs = pl.DataFrame({"Run": ["R1", "R2", "R3"]})
     key = KEYS[level]
@@ -55,7 +63,15 @@ def _level(
     if rule_json is not None:
         uns["provenance"] = {"rule_json": rule_json}
     return ParsedLevel.build(
-        obs, ("Run",), features, (key,), {}, primary_layer=layers[0], abundance=values, uns=uns
+        obs,
+        ("Run",),
+        features,
+        (key,),
+        {},
+        primary_layer=layers[0],
+        abundance=values,
+        uns=uns,
+        varm=varm,
     )
 
 
@@ -64,9 +80,15 @@ def _result(
     layers: Sequence[str],
     var: VarColumns | None = None,
     level: str = "ion",
+    varm: Mapping[str, pl.DataFrame] | None = None,
+    metadata: dict[str, JsonValue] | None = None,
 ) -> ParsedLevels:
     rule_json = declared_rule_json(rule, level) if rule is not None else None
-    return ParsedLevels(levels={level: _level(level, rule_json, layers, var or {})}, uns={})
+    return ParsedLevels(
+        levels={level: _level(level, rule_json, layers, var or {}, varm)},
+        uns={},
+        metadata=metadata or {},
+    )
 
 
 def _edited_maxquant(**changes: object) -> ParsedLevels:
@@ -141,10 +163,104 @@ def test_miape_names_the_columns_mipae_anndata_expects() -> None:
     assert raw is parsed.levels["protein"].layers["PG_MaxLFQ"]
 
 
-def test_an_ion_level_has_no_miape_modality() -> None:
-    catalog = Catalog(_result(*MAXQUANT), "miape")
-    assert catalog.layer("ion", concept="miape") is None
-    assert catalog.var("ion", concept="miape") is None
+DIANN_ION = {
+    "ProForma_peptidoform": ["PEPTIDE", "PEPTIDEK"],
+    "Precursor_Charge": [2.0, 3.0],
+    "Protein_Group": ["P1", "P1;P2"],
+    "apb_Decoy": [False, False],
+}
+
+
+def test_an_ion_level_answers_the_proposed_ion_modality() -> None:
+    parsed = _result("diann/v2/rules.json", ["Ms1_Normalised", "Q_Value"], DIANN_ION)
+    catalog = Catalog(parsed, "miape")
+    assert catalog.var("ion", concept="miape") == (
+        "charge",
+        "is_contaminant",
+        "is_decoy",
+        "peptidoform",
+        "peptidoform_ion",
+        "protein_group",
+    )
+    assert catalog.var("ion", concept="miape", origin="apb2") == ("peptidoform", "peptidoform_ion")
+    assert (
+        catalog.layer("ion", concept="miape", kind="raw")
+        is parsed.levels["ion"].layers["Ms1_Normalised"]
+    )
+    ion = catalog.var("ion", concept="miape", kind="peptidoform_ion")
+    assert ion is not None
+    assert ion.name == "ProForma_ion"
+
+
+def test_an_apb_fasta_field_is_unknown_until_apb_fasta_runs() -> None:
+    """A FASTA-based field never reads as absent before apb-fasta had a chance to write it."""
+    catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "miape")
+    with pytest.raises(UnresolvedField, match=r"apb-fasta has not run.*apb-fasta verify-peptides"):
+        catalog.var("ion", concept="miape", kind="is_contaminant")
+
+
+def test_an_apb_fasta_field_reads_its_varm_table() -> None:
+    """After apb-fasta, the contaminant flag comes from its feature-aligned varm table."""
+    parsed = _result(
+        "diann/v2/rules.json",
+        ["Ms1_Normalised"],
+        DIANN_ION,
+        varm=FASTA_CONTAMINANTS,
+        metadata=FASTA_RAN,
+    )
+    catalog = Catalog(parsed, "miape")
+    flag = catalog.var("ion", concept="miape", kind="is_contaminant")
+    assert flag is not None
+    assert flag.to_list() == [True, False]
+    tables = catalog.fields().filter(pl.col("kind") == "is_contaminant").get_column("table")
+    assert tables.to_list() == ["fasta_validation"]
+
+
+def test_origin_chooses_between_the_vendor_and_apb_fasta() -> None:
+    """FragPipe marks its own contaminants and apb-fasta marks the FASTA's: both answer."""
+    parsed = _result(
+        "fragpipe/rules.json",
+        ["Intensity"],
+        {"apb_Contaminant": [False, True]},
+        varm=FASTA_CONTAMINANTS,
+        metadata=FASTA_RAN,
+    )
+    catalog = Catalog(parsed, "miape")
+    with pytest.raises(UnresolvedField, match="ambiguous"):
+        catalog.var("ion", concept="miape", kind="is_contaminant")
+    vendor = catalog.var("ion", concept="miape", kind="is_contaminant", origin="vendor")
+    fasta = catalog.var("ion", concept="miape", kind="is_contaminant", origin="apb_fasta")
+    assert vendor is not None and vendor.to_list() == [False, True]
+    assert fasta is not None and fasta.to_list() == [True, False]
+
+
+def test_a_protein_assignment_that_is_no_group_answers_missing() -> None:
+    """MaxQuant's ion protein column falls back to mapped proteins, so it is not a group key."""
+    catalog = Catalog(_result(*MAXQUANT, var={"Protein_IDs": ["P1", "P2"]}), "miape")
+    assert catalog.var("ion", concept="miape", kind="protein_group") is None
+
+
+def test_a_vendor_without_its_own_flag_offers_none() -> None:
+    """DIA-NN marks no contaminants itself, so only apb-fasta can answer them."""
+    catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "miape")
+    assert catalog.var("ion", concept="miape", kind="is_contaminant", origin="vendor") is None
+
+
+def test_a_varm_lookup_survives_storage(tmp_path: Path) -> None:
+    """A snapshot naming a varm table reads back identically."""
+    parsed = _result(
+        "diann/v2/rules.json",
+        ["Ms1_Normalised"],
+        DIANN_ION,
+        varm=FASTA_CONTAMINANTS,
+        metadata=FASTA_RAN,
+    )
+    catalog = Catalog(parsed, "miape")
+    catalog.var("ion", concept="miape", kind="is_contaminant")
+    snapshot = catalog.snapshot()
+    target = tmp_path / "result.h5mu"
+    write_parsed_levels(attach_snapshot(parsed, snapshot), target)
+    assert stored_snapshot(read_parsed_levels(target), "miape") == snapshot
 
 
 def test_an_unknown_catalogue_set_is_rejected() -> None:
@@ -353,7 +469,12 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     assert stored["contract"] == "apb-catalog-resolution"
     answer = stored["resolutions"][0]
     assert answer["status"] == "resolved"
-    assert answer["reference"] == {"level": "ion", "location": "layers", "name": "PEP"}
+    assert answer["reference"] == {
+        "level": "ion",
+        "location": "layers",
+        "name": "PEP",
+        "table": None,
+    }
     entry = next(entry for entry in stored["entries"] if entry["reference"] == answer["reference"])
     assert entry["qualifiers"]["kind"] == "pep"
 

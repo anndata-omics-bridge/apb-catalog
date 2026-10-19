@@ -83,7 +83,7 @@
     },
     "ConceptRequest": {
       "additionalProperties": false,
-      "description": "A consumer's question: one concept on one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier.",
+      "description": "A consumer's question: one concept on one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``\ntables.",
       "properties": {
         "concept": {
           "title": "Concept",
@@ -169,7 +169,8 @@
     "Location": {
       "enum": [
         "layers",
-        "var"
+        "var",
+        "varm"
       ],
       "type": "string"
     },
@@ -218,7 +219,7 @@
     },
     "Reference": {
       "additionalProperties": false,
-      "description": "Where one retained field lives in an APB result, by its APB output name.",
+      "description": "Where one retained field lives in an APB result, by its APB output name.\n\nA ``varm`` field also names its feature-aligned table.",
       "properties": {
         "level": {
           "title": "Level",
@@ -230,6 +231,18 @@
         "name": {
           "title": "Name",
           "type": "string"
+        },
+        "table": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Table"
         }
       },
       "required": [
@@ -445,8 +458,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.3",
-      "default": "0.3",
+      "const": "0.4",
+      "default": "0.4",
       "title": "Contract Version",
       "type": "string"
     },
