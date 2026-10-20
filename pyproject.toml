@@ -25,9 +25,13 @@ classifiers = [
 ]
 dependencies = [
     "apb2>=0.1,<0.2",
+    "cyclopts>=4,<5",
     "polars>=1.43,<2",
     "pydantic>=2.10",
 ]
+
+[project.scripts]
+apb-catalog = "apb_catalog.cli:main"
 
 [project.urls]
 Documentation = "https://anndata-omics-bridge.github.io/apb-catalog/"

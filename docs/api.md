@@ -45,4 +45,29 @@ stored_snapshot(annotated, "identification_confidence")                   # read
 stale_levels(annotated, catalog.snapshot())               # levels whose software name or version changed since
 ```
 
-The snapshot is stored as JSON at `metadata["catalog"][<set>]["result"]`, beside other sets' snapshots, with each level's request counts in that level's `metadata["catalog"][<set>]["summary"]`. Both persist in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.3.schema.json`.
+The snapshot is stored as JSON at `metadata["catalog"][<set>]["result"]`, beside other sets' snapshots, with each level's request counts in that level's `metadata["catalog"][<set>]["summary"]`. Both persist in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, concept definitions, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.4.schema.json`.
+
+## Rule check
+
+```python
+from apb_catalog.api import catalogues, rule_coverage
+
+catalogues()             # one row per set: purpose, users, entries, whether it sets requirements
+rule_coverage("miape")   # one row per field of every packaged rule level, with the level's verdict
+```
+
+| Column | Meaning |
+| --- | --- |
+| `software`, `version`, `rule`, `level` | The packaged APB2 rule level; `version` is the concise reading of its version pattern |
+| `kind`, `qualifiers`, `origin` | The catalogued meaning; `qualifiers` holds the others as `key=value` |
+| `producer` | `APB2` or `apb-fasta` for fields APB writes; null for the vendor's own |
+| `requirement` | `MUST`, `SHOULD` or `MAY` where the set sets requirements |
+| `location`, `table`, `column` | Where the field lives; `column` is null when nothing supplies a required field |
+| `inputs` | The vendor columns APB2 computes the column from |
+| `needs` | What to run before the field exists, such as `apb-fasta verify-peptides` |
+| `verdict` | The level's: `fail` when a MUST field is unsupported, `warn` when a SHOULD or MAY field is, `pass` otherwise; null for sets without requirements |
+
+- Requirements live in `src/apb_catalog/data/requirements.json`, per set, level and kind; only `miape` sets them
+- APB2's fields count where the rule's level keeps their column; apb-fasta's count on every level, with `needs`
+- A level with no catalogued or required field has one row without a kind
+- The command line prints the same check: `apb-catalog check miape`, or `apb-catalog check miape spectronaut` for one vendor's fields; it exits 1 when a level fails

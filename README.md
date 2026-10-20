@@ -35,6 +35,17 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 - Where the vendor and apb-fasta both answer, as for FragPipe's contaminants, `origin="vendor"` or `origin="apb_fasta"` chooses
 - `attach_snapshot(parsed, catalog.snapshot())` records bindings and lookups in `metadata["catalog"][<catalogue>]["result"]`, and each level's request counts in its `metadata["catalog"][<catalogue>]["summary"]`
 
+## Rule check
+
+```bash
+apb-catalog                          # every catalogue set
+apb-catalog check miape              # FAIL, WARN or PASS per packaged rule level; exit 1 on a FAIL
+apb-catalog check miape spectronaut  # one vendor, with every field and its column
+```
+
+- `rule_coverage("miape")` returns the same check as a Polars frame, one row per field
+- A level fails when it misses a MUST field and warns when it misses a SHOULD or MAY one; `requirements.json` sets them, only for `miape`
+
 ## Catalogues
 
 - `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 19 entries

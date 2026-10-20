@@ -40,3 +40,26 @@ def test_siblings_are_imported_only_through_their_api() -> None:
         if module != f"{module.split('.')[0]}.api"
     ]
     assert offenders == []
+
+
+PACKAGE = "apb_catalog"
+
+
+def _package_modules(path: Path) -> list[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    modules: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module is not None and node.level == 0:
+            modules.append(node.module)
+    return [module for module in modules if module.split(".")[0] == PACKAGE]
+
+
+def test_the_cli_imports_its_package_only_through_the_api() -> None:
+    offenders = [
+        module
+        for module in _package_modules(ROOT / "src" / PACKAGE / "cli.py")
+        if module != f"{PACKAGE}.api"
+    ]
+    assert offenders == []

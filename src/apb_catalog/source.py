@@ -9,12 +9,15 @@ from functools import cache
 from importlib import resources
 from typing import Literal, cast
 
-from pydantic import model_validator
+from pydantic import TypeAdapter, model_validator
 
 from apb_catalog.vocabulary import FrozenModel, Vocabulary, packaged_vocabulary
 
 type Location = Literal["layers", "var", "varm"]
 type Address = tuple[Location, str | None, str]
+type Requirement = Literal["MUST", "SHOULD", "MAY"]
+type Requirements = Mapping[str, Mapping[str, Requirement]]
+"""The requirement level of each kind, per level, that a consumer's schema sets."""
 
 
 class Reference(FrozenModel):
@@ -164,9 +167,18 @@ class SourceCatalogues:
     """Source catalogues checked against one vocabulary and indexed by software and version.
 
     ``producers`` hold the fields APB itself writes; they apply to every reviewed level.
+    ``requirements`` are the consumer schema's requirement levels per level and kind; a set
+    without them is checked for coverage only.
     """
 
-    __slots__ = ("_by_version", "catalogues", "description", "producers", "vocabulary")
+    __slots__ = (
+        "_by_version",
+        "catalogues",
+        "description",
+        "producers",
+        "requirements",
+        "vocabulary",
+    )
 
     def __init__(
         self,
@@ -174,11 +186,13 @@ class SourceCatalogues:
         catalogues: tuple[SourceCatalogue, ...],
         description: CatalogueDescription,
         producers: tuple[ProducerCatalogue, ...] = (),
+        requirements: Requirements | None = None,
     ) -> None:
         self.vocabulary = vocabulary
         self.description = description
         self.catalogues = catalogues
         self.producers = producers
+        self.requirements: Requirements = requirements or {}
         self._by_version: dict[tuple[str, str, str], ReviewedRule] = {}
         entries = [entry for source in (*catalogues, *producers) for entry in source.entries]
         entry_ids = [entry.entry_id for entry in entries]
@@ -189,6 +203,15 @@ class SourceCatalogues:
                 vocabulary.concept(entry.concept).check_description(entry.qualifiers)
             except ValueError as error:
                 raise ValueError(f"{entry.entry_id}: {error}") from error
+        kinds = {
+            kind
+            for concept in {entry.concept for entry in entries}
+            for kind in vocabulary.concept(concept).qualifiers["kind"].values
+        }
+        for level, required in self.requirements.items():
+            unknown = sorted(set(required) - kinds)
+            if unknown:
+                raise ValueError(f"requirements on {level} name unknown kinds {unknown}")
         for catalogue in catalogues:
             for variant in catalogue.variants:
                 key = (catalogue.software_name, variant.software_version_pattern, variant.level)
@@ -220,6 +243,20 @@ def packaged_descriptions() -> dict[str, CatalogueDescription]:
     }
 
 
+_REQUIREMENTS = TypeAdapter(dict[str, dict[str, dict[str, Requirement]]])
+
+
+@cache
+def packaged_requirements() -> dict[str, dict[str, dict[str, Requirement]]]:
+    """Return the requirement levels of every packaged set that has them, by set name."""
+    text = resources.files("apb_catalog").joinpath("data", "requirements.json").read_text("utf-8")
+    requirements = _REQUIREMENTS.validate_json(text)
+    unknown = sorted(set(requirements) - set(packaged_descriptions()))
+    if unknown:
+        raise ValueError(f"requirements for unknown catalogues {unknown}")
+    return requirements
+
+
 @cache
 def packaged_catalogues(name: str, /) -> SourceCatalogues:
     """Load and cross-check one packaged catalogue set against the shared vocabulary."""
@@ -242,4 +279,10 @@ def packaged_catalogues(name: str, /) -> SourceCatalogues:
         if producer_directory.is_dir()
         else ()
     )
-    return SourceCatalogues(packaged_vocabulary(), catalogues, descriptions[name], producers)
+    return SourceCatalogues(
+        packaged_vocabulary(),
+        catalogues,
+        descriptions[name],
+        producers,
+        packaged_requirements().get(name),
+    )

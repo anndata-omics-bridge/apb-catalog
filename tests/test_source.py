@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib import resources
+from typing import cast
 
 import pytest
 
@@ -285,3 +286,36 @@ def test_apb2_entries_name_columns_the_rules_write(name: str) -> None:
         )
     ]
     assert unwritten == []
+
+
+def test_every_peptide_derived_level_names_a_protein_group() -> None:
+    sources = packaged_catalogues("miape")
+    missing = [
+        f"{variant.rule} {variant.level}"
+        for catalogue in sources.catalogues
+        for variant in catalogue.variants
+        if variant.level in ("peptide", "peptidoform", "ion")
+        and not any(
+            entry.qualifiers["kind"] == "protein_group" for entry in catalogue.entries_for(variant)
+        )
+    ]
+    assert missing == []
+
+
+def test_an_ion_protein_group_joins_the_protein_level() -> None:
+    """Where a rule also has a protein level, the ion's group is the column APB2 links them by."""
+    unjoined: list[str] = []
+    for catalogue in packaged_catalogues("miape").catalogues:
+        with_proteins = {
+            variant.rule for variant in catalogue.variants if variant.level == "protein"
+        }
+        for variant in catalogue.variants:
+            if variant.level != "ion" or variant.rule not in with_proteins:
+                continue
+            for entry in catalogue.entries_for(variant):
+                if entry.qualifiers["kind"] != "protein_group":
+                    continue
+                column = declared_var_column(variant.rule, "ion", entry.reference.name)
+                if "protein_assignment" not in cast(list[str], column.get("roles") or []):
+                    unjoined.append(f"{variant.rule}: {entry.reference.name}")
+    assert unjoined == []

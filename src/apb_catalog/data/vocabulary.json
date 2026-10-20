@@ -1,5 +1,5 @@
 {
-  "vocabulary_version": "0.4",
+  "vocabulary_version": "0.5",
   "concepts": {
     "confidence": {
       "definition": "How likely an identification, or the signal quantified for it, is correct, as the producing software reports it.",

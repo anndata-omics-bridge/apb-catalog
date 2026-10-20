@@ -10,6 +10,10 @@ A level binds to a catalogue variant by the `software_name` and `software_versio
 4. Changed software name or version pattern: edit the catalogue's `software_name` or the variant's pattern; the variant test reports each mismatch
 5. New vendor: add `<vendor>.json` to every set, with `"entries": []` where the set needs nothing from it
 
+## Checking the rules
+
+`apb-catalog check <set>` prints one line per packaged rule level, FAIL, WARN or PASS with its unsupported fields, and exits 1 when a level misses a MUST field; `apb-catalog check <set> <software>` adds every field and the column answering it. A set's requirement levels live in `src/apb_catalog/data/requirements.json`; a set without them gets coverage only.
+
 ## Adding a consumer
 
 1. Add `src/apb_catalog/data/sources/<set>/` with one catalogue per vendor, covering every packaged rule level
@@ -128,9 +132,12 @@ No test catches this. Fix: give each field its own kind, as `proteobench_entrapm
 | Vendor columns: `test_vendor_files_hold_no_apb2_columns` | a vendor file names an APB2 `ProForma_*` column |
 | Vendor flags: `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | a vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
 | APB2 columns: `test_apb2_entries_name_columns_the_rules_write` | an APB2 entry names a column no packaged rule writes on its level |
+| Protein groups: `test_every_peptide_derived_level_names_a_protein_group` | a reviewed `miape` peptide, peptidoform or ion level has no `protein_group` entry |
+| Join: `test_an_ion_protein_group_joins_the_protein_level` | an ion `protein_group` entry, on a rule with a protein level, names a column without APB2's `protein_assignment` role |
+| Requirements: `test_requirements_must_name_vocabulary_kinds` | `requirements.json` names a kind the set's concept does not define |
 | Page: `test_the_catalogue_page_matches_the_generator` | the Catalogues page differs from `make docs-tables` |
 
-Descriptions live in `tests/test_catalog.py`, the page check in `tests/test_docs.py`, the others in `tests/test_source.py`.
+Descriptions live in `tests/test_catalog.py`, requirements in `tests/test_coverage.py`, the page check in `tests/test_docs.py`, the others in `tests/test_source.py`.
 
 ```bash
 .venv/bin/pytest tests/test_source.py   # catalogue checks alone, while editing

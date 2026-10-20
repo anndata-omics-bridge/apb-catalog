@@ -178,6 +178,7 @@ def test_an_ion_level_answers_the_proposed_ion_modality() -> None:
         "charge",
         "is_contaminant",
         "is_decoy",
+        "is_unique",
         "peptidoform",
         "peptidoform_ion",
         "protein_group",
@@ -234,10 +235,12 @@ def test_origin_chooses_between_the_vendor_and_apb_fasta() -> None:
     assert fasta is not None and fasta.to_list() == [True, False]
 
 
-def test_a_protein_assignment_that_is_no_group_answers_missing() -> None:
-    """MaxQuant's ion protein column falls back to mapped proteins, so it is not a group key."""
+def test_an_ion_protein_group_is_its_protein_assignment() -> None:
+    """MaxQuant's ions carry the group's Protein IDs, the column APB2 links ions to proteins by."""
     catalog = Catalog(_result(*MAXQUANT, var={"Protein_IDs": ["P1", "P2"]}), "miape")
-    assert catalog.var("ion", concept="miape", kind="protein_group") is None
+    group = catalog.var("ion", concept="miape", kind="protein_group")
+    assert group is not None
+    assert group.name == "Protein_IDs"
 
 
 def test_a_vendor_without_its_own_flag_offers_none() -> None:
