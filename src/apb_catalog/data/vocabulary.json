@@ -1,6 +1,28 @@
 {
-  "vocabulary_version": "0.6",
+  "vocabulary_version": "0.7",
   "concepts": {
+    "abundance": {
+      "definition": "A quantity an APB2 rule marks with the layer role abundance: what it measures, and whether the producing software normalises it across runs.",
+      "qualifiers": {
+        "kind": {
+          "definition": "What the value measures.",
+          "values": {
+            "intensity": "A measured signal of the level's feature, summed, integrated or at apex, at the MS level the software quantifies on.",
+            "ms1_intensity": "A measured MS1 signal, reported beside the software's fragment-based quantity.",
+            "maxlfq": "A MaxLFQ estimate: delayed normalisation and maximal peptide-ratio extraction (Cox et al. 2014).",
+            "ibaq": "Intensity-based absolute quantification: summed intensity divided by the number of theoretically observable peptides.",
+            "directlfq": "A directLFQ estimate (Ammar et al. 2023)."
+          }
+        },
+        "normalisation": {
+          "definition": "Whether the producing software normalises the value across runs; which method a run used is not catalogued.",
+          "values": {
+            "none": "The software never normalises this column.",
+            "run_setting": "The column carries whatever cross-run normalisation the run's settings chose, possibly none."
+          }
+        }
+      }
+    },
     "confidence": {
       "definition": "How likely an identification, or the signal quantified for it, is correct, as the producing software reports it.",
       "qualifiers": {

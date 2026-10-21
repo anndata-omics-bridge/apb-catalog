@@ -158,7 +158,7 @@ def test_request_predicates_are_checked_against_the_vocabulary() -> None:
     with pytest.raises(ValueError, match="accepts no value"):
         concept.check_predicate({"kind": ()})
     with pytest.raises(ValueError, match="unknown concept"):
-        packaged_vocabulary().concept("abundance")
+        packaged_vocabulary().concept("retention")
 
 
 def test_unknown_is_a_reserved_qualifier_value() -> None:

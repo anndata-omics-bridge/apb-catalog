@@ -1,0 +1,109 @@
+{
+  "catalogue_id": "alphapept",
+  "catalogue_version": "0.1",
+  "software_name": "AlphaPept",
+  "variants": [
+    {
+      "rule": "alphapept/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^0\\.5\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "alphapept.ion.Intensity",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "ms1_int_sum_apex_dn: AlphaPept's summed MS1 apex intensity after its delayed normalisation, the _dn suffix."
+      }
+    },
+    {
+      "entry_id": "alphapept.ion.MS1_Int_Sum_Apex",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "MS1_Int_Sum_Apex"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "ms1_int_sum_apex: summed MS1 apex intensity, before AlphaPept's delayed normalisation."
+      }
+    },
+    {
+      "entry_id": "alphapept.ion.MS1_Int_Sum_Area",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "MS1_Int_Sum_Area"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "ms1_int_sum_area: summed MS1 peak area, before AlphaPept's delayed normalisation."
+      }
+    },
+    {
+      "entry_id": "alphapept.ion.MS1_Int_Max_Apex",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "MS1_Int_Max_Apex"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "ms1_int_max_apex: maximal MS1 apex intensity, before AlphaPept's delayed normalisation."
+      }
+    },
+    {
+      "entry_id": "alphapept.ion.MS1_Int_Max_Area",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "MS1_Int_Max_Area"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "ms1_int_max_area: maximal MS1 peak area, before AlphaPept's delayed normalisation."
+      }
+    }
+  ]
+}

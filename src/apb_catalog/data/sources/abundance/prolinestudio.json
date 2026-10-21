@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "prolinestudio",
+  "catalogue_version": "0.1",
+  "software_name": "ProlineStudio",
+  "variants": [
+    {
+      "rule": "prolinestudio/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^2\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "prolinestudio.ion.Abundance",
+      "rules": [
+        "prolinestudio/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "abundance_<sample>: Proline's precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."
+      }
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "catalogue_id": "alphadia",
+  "catalogue_version": "0.1",
+  "software_name": "AlphaDIA",
+  "variants": [
+    {
+      "rule": "alphadia/v1_10/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\.10(?:\\.|-|$)"
+    },
+    {
+      "rule": "alphadia/v1_12/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\.12(?:\\.|-|$)"
+    },
+    {
+      "rule": "alphadia/v2/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^2\\."
+    },
+    {
+      "rule": "alphadia/v2/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^2\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "alphadia.ion.Intensity",
+      "rules": [
+        "alphadia/v1_10/rules.json",
+        "alphadia/v1_12/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "directlfq",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "AlphaDIA's precursor-level directLFQ intensity matrix; normalised when the run sets search_output.normalize_lfq, on by default.",
+        "source": "https://doi.org/10.1016/j.mcpro.2023.100581"
+      }
+    },
+    {
+      "entry_id": "alphadia.ion.Precursor_Intensity",
+      "rules": [
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Precursor_Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "directlfq",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "precursor.intensity: AlphaDIA's precursor-level directLFQ intensity; normalised when the run sets search_output.normalize_directlfq, on by default.",
+        "source": "https://doi.org/10.1016/j.mcpro.2023.100581"
+      }
+    },
+    {
+      "entry_id": "alphadia.protein.PG_Intensity",
+      "rules": [
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "PG_Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "directlfq",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "pg.intensity: AlphaDIA's protein-group directLFQ intensity; normalised when the run sets search_output.normalize_directlfq, on by default.",
+        "source": "https://doi.org/10.1016/j.mcpro.2023.100581"
+      }
+    }
+  ]
+}

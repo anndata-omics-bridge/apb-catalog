@@ -274,7 +274,7 @@ def test_an_unknown_kind_or_concept_is_rejected() -> None:
     with pytest.raises(ValueError, match="does not admit"):
         catalog.layer("ion", concept="confidence", kind="pepp")
     with pytest.raises(ValueError, match="unknown concept"):
-        catalog.layer("ion", concept="abundance", kind="raw")
+        catalog.layer("ion", concept="retention", kind="raw")
 
 
 def test_leaving_out_kind_lists_the_kinds_on_offer() -> None:
@@ -489,6 +489,30 @@ def test_proteobench_entrapment_offers_each_precursor_q_value_as_its_own_kind() 
         Catalog(_result(*MAXQUANT), "proteobench_entrapment").layer("ion", concept="confidence")
         is None
     )
+
+
+def test_abundance_finds_the_un_normalised_layer_where_one_exists() -> None:
+    """DIA-NN writes its precursor quantity before and after normalisation; PEAKS only after."""
+    layers = ["Precursor_Normalised", "Precursor_Quantity", "Ms1_Area", "Ms1_Normalised"]
+    parsed = _result("diann/v1_8/rules.json", layers)
+    catalog = Catalog(parsed, "abundance")
+    ion = parsed.levels["ion"].layers
+    raw = catalog.layer("ion", concept="abundance", kind="intensity", normalisation="none")
+    assert raw is ion["Precursor_Quantity"]
+    normalised = catalog.layer(
+        "ion", concept="abundance", kind="intensity", normalisation="run_setting"
+    )
+    assert normalised is ion["Precursor_Normalised"]
+    peaks = Catalog(_result("peaks/rules.json", ["Normalized_Area"]), "abundance")
+    assert peaks.layer("ion", concept="abundance", kind="intensity", normalisation="none") is None
+
+
+def test_an_undocumented_normalisation_is_unknown_not_missing() -> None:
+    """A consumer can tell a layer nobody documented from a layer that does not exist."""
+    catalog = Catalog(_result("fragpipe/rules.json", ["Intensity"]), "abundance")
+    with pytest.raises(UnresolvedField) as raised:
+        catalog.layer("ion", concept="abundance", kind="intensity", normalisation="none")
+    assert raised.value.resolution.status == "unknown"
 
 
 def test_each_level_counts_the_requests_its_snapshot_answered() -> None:

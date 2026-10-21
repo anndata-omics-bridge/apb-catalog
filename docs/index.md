@@ -14,10 +14,11 @@ pep = catalog.layer("ion", concept="confidence", kind="pep")
 
 ## Catalogues per consumer
 
-A catalogue annotates only what one consumer needs, never every vendor column.
+A catalogue annotates what its consumers need, never every vendor column; `abundance` describes the layers of one APB2 role.
 
 | Set | Used by | Annotates |
 | --- | --- | --- |
+| `abundance` | apb-proteobench modules that ask for an un-normalised layer | Every layer APB2 marks `abundance`: what it measures and whether the software normalises it |
 | `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
 | `proteobench_entrapment` | apb-proteobench entrapment scoring | Run, library and experiment-wide precursor q-values, each its own kind |
 
@@ -32,6 +33,7 @@ Rule of thumb:
 - Meaning several tools need, or apb2 itself defines → role in `rules.json`
 - Meaning one consumer or an external standard needs → catalogue
 - A catalogue copy of a role would be a second source of truth
+- Qualifying a role is not a copy: `abundance` adds kind and normalisation to the layers APB2 marks `abundance`, and a test keeps its entries equal to those layers
 
 ## How it stays correct
 
@@ -43,6 +45,6 @@ Rule of thumb:
 ## Pages
 
 - [Get started](getting-started.md): install, look up, use the data
-- [Catalogues](catalogues.md): every entry of both packaged sets
+- [Catalogues](catalogues.md): every entry of every packaged set
 - [Python API](api.md): lookups, errors and snapshots
 - [Maintaining](maintaining.md): APB2 rule changes, new consumers, a worked catalogue example

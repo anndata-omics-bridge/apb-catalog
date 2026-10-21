@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "i2masschroq",
+  "catalogue_version": "0.1",
+  "software_name": "i2MassChroQ",
+  "variants": [
+    {
+      "rule": "i2masschroq/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "i2masschroq.ion.Intensity",
+      "rules": [
+        "i2masschroq/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "area: MassChroQ's extracted ion chromatogram area per run. Whether the run's settings can normalise this column is not established."
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "peaks",
+  "catalogue_version": "0.1",
+  "software_name": "PEAKS",
+  "variants": [
+    {
+      "rule": "peaks/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^13(?:\\.|\\s|$)"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "peaks.ion.Normalized_Area",
+      "rules": [
+        "peaks/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Normalized_Area"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "<sample> Normalized Area: the feature area after PEAKS's normalisation; the run's Normalization Method, such as TIC or No Normalization, decides."
+      }
+    }
+  ]
+}

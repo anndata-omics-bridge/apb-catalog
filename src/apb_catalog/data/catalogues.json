@@ -1,4 +1,10 @@
 {
+  "abundance": {
+    "purpose": "What each abundance layer APB2 writes measures, and whether the software normalises it across runs: intensity, MS1 intensity, MaxLFQ, iBAQ or directLFQ, normalised never or as the run's settings chose. Every layer an APB2 rule marks with the role abundance carries an entry, except DIA-NN's gene-group Genes.MaxLFQ on the protein-group level.",
+    "used_by": [
+      "apb-proteobench: modules that ask for an abundance normalisation, such as dia_plasma"
+    ]
+  },
   "identification_confidence": {
     "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, DIA-NN's and Spectronaut's protein-group q-values per run, per library and across the experiment, and MaxQuant's across the experiment. Scores, vendor summaries and other vendors' protein-level confidence are left out.",
     "used_by": [

@@ -1,0 +1,165 @@
+{
+  "catalogue_id": "maxquant",
+  "catalogue_version": "0.1",
+  "software_name": "MaxQuant",
+  "variants": [
+    {
+      "rule": "maxquant_wide/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
+    },
+    {
+      "rule": "maxquant_wide/rules.json",
+      "level": "peptidoform",
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
+    },
+    {
+      "rule": "maxquant_wide/rules.json",
+      "level": "peptide",
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
+    },
+    {
+      "rule": "maxquant_wide/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "maxquant.ion.Intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "evidence.txt Intensity: the summed extracted ion current of the feature's isotope clusters, never normalised."
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.Intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "modificationSpecificPeptides.txt Intensity <run>: summed peptide intensity, never normalised."
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.Intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "peptides.txt Intensity <run>: summed peptide intensity, never normalised."
+      }
+    },
+    {
+      "entry_id": "maxquant.peptide.LFQ_Intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptide",
+        "location": "layers",
+        "name": "LFQ_Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "maxlfq",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "peptides.txt LFQ intensity <run>: MaxLFQ, with delayed normalisation unless the run skips it; present only when the run enables LFQ.",
+        "source": "https://doi.org/10.1074/mcp.M113.031591"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.Intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "proteinGroups.txt Intensity <run>: the protein group's summed peptide intensities, never normalised."
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.LFQ_Intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "LFQ_Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "maxlfq",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "proteinGroups.txt LFQ intensity <run>: MaxLFQ, with delayed normalisation unless the run skips it; present only when the run enables LFQ.",
+        "source": "https://doi.org/10.1074/mcp.M113.031591"
+      }
+    },
+    {
+      "entry_id": "maxquant.protein.iBAQ",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "iBAQ"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "ibaq",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "proteinGroups.txt iBAQ <run>: summed intensity divided by the number of theoretically observable peptides, from un-normalised intensities.",
+        "source": "https://doi.org/10.1038/nature10098"
+      }
+    }
+  ]
+}

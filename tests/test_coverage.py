@@ -151,6 +151,7 @@ def test_every_packaged_set_is_listed() -> None:
     """No packaged set sets requirements; every set has entries."""
     listed = catalogues()
     assert listed.get_column("catalogue").to_list() == [
+        "abundance",
         "identification_confidence",
         "proteobench_entrapment",
     ]

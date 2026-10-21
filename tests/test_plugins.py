@@ -17,6 +17,7 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
     """The overview counts its entries and reports its requirements."""
     listed = catalogues()
     assert listed.get_column("catalogue").to_list() == [
+        "abundance",
         "identification_confidence",
         "proteobench_entrapment",
         toy_set,

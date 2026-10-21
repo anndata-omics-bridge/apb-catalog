@@ -19,7 +19,7 @@ A level binds to a catalogue variant by the `software_name` and `software_versio
 1. Add `src/apb_catalog/data/sources/<set>/` with one catalogue per vendor, covering every packaged rule level
 2. Add the set's purpose and users to `src/apb_catalog/data/catalogues.json`
 3. Add a concept and its qualifiers to `src/apb_catalog/data/vocabulary.json`, only if no existing concept fits
-4. Catalogue only the fields that consumer reads
+4. Catalogue only the fields that consumer reads, or, for a set that describes one APB2 role such as `abundance`, every field with that role
 5. List the set on [Catalogues](catalogues.md), in the [home page](index.md) table and in the README
 
 ## Plugin sets
@@ -149,6 +149,7 @@ No test catches this. Fix: give each field its own kind, as `proteobench_entrapm
 | Descriptions: `test_every_packaged_set_states_its_purpose_and_users` | a set directory and `catalogues.json` disagree |
 | Vendor columns: `test_vendor_files_hold_no_apb2_columns` | a vendor file names an APB2 `ProForma_*` column |
 | Vendor flags: `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | a vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
+| Abundance layers: `test_abundance_entries_are_the_layers_apb2_marks_abundance` | an APB2 rule marks a layer `abundance` that the `abundance` set does not catalogue, or the set names a layer without the role |
 | APB2 columns: `test_apb2_entries_name_columns_the_rules_write` | an APB2 producer entry of any set names a column no packaged rule writes on its level |
 | Requirements: `test_requirements_must_name_vocabulary_kinds` | `requirements.json` names a kind the set's concept does not define |
 | Page: `test_the_catalogue_page_matches_the_generator` | the Catalogues page differs from `make docs-tables` |

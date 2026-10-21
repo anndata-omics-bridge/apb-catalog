@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "metamorpheus",
+  "catalogue_version": "0.1",
+  "software_name": "MetaMorpheus",
+  "variants": [
+    {
+      "rule": "metamorpheus/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "metamorpheus.ion.Intensity",
+      "rules": [
+        "metamorpheus/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "Peak intensity in AllQuantifiedPeaks.tsv: FlashLFQ's peak intensity. FlashLFQ has a Normalize setting, but whether this file carries it is not established."
+      }
+    }
+  ]
+}

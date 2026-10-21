@@ -1,0 +1,236 @@
+{
+  "catalogue_id": "spectronaut",
+  "catalogue_version": "0.1",
+  "software_name": "Spectronaut",
+  "variants": [
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^15\\..*"
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^15\\..*"
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "fragment",
+      "software_version_pattern": "^15\\..*"
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^(19|20)\\..*"
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^(19|20)\\..*"
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "fragment",
+      "software_version_pattern": "^(19|20)\\..*"
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^21\\..*"
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^21\\..*"
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "fragment",
+      "software_version_pattern": "^21\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "spectronaut.ion.FG_Quantity",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "FG_Quantity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "FG.Quantity: the precursor quantity at the run's quantity MS level, after cross-run normalisation when the run enables it. The Cross-Run Normalization setting decides; its parameter file states it."
+      }
+    },
+    {
+      "entry_id": "spectronaut.ion.FG_MS2RawQuantity",
+      "rules": [
+        "spectronaut/v15/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "FG_MS2RawQuantity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "FG.MS2RawQuantity: the precursor's MS2 quantity before normalisation; FG.Quantity's source when the run quantifies on MS2, the default."
+      }
+    },
+    {
+      "entry_id": "spectronaut.ion.FG_MS1RawQuantity",
+      "rules": [
+        "spectronaut/v15/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "FG_MS1RawQuantity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "ms1_intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "FG.MS1RawQuantity: the precursor's MS1 quantity before normalisation."
+      }
+    },
+    {
+      "entry_id": "spectronaut.ion.EG_TotalQuantity_Settings",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_TotalQuantity_Settings"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "EG.TotalQuantity (Settings): the elution group's total quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
+      }
+    },
+    {
+      "entry_id": "spectronaut.ion.EG_TargetQuantity_Settings",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_TargetQuantity_Settings"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "EG.TargetQuantity (Settings): the elution group's target-channel quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
+      }
+    },
+    {
+      "entry_id": "spectronaut.ion.EG_ReferenceQuantity_Settings",
+      "rules": [
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "EG_ReferenceQuantity_Settings"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "EG.ReferenceQuantity (Settings): the elution group's reference-channel quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
+      }
+    },
+    {
+      "entry_id": "spectronaut.protein.PG_Quantity",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "PG_Quantity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "unknown",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "PG.Quantity: the protein-group quantity from normalised precursor quantities; the run's protein quantity method, such as a top-N mean or MaxLFQ, decides the kind. The Cross-Run Normalization setting decides; its parameter file states it."
+      }
+    },
+    {
+      "entry_id": "spectronaut.fragment.F_PeakArea",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "fragment",
+        "location": "layers",
+        "name": "F_PeakArea"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "F.PeakArea: the fragment's peak area; Spectronaut writes its normalised area as a separate column, F.NormalizedPeakArea."
+      }
+    },
+    {
+      "entry_id": "spectronaut.fragment.F_PeakHeight",
+      "rules": [
+        "spectronaut/v15/rules.json"
+      ],
+      "reference": {
+        "level": "fragment",
+        "location": "layers",
+        "name": "F_PeakHeight"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "F.PeakHeight: the height of the fragment's extracted ion chromatogram; Spectronaut's normalised fragment value is the separate F.NormalizedPeakArea."
+      }
+    }
+  ]
+}

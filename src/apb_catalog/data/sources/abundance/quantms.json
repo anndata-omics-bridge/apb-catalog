@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "quantms",
+  "catalogue_version": "0.1",
+  "software_name": "quantms",
+  "variants": [
+    {
+      "rule": "quantms/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^v?1\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "quantms.ion.Intensity",
+      "rules": [
+        "quantms/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "Intensity in msstats_in.csv: OpenMS's feature intensity, before MSstats. Whether the run's settings can normalise this column is not established."
+      }
+    }
+  ]
+}

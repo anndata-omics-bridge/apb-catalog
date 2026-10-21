@@ -1,0 +1,52 @@
+{
+  "catalogue_id": "msangel",
+  "catalogue_version": "0.1",
+  "software_name": "MSAngel",
+  "variants": [
+    {
+      "rule": "msangel/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^2\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "msangel.ion.Abundance",
+      "rules": [
+        "msangel/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "abundance_<sample>: Proline's precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."
+      }
+    },
+    {
+      "entry_id": "msangel.ion.Raw_Abundance",
+      "rules": [
+        "msangel/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Raw_Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "none"
+      },
+      "evidence": {
+        "basis": "raw_abundance_<sample>: Proline's raw precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."
+      }
+    }
+  ]
+}

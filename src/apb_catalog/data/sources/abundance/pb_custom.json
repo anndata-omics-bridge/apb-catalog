@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "pb_custom",
+  "catalogue_version": "0.1",
+  "software_name": "pb_custom",
+  "variants": [
+    {
+      "rule": "pb_custom/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^.*$"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "pb_custom.ion.Intensity",
+      "rules": [
+        "pb_custom/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "ProteoBench's custom format: intensities the submitter supplies, with no parameter file to say how they were made."
+      }
+    }
+  ]
+}

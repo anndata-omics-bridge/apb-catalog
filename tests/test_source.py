@@ -22,6 +22,7 @@ from apb_catalog.source import (
 )
 from apb_catalog.vocabulary import packaged_vocabulary
 from tests.packaged_rules import (
+    abundance_layers,
     declared_software_versions,
     declared_var_column,
     effective_rules,
@@ -122,6 +123,27 @@ def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
         for software, version in declared_software_versions(rule, level)
     }
     assert packaged - reviewed == set()
+
+
+ABUNDANCE_LEFT_OUT = {("protein", "Genes_MaxLFQ")}
+"""DIA-NN's gene-group quantity sits on the protein-group level, which answers for its own entity."""
+
+
+def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
+    """A new abundance layer in an APB2 rule fails here until a reviewer catalogues it."""
+    catalogued = {
+        (rule, entry.reference.level, entry.reference.name)
+        for catalogue in _catalogues("abundance")
+        for entry in catalogue.entries
+        for rule in entry.rules
+    }
+    marked = {
+        (rule, level, name)
+        for rule, level in effective_rules()
+        for name in abundance_layers(rule, level)
+        if (level, name) not in ABUNDANCE_LEFT_OUT
+    }
+    assert catalogued == marked
 
 
 def test_an_entry_must_use_a_declared_rule_variant() -> None:

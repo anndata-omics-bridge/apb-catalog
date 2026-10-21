@@ -44,6 +44,17 @@ def declared_var_column(rule: str, level: str, name: str) -> dict[str, JsonValue
     return next(column for column in columns.get("var", []) if column["name"] == name)
 
 
+def abundance_layers(rule: str, level: str) -> set[str]:
+    """Return the layers a packaged rule level marks with the role ``abundance``."""
+    payload = effective_rules()[(rule, level)][0]
+    measurements = cast(dict[str, list[dict[str, JsonValue]]], payload["measurements"])
+    return {
+        str(layer["name"])
+        for layer in measurements["layers"]
+        if "abundance" in cast(list[str], layer.get("roles", []))
+    }
+
+
 def retained_sources(rule: str, level: str) -> dict[tuple[str, str], str]:
     """Map every (location, APB name) a packaged rule level retains to its vendor source."""
     payload = effective_rules()[(rule, level)][0]

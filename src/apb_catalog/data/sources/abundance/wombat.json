@@ -1,0 +1,57 @@
+{
+  "catalogue_id": "wombat",
+  "catalogue_version": "0.1",
+  "software_name": "WOMBAT",
+  "variants": [
+    {
+      "rule": "wombat/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^0\\.9\\.11$"
+    },
+    {
+      "rule": "wombat/rules.json",
+      "level": "peptidoform",
+      "software_version_pattern": "^0\\.9\\.11$"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "wombat.ion.Abundance",
+      "rules": [
+        "wombat/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "abundance_<sample>: WOMBAT-P's precursor abundance; the run's normalization_method, such as median, decides its normalisation."
+      }
+    },
+    {
+      "entry_id": "wombat.peptidoform.Abundance",
+      "rules": [
+        "wombat/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "layers",
+        "name": "Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "run_setting"
+      },
+      "evidence": {
+        "basis": "abundance_<sample>: WOMBAT-P's peptidoform abundance; the run's normalization_method, such as median, decides its normalisation."
+      }
+    }
+  ]
+}

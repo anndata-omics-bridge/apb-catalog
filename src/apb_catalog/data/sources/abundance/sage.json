@@ -1,0 +1,57 @@
+{
+  "catalogue_id": "sage",
+  "catalogue_version": "0.1",
+  "software_name": "Sage",
+  "variants": [
+    {
+      "rule": "sage/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^0\\."
+    },
+    {
+      "rule": "sage/rules.json",
+      "level": "peptidoform",
+      "software_version_pattern": "^0\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "sage.ion.Intensity",
+      "rules": [
+        "sage/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "<run> column of lfq.tsv: Sage's MS1 label-free intensity, per precursor charge. Whether the run's settings can normalise this column is not established."
+      }
+    },
+    {
+      "entry_id": "sage.peptidoform.Intensity",
+      "rules": [
+        "sage/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "intensity",
+        "normalisation": "unknown"
+      },
+      "evidence": {
+        "basis": "<run> column of lfq.tsv: Sage's MS1 label-free intensity, charge states combined. Whether the run's settings can normalise this column is not established."
+      }
+    }
+  ]
+}
