@@ -122,29 +122,6 @@ def test_quantification_confidence_is_found_only_when_asked_for() -> None:
     assert column.to_list() == [0.001, 0.002]
 
 
-def test_miape_names_the_columns_mipae_anndata_expects() -> None:
-    parsed = _result(
-        "diann/v2/rules.json",
-        ["PG_MaxLFQ", "Genes_MaxLFQ"],
-        {"Genes": ["G1", "G2"], "Protein_Ids": ["P1", "P2"]},
-        level="protein",
-    )
-    catalog = Catalog(parsed, "miape")
-    assert catalog.var("protein", concept="miape") == ("gene_name", "protein_group")
-    assert catalog.layer("protein", concept="miape") == ("raw",)
-    genes = catalog.var("protein", concept="miape", kind="gene_name")
-    assert genes is not None
-    assert genes.to_list() == ["G1", "G2"]
-    raw = catalog.layer("protein", concept="miape", kind="raw")
-    assert raw is parsed.levels["protein"].layers["PG_MaxLFQ"]
-
-
-def test_an_ion_level_has_no_miape_modality() -> None:
-    catalog = Catalog(_result(*MAXQUANT), "miape")
-    assert catalog.layer("ion", concept="miape") is None
-    assert catalog.var("ion", concept="miape") is None
-
-
 def test_an_unknown_catalogue_set_is_rejected() -> None:
     """Only the packaged consumer sets exist."""
     with pytest.raises(ValueError, match="unknown catalogue"):
@@ -243,12 +220,12 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     """Attaching one set's snapshot keeps the other's, and the input stays unchanged."""
     parsed = _result(*MAXQUANT)
     confidence = Catalog(parsed, "identification_confidence").snapshot()
-    miape = Catalog(parsed, "miape").snapshot()
-    attached = attach_snapshot(attach_snapshot(parsed, confidence), miape)
+    entrapment = Catalog(parsed, "proteobench_entrapment").snapshot()
+    attached = attach_snapshot(attach_snapshot(parsed, confidence), entrapment)
     assert METADATA_KEY not in parsed.metadata
     assert stored_snapshot(parsed, "identification_confidence") is None
     assert stored_snapshot(attached, "identification_confidence") == confidence
-    assert stored_snapshot(attached, "miape") == miape
+    assert stored_snapshot(attached, "proteobench_entrapment") == entrapment
     assert attached.levels is parsed.levels
 
 

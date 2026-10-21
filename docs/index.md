@@ -42,6 +42,7 @@ Rule of thumb:
 
 ## Pages
 
+- [Get started](getting-started.md): install, look up, use the data
 - [Catalogues](catalogues.md): every entry of both sets
 - [Python API](api.md): lookups, errors and snapshots
 - [Maintaining](maintaining.md): re-reviewing after an APB2 rule change

@@ -19,8 +19,6 @@ confidence = Catalog(parsed, "identification_confidence")                     # 
 confidence.layer("ion", concept="confidence")                 # ('pep', 'q_value') — kinds on offer, or None
 pep = confidence.layer("ion", concept="confidence", kind="pep")  # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
 
-miape = Catalog(parsed, "miape")
-miape.var("protein", concept="miape")                        # ('gene_name', 'protein_group')
 ```
 
 - [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of both sets
@@ -36,6 +34,7 @@ miape.var("protein", concept="miape")                        # ('gene_name', 'pr
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`, never `unknown`
 - Entries bind to reviewed effective-rule fingerprints (SHA-256 of canonical `rule_json`); any APB2 rule change needs re-review, enforced by the drift tests
+- Vocabulary: `confidence` with `kind` (pep, q_value) and `stage`
 
 ## Snapshot contract
 

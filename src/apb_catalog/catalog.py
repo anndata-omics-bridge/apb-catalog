@@ -35,7 +35,7 @@ class Catalog:
 
     ``Catalog(parsed, "identification_confidence").layer("ion", concept="confidence", kind="pep")`` returns
     MaxQuant's ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no
-    PEP; ``Catalog(parsed, "miape").var("protein", concept="miape", kind="gene_name")`` returns the
+    PEP. Leaving out ``kind`` lists the kinds the level holds.
     A level answers only for its own entity. Confidence lookups mean identification unless
     ``stage="quantification"`` says otherwise. Ambiguous or unreviewed answers raise
     :class:`~apb_catalog.resolver.UnresolvedField` naming the candidates.
