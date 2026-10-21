@@ -1,0 +1,24 @@
+{
+  "catalogue_id": "apb2",
+  "catalogue_version": "0.1",
+  "producer": "APB2",
+  "entries": [
+    {
+      "entry_id": "apb2.ion.ProForma_peptidoform.peptidoform",
+      "rules": [],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "ProForma_peptidoform"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "peptidoform",
+        "origin": "apb2"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    }
+  ]
+}

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from importlib import resources
-from typing import cast
 
 import pytest
 
@@ -16,6 +15,8 @@ from apb_catalog.source import (
     SourceCatalogue,
     SourceCatalogues,
     SourceEntry,
+    catalogue_descriptions,
+    catalogue_set,
     packaged_catalogues,
     packaged_descriptions,
 )
@@ -217,33 +218,6 @@ def test_a_varm_reference_names_its_table() -> None:
         Reference(level="ion", location="var", name="flag", table="fasta_validation")
 
 
-def _producers(name: str) -> list[ProducerCatalogue]:
-    directory = resources.files("apb_catalog").joinpath("data", "producers", name)
-    if not directory.is_dir():
-        return []
-    return [
-        ProducerCatalogue.model_validate_json(path.read_text("utf-8"))
-        for path in sorted(directory.iterdir(), key=lambda path: path.name)
-    ]
-
-
-def test_each_miape_entry_declares_the_origin_of_its_file() -> None:
-    """Vendor files hold the vendor's fields; each producer file holds its producer's."""
-    wrong = [
-        entry.entry_id
-        for catalogue in _catalogues("miape")
-        for entry in catalogue.entries
-        if entry.qualifiers["origin"] != "vendor"
-    ]
-    wrong += [
-        entry.entry_id
-        for producer in _producers("miape")
-        for entry in producer.entries
-        if entry.qualifiers["origin"] != producer.catalogue_id
-    ]
-    assert wrong == []
-
-
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_vendor_files_hold_no_apb2_columns(name: str) -> None:
     """APB2's canonical ProForma columns are not the vendor's; the APB2 catalogue holds them."""
@@ -270,12 +244,12 @@ def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> 
     assert constant == []
 
 
-@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_apb2_entries_name_columns_the_rules_write(name: str) -> None:
-    """Every APB2 entry names a canonical column some packaged rule writes on its level."""
+def test_apb2_entries_name_columns_the_rules_write(toy_set: str) -> None:
+    """Every APB2 entry, packaged or plugin, names a canonical column a packaged rule writes."""
     unwritten = [
         entry.entry_id
-        for producer in _producers(name)
+        for name in catalogue_descriptions()
+        for producer in catalogue_set(name).producers
         if producer.catalogue_id == "apb2"
         for entry in producer.entries
         if not entry.reference.name.startswith("ProForma_")
@@ -286,36 +260,3 @@ def test_apb2_entries_name_columns_the_rules_write(name: str) -> None:
         )
     ]
     assert unwritten == []
-
-
-def test_every_peptide_derived_level_names_a_protein_group() -> None:
-    sources = packaged_catalogues("miape")
-    missing = [
-        f"{variant.rule} {variant.level}"
-        for catalogue in sources.catalogues
-        for variant in catalogue.variants
-        if variant.level in ("peptide", "peptidoform", "ion")
-        and not any(
-            entry.qualifiers["kind"] == "protein_group" for entry in catalogue.entries_for(variant)
-        )
-    ]
-    assert missing == []
-
-
-def test_an_ion_protein_group_joins_the_protein_level() -> None:
-    """Where a rule also has a protein level, the ion's group is the column APB2 links them by."""
-    unjoined: list[str] = []
-    for catalogue in packaged_catalogues("miape").catalogues:
-        with_proteins = {
-            variant.rule for variant in catalogue.variants if variant.level == "protein"
-        }
-        for variant in catalogue.variants:
-            if variant.level != "ion" or variant.rule not in with_proteins:
-                continue
-            for entry in catalogue.entries_for(variant):
-                if entry.qualifiers["kind"] != "protein_group":
-                    continue
-                column = declared_var_column(variant.rule, "ion", entry.reference.name)
-                if "protein_assignment" not in cast(list[str], column.get("roles") or []):
-                    unjoined.append(f"{variant.rule}: {entry.reference.name}")
-    assert unjoined == []

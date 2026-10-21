@@ -146,23 +146,6 @@ def test_quantification_confidence_is_found_only_when_asked_for() -> None:
     assert column.to_list() == [0.001, 0.002]
 
 
-def test_miape_names_the_columns_mipae_anndata_expects() -> None:
-    parsed = _result(
-        "diann/v2/rules.json",
-        ["PG_MaxLFQ", "Genes_MaxLFQ"],
-        {"Genes": ["G1", "G2"], "Protein_Ids": ["P1", "P2"]},
-        level="protein",
-    )
-    catalog = Catalog(parsed, "miape")
-    assert catalog.var("protein", concept="miape") == ("gene_name", "protein_group")
-    assert catalog.layer("protein", concept="miape") == ("raw",)
-    genes = catalog.var("protein", concept="miape", kind="gene_name")
-    assert genes is not None
-    assert genes.to_list() == ["G1", "G2"]
-    raw = catalog.layer("protein", concept="miape", kind="raw")
-    assert raw is parsed.levels["protein"].layers["PG_MaxLFQ"]
-
-
 DIANN_ION = {
     "ProForma_peptidoform": ["PEPTIDE", "PEPTIDEK"],
     "Precursor_Charge": [2.0, 3.0],
@@ -171,36 +154,26 @@ DIANN_ION = {
 }
 
 
-def test_an_ion_level_answers_the_proposed_ion_modality() -> None:
+def test_a_plugin_set_answers_like_a_packaged_one(toy_set: str) -> None:
+    """An installed set's vendor and APB2 fields are found by their kinds."""
     parsed = _result("diann/v2/rules.json", ["Ms1_Normalised", "Q_Value"], DIANN_ION)
-    catalog = Catalog(parsed, "miape")
-    assert catalog.var("ion", concept="miape") == (
-        "charge",
-        "is_contaminant",
-        "is_decoy",
-        "is_unique",
-        "peptidoform",
-        "peptidoform_ion",
-        "protein_group",
-    )
-    assert catalog.var("ion", concept="miape", origin="apb2") == ("peptidoform", "peptidoform_ion")
-    assert (
-        catalog.layer("ion", concept="miape", kind="raw")
-        is parsed.levels["ion"].layers["Ms1_Normalised"]
-    )
-    ion = catalog.var("ion", concept="miape", kind="peptidoform_ion")
-    assert ion is not None
-    assert ion.name == "ProForma_ion"
+    catalog = Catalog(parsed, toy_set)
+    assert catalog.var("ion", concept="toy", origin="vendor") == ("charge", "decoy", "group")
+    assert catalog.var("ion", concept="toy", origin="apb2") == ("peptidoform",)
+    group = catalog.var("ion", concept="toy", kind="group")
+    assert group is not None
+    assert group.to_list() == ["P1", "P1;P2"]
+    assert catalog.description.used_by == ("apb-catalog tests",)
 
 
-def test_an_apb_fasta_field_is_unknown_until_apb_fasta_runs() -> None:
+def test_a_later_producers_field_is_unknown_until_it_runs(toy_set: str) -> None:
     """A FASTA-based field never reads as absent before apb-fasta had a chance to write it."""
-    catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "miape")
+    catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), toy_set)
     with pytest.raises(UnresolvedField, match=r"apb-fasta has not run.*apb-fasta verify-peptides"):
-        catalog.var("ion", concept="miape", kind="is_contaminant")
+        catalog.var("ion", concept="toy", kind="contaminant")
 
 
-def test_an_apb_fasta_field_reads_its_varm_table() -> None:
+def test_a_producer_field_reads_its_varm_table(toy_set: str) -> None:
     """After apb-fasta, the contaminant flag comes from its feature-aligned varm table."""
     parsed = _result(
         "diann/v2/rules.json",
@@ -209,15 +182,15 @@ def test_an_apb_fasta_field_reads_its_varm_table() -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    catalog = Catalog(parsed, "miape")
-    flag = catalog.var("ion", concept="miape", kind="is_contaminant")
+    catalog = Catalog(parsed, toy_set)
+    flag = catalog.var("ion", concept="toy", kind="contaminant")
     assert flag is not None
     assert flag.to_list() == [True, False]
-    tables = catalog.fields().filter(pl.col("kind") == "is_contaminant").get_column("table")
+    tables = catalog.fields().filter(pl.col("kind") == "contaminant").get_column("table")
     assert tables.to_list() == ["fasta_validation"]
 
 
-def test_origin_chooses_between_the_vendor_and_apb_fasta() -> None:
+def test_origin_chooses_between_the_vendor_and_a_producer(toy_set: str) -> None:
     """FragPipe marks its own contaminants and apb-fasta marks the FASTA's: both answer."""
     parsed = _result(
         "fragpipe/rules.json",
@@ -226,30 +199,22 @@ def test_origin_chooses_between_the_vendor_and_apb_fasta() -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    catalog = Catalog(parsed, "miape")
+    catalog = Catalog(parsed, toy_set)
     with pytest.raises(UnresolvedField, match="ambiguous"):
-        catalog.var("ion", concept="miape", kind="is_contaminant")
-    vendor = catalog.var("ion", concept="miape", kind="is_contaminant", origin="vendor")
-    fasta = catalog.var("ion", concept="miape", kind="is_contaminant", origin="apb_fasta")
+        catalog.var("ion", concept="toy", kind="contaminant")
+    vendor = catalog.var("ion", concept="toy", kind="contaminant", origin="vendor")
+    fasta = catalog.var("ion", concept="toy", kind="contaminant", origin="apb_fasta")
     assert vendor is not None and vendor.to_list() == [False, True]
     assert fasta is not None and fasta.to_list() == [True, False]
 
 
-def test_an_ion_protein_group_is_its_protein_assignment() -> None:
-    """MaxQuant's ions carry the group's Protein IDs, the column APB2 links ions to proteins by."""
-    catalog = Catalog(_result(*MAXQUANT, var={"Protein_IDs": ["P1", "P2"]}), "miape")
-    group = catalog.var("ion", concept="miape", kind="protein_group")
-    assert group is not None
-    assert group.name == "Protein_IDs"
-
-
-def test_a_vendor_without_its_own_flag_offers_none() -> None:
+def test_a_vendor_without_its_own_flag_offers_none(toy_set: str) -> None:
     """DIA-NN marks no contaminants itself, so only apb-fasta can answer them."""
-    catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "miape")
-    assert catalog.var("ion", concept="miape", kind="is_contaminant", origin="vendor") is None
+    catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), toy_set)
+    assert catalog.var("ion", concept="toy", kind="contaminant", origin="vendor") is None
 
 
-def test_a_varm_lookup_survives_storage(tmp_path: Path) -> None:
+def test_a_varm_lookup_survives_storage(toy_set: str, tmp_path: Path) -> None:
     """A snapshot naming a varm table reads back identically."""
     parsed = _result(
         "diann/v2/rules.json",
@@ -258,12 +223,12 @@ def test_a_varm_lookup_survives_storage(tmp_path: Path) -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    catalog = Catalog(parsed, "miape")
-    catalog.var("ion", concept="miape", kind="is_contaminant")
+    catalog = Catalog(parsed, toy_set)
+    catalog.var("ion", concept="toy", kind="contaminant")
     snapshot = catalog.snapshot()
     target = tmp_path / "result.h5mu"
     write_parsed_levels(attach_snapshot(parsed, snapshot), target)
-    assert stored_snapshot(read_parsed_levels(target), "miape") == snapshot
+    assert stored_snapshot(read_parsed_levels(target), toy_set) == snapshot
 
 
 def test_an_unknown_catalogue_set_is_rejected() -> None:
@@ -373,12 +338,12 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     """Attaching one set's snapshot keeps the other's, and the input stays unchanged."""
     parsed = _result(*MAXQUANT)
     confidence = Catalog(parsed, "identification_confidence").snapshot()
-    miape = Catalog(parsed, "miape").snapshot()
-    attached = attach_snapshot(attach_snapshot(parsed, confidence), miape)
+    entrapment = Catalog(parsed, "proteobench_entrapment").snapshot()
+    attached = attach_snapshot(attach_snapshot(parsed, confidence), entrapment)
     assert METADATA_KEY not in parsed.metadata
     assert stored_snapshot(parsed, "identification_confidence") is None
     assert stored_snapshot(attached, "identification_confidence") == confidence
-    assert stored_snapshot(attached, "miape") == miape
+    assert stored_snapshot(attached, "proteobench_entrapment") == entrapment
     assert attached.levels["ion"].layers is parsed.levels["ion"].layers
     assert METADATA_KEY not in attached.levels["ion"].metadata, "no request, no level summary"
 

@@ -1,0 +1,71 @@
+{
+  "catalogue_id": "fragpipe",
+  "catalogue_version": "0.1",
+  "software_name": "FragPipe",
+  "variants": [
+    {
+      "rule": "fragpipe/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^2[23]\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "fragpipe.ion.Charge.charge",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "Charge"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "charge",
+        "origin": "vendor"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    },
+    {
+      "entry_id": "fragpipe.ion.apb_Decoy.decoy",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "decoy",
+        "origin": "vendor"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    },
+    {
+      "entry_id": "fragpipe.ion.apb_Contaminant.contaminant",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "apb_Contaminant"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "contaminant",
+        "origin": "vendor"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    }
+  ]
+}

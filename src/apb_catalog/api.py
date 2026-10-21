@@ -1,4 +1,7 @@
-"""The one public APB Catalog module: semantic lookups and their stored snapshots."""
+"""The one public APB Catalog module: semantic lookups and their stored snapshots.
+
+Installed plugins add catalogue sets through the `apb_catalog.catalogues` entry-point group.
+"""
 
 from __future__ import annotations
 

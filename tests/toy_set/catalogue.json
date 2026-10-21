@@ -1,0 +1,6 @@
+{
+  "purpose": "Synthetic plugin set: a few ion fields from vendors, APB2 and apb-fasta.",
+  "used_by": [
+    "apb-catalog tests"
+  ]
+}

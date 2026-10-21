@@ -21,7 +21,7 @@ A catalogue annotates only what one consumer needs, never every vendor column.
 | `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
 | `proteobench_entrapment` | apb-proteobench entrapment scoring | Run, library and experiment-wide precursor q-values, each its own kind |
 
-Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry.
+Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry. An installed package can add a set as a plugin; see [Maintaining](maintaining.md#plugin-sets).
 
 ## Catalogue or column role?
 
@@ -42,6 +42,7 @@ Rule of thumb:
 
 ## Pages
 
-- [Catalogues](catalogues.md): every entry of all three sets
+- [Get started](getting-started.md): install, look up, use the data
+- [Catalogues](catalogues.md): every entry of both packaged sets
 - [Python API](api.md): lookups, errors and snapshots
 - [Maintaining](maintaining.md): APB2 rule changes, new consumers, a worked catalogue example

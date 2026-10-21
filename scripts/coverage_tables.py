@@ -8,7 +8,6 @@ come from ``apb_catalog.api.rule_coverage``, the rule check ``apb-catalog check`
 from __future__ import annotations
 
 import re
-from collections.abc import Callable
 from pathlib import Path
 from typing import cast
 
@@ -32,9 +31,6 @@ LEVELS = ("protein", "peptide", "peptidoform", "ion")
 KIND_ORDER = ("pep", "q_value", "library_q_value", "global_q_value")
 STAGE_ORDER = ("identification", "quantification")
 
-NOTES: dict[tuple[str, str, str], str] = {("APB2", "ion", "charge"): "in `ProForma_ion`"}
-"""Producer cells that hold a field inside another column rather than as a column of its own."""
-
 CELLS = (
     "A cell names the APB column that answers, with the vendor columns APB2 computes it from"
     f" (`apb_Decoy` ← `Decoy`); {ABSENT} means nothing is catalogued."
@@ -48,17 +44,10 @@ LEGENDS: dict[str, str] = {
         f"Coverage by software version, for the vendors that carry entries. {CELLS} Per run is"
         " a layer, one value per sample."
     ),
-    "miape": (
-        " the draft specifies for it plus the shared `raw` layer; the ion table is APB's proposed"
-        f" modality. {CELLS} Vendor rows show only what the vendor's export supplies. The APB2"
-        " row shows APB2's canonical columns, answered where the level has them. The apb-fasta"
-        " row answers after `apb-fasta verify-peptides`; until then its fields answer `unknown`."
-    ),
 }
 EVERY_VENDOR_ROW = {
     "identification_confidence": True,
     "proteobench_entrapment": False,
-    "miape": True,
 }
 
 
@@ -106,10 +95,6 @@ type Row = dict[str, object]
 type Column = tuple[str, ...]
 
 
-def _miape_column(row: Row) -> Column:
-    return (cast(str, row["kind"]),)
-
-
 def _confidence_column(row: Row) -> Column:
     feature = "run" if row["location"] == "layers" else "feature"
     qualifiers = dict(
@@ -127,25 +112,17 @@ def _supported(rows: list[Row]) -> list[Row]:
     return [row for row in rows if row["column"] is not None]
 
 
-def _cells(columns: list[Column], rows: list[Row], column_of: Callable[[Row], Column]) -> list[str]:
+def _cells(columns: list[Column], rows: list[Row]) -> list[str]:
     by_column: dict[Column, list[str]] = {}
     for row in _supported(rows):
-        cells = by_column.setdefault(column_of(row), [])
+        cells = by_column.setdefault(_confidence_column(row), [])
         if _row_field(row) not in cells:
             cells.append(_row_field(row))
     return ["; ".join(by_column[column]) if column in by_column else ABSENT for column in columns]
 
 
-def _columns(name: str, rows: list[Row]) -> tuple[list[Column], list[str]]:
-    """The coverage columns of one level: required fields in order, or the fields found."""
-    if name == "miape":
-        required = dict.fromkeys(
-            (cast(str, row["kind"]), cast(str, row["requirement"]))
-            for row in rows
-            if row["requirement"] is not None
-        )
-        columns: list[Column] = [(kind,) for kind, _ in required]
-        return columns, [f"`{kind}` {requirement}" for kind, requirement in required]
+def _columns(rows: list[Row]) -> tuple[list[Column], list[str]]:
+    """The coverage columns of one level: the fields the vendors supply."""
     vendor = [row for row in _supported(rows) if row["producer"] is None]
     found = {_confidence_column(row) for row in vendor}
     columns = sorted(
@@ -160,9 +137,7 @@ def _columns(name: str, rows: list[Row]) -> tuple[list[Column], list[str]]:
 
 
 def _coverage(name: str) -> list[str]:
-    """One coverage table per level that the set's entries or modalities cover."""
-    miape = name == "miape"
-    column_of: Callable[[Row], Column] = _miape_column if miape else _confidence_column
+    """One coverage table per level that the set's entries cover."""
     coverage = rule_coverage(name)
     with_entries = set(
         coverage.filter(pl.col("producer").is_null() & pl.col("column").is_not_null())
@@ -172,7 +147,7 @@ def _coverage(name: str) -> list[str]:
     blocks: list[str] = []
     for level in LEVELS:
         rows = coverage.filter(pl.col("level") == level).to_dicts()
-        columns, header = _columns(name, rows)
+        columns, header = _columns(rows)
         variants: dict[tuple[str, str, str], list[Row]] = {}
         for row in rows:
             if EVERY_VENDOR_ROW[name] or row["software"] in with_entries:
@@ -196,19 +171,14 @@ def _coverage(name: str) -> list[str]:
                 *_cells(
                     columns,
                     [row for row in variants[(software, version, rule)] if row["producer"] is None],
-                    column_of,
                 ),
             ]
             for software, version, rule in ordered
         ]
         for producer, entries in producers.items():
-            cells = [
-                NOTES.get((producer, level, column[0]), cell) if cell == ABSENT else cell
-                for column, cell in zip(columns, _cells(columns, entries, column_of), strict=True)
-            ]
-            table_rows.append([producer, _scope(cast(str | None, entries[0]["needs"])), *cells])
-        lead_in = f"{level.capitalize()} level{', proposed' if miape and level == 'ion' else ''}:"
-        blocks.append(_table(lead_in, header, table_rows))
+            needs = _scope(cast(str | None, entries[0]["needs"]))
+            table_rows.append([producer, needs, *_cells(columns, entries)])
+        blocks.append(_table(f"{level.capitalize()} level:", header, table_rows))
     return blocks
 
 

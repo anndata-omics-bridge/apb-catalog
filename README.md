@@ -21,30 +21,27 @@ from apb_catalog.api import Catalog
 confidence = Catalog(parsed, "identification_confidence")                     # parsed: apb2 ParsedLevels
 confidence.layer("ion", concept="confidence")                 # ('pep', 'q_value') — kinds on offer, or None
 pep = confidence.layer("ion", concept="confidence", kind="pep")  # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
-
-miape = Catalog(parsed, "miape")
-miape.var("protein", concept="miape")                        # ('gene_name', 'protein_group')
 ```
 
-- [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of all three sets
+- [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of both packaged sets
 - `layer` returns the apb2 layer table, `var` the column; `None` means the vendor has no such field
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Confidence lookups mean identification unless `stage="quantification"` says otherwise
 - Two equally good fields, or a rule nobody reviewed, raise `UnresolvedField` naming the candidates
-- A field apb-fasta writes raises `UnresolvedField` until `apb-fasta verify-peptides` has run, naming that command; `var` reads apb-fasta's feature-aligned `varm` tables too
-- Where the vendor and apb-fasta both answer, as for FragPipe's contaminants, `origin="vendor"` or `origin="apb_fasta"` chooses
+- A field a later producer such as apb-fasta writes raises `UnresolvedField` until that producer has run, naming what to run; `var` reads feature-aligned `varm` tables too
+- Where two origins answer one kind, the set's `origin` qualifier chooses
 - `attach_snapshot(parsed, catalog.snapshot())` records bindings and lookups in `metadata["catalog"][<catalogue>]["result"]`, and each level's request counts in its `metadata["catalog"][<catalogue>]["summary"]`
 
 ## Rule check
 
 ```bash
 apb-catalog                          # every catalogue set
-apb-catalog check miape              # FAIL, WARN or PASS per packaged rule level; exit 1 on a FAIL
-apb-catalog check miape spectronaut  # one vendor, with every field and its column
+apb-catalog check SET                # FAIL, WARN or PASS per packaged rule level; exit 1 on a FAIL
+apb-catalog check SET spectronaut    # one vendor, with every field and its column
 ```
 
-- `rule_coverage("miape")` returns the same check as a Polars frame, one row per field
-- A level fails when it misses a MUST field and warns when it misses a SHOULD or MAY one; `requirements.json` sets them, only for `miape`
+- `rule_coverage(SET)` returns the same check as a Polars frame, one row per field
+- A level fails when it misses a MUST field and warns when it misses a SHOULD or MAY one; a set's requirements set them, and a set without requirements reports coverage only
 
 ## Catalogues
 
@@ -53,6 +50,8 @@ apb-catalog check miape spectronaut  # one vendor, with every field and its colu
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`, never `unknown`
 - A level binds by the software name and version pattern its APB2 rule declares, plus the level; editing a rule within a version keeps its entries, and a new rule version needs its own variant
+- Vocabulary: `confidence` with `kind` (pep, q_value) and `stage`
+- Plugin sets: an installed package adds a set through the `apb_catalog.catalogues` entry-point group; [Maintaining](https://anndata-omics-bridge.github.io/apb-catalog/maintaining/#plugin-sets) describes its folder
 
 ## Snapshot contract
 

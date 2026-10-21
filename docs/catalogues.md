@@ -178,3 +178,8 @@ Every entry:
 | WOMBAT | all | — | — | none relevant | — |
 
 <!-- end of generated block: proteobench_entrapment -->
+
+## Reporting standards
+
+- The released reporting guideline for quantitative proteomics results is [MIAPE-Quant 1.0](https://github.com/HUPO-PSI/MIAPE/blob/main/MIAPE_Quant_v1.0_Final_0.pdf) (HUPO-PSI, 2012)
+- It asks, among other items, for quantification values per feature, identified by peptide sequence or by sequence plus charge state; APB's ion level holds that feature

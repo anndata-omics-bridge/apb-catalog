@@ -3,15 +3,18 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import cache
 from importlib import resources
+from importlib.metadata import EntryPoints, entry_points
+from importlib.resources.abc import Traversable
 from typing import Literal, cast
 
 from pydantic import TypeAdapter, model_validator
 
-from apb_catalog.vocabulary import FrozenModel, Vocabulary, packaged_vocabulary
+from apb_catalog.vocabulary import Concept, FrozenModel, Vocabulary, packaged_vocabulary
 
 type Location = Literal["layers", "var", "varm"]
 type Address = tuple[Location, str | None, str]
@@ -264,25 +267,112 @@ def packaged_catalogues(name: str, /) -> SourceCatalogues:
     if name not in descriptions:
         raise ValueError(f"unknown catalogue {name!r}; packaged: {list(descriptions)}")
     data = resources.files("apb_catalog").joinpath("data")
-    catalogues = tuple(
-        SourceCatalogue.model_validate_json(path.read_text("utf-8"))
-        for path in sorted(data.joinpath("sources", name).iterdir(), key=lambda path: path.name)
-        if path.name.endswith(".json")
-    )
-    producer_directory = data.joinpath("producers", name)
-    producers = (
-        tuple(
-            ProducerCatalogue.model_validate_json(path.read_text("utf-8"))
-            for path in sorted(producer_directory.iterdir(), key=lambda path: path.name)
-            if path.name.endswith(".json")
-        )
-        if producer_directory.is_dir()
-        else ()
-    )
     return SourceCatalogues(
         packaged_vocabulary(),
-        catalogues,
+        _read(data.joinpath("sources", name), SourceCatalogue),
         descriptions[name],
-        producers,
+        _read(data.joinpath("producers", name), ProducerCatalogue),
         packaged_requirements().get(name),
+    )
+
+
+PLUGIN_GROUP = "apb_catalog.catalogues"
+"""The entry-point group through which installed packages add catalogue sets."""
+
+
+class VocabularyExtension(FrozenModel):
+    """The concepts a plugin set adds to the packaged vocabulary."""
+
+    concepts: dict[str, Concept]
+
+
+_LEVEL_REQUIREMENTS = TypeAdapter(dict[str, dict[str, Requirement]])
+
+
+def plugin_folders(points: EntryPoints) -> dict[str, Traversable]:
+    """The catalogue set folder each entry point names, by set name.
+
+    Raises:
+        ValueError: Two entry points name one set.
+    """
+    repeated = sorted(
+        name for name, count in Counter(point.name for point in points).items() if count > 1
+    )
+    if repeated:
+        raise ValueError(f"several installed plugins name the catalogue sets {repeated}")
+    return {point.name: resources.files(point.value) for point in points}
+
+
+@cache
+def _plugin_folders() -> dict[str, Traversable]:
+    """Every installed plugin's catalogue set folder, by set name."""
+    return plugin_folders(entry_points(group=PLUGIN_GROUP))
+
+
+def catalogue_descriptions() -> dict[str, CatalogueDescription]:
+    """Return every packaged and plugin catalogue set's description, by set name.
+
+    Raises:
+        ValueError: A plugin set has a packaged set's name.
+    """
+    packaged = packaged_descriptions()
+    plugins = _plugin_folders()
+    clashing = sorted(set(packaged) & set(plugins))
+    if clashing:
+        raise ValueError(f"plugin catalogue sets {clashing} have the names of packaged sets")
+    return {**packaged, **{name: _plugin_set(name).description for name in plugins}}
+
+
+def catalogue_set(name: str, /) -> SourceCatalogues:
+    """Load one packaged or plugin catalogue set.
+
+    Raises:
+        ValueError: No packaged or plugin set has this name.
+    """
+    descriptions = catalogue_descriptions()
+    if name not in descriptions:
+        raise ValueError(
+            f"unknown catalogue {name!r}; packaged: {list(packaged_descriptions())}, "
+            f"plugins: {list(_plugin_folders())}"
+        )
+    return packaged_catalogues(name) if name in packaged_descriptions() else _plugin_set(name)
+
+
+@cache
+def _plugin_set(name: str, /) -> SourceCatalogues:
+    """Load one plugin set, its concepts added to the packaged vocabulary."""
+    folder = _plugin_folders()[name]
+    packaged = packaged_vocabulary()
+    added = VocabularyExtension.model_validate_json(
+        folder.joinpath("vocabulary.json").read_text("utf-8")
+    )
+    redefined = sorted(set(added.concepts) & set(packaged.concepts))
+    if redefined:
+        raise ValueError(f"plugin catalogue set {name!r} redefines packaged concepts {redefined}")
+    vocabulary = Vocabulary(
+        vocabulary_version=packaged.vocabulary_version,
+        concepts={**packaged.concepts, **added.concepts},
+    )
+    requirements = folder.joinpath("requirements.json")
+    return SourceCatalogues(
+        vocabulary,
+        _read(folder.joinpath("sources"), SourceCatalogue),
+        CatalogueDescription.model_validate_json(
+            folder.joinpath("catalogue.json").read_text("utf-8")
+        ),
+        _read(folder.joinpath("producers"), ProducerCatalogue),
+        _LEVEL_REQUIREMENTS.validate_json(requirements.read_text("utf-8"))
+        if requirements.is_file()
+        else None,
+    )
+
+
+def _read[T: FrozenModel](directory: Traversable, model: type[T]) -> tuple[T, ...]:
+    """Every JSON file of one directory, by file name; none when the directory is absent."""
+    if not directory.is_dir():
+        return ()
+    return tuple(
+        model.model_validate_json(path.read_text("utf-8"))
+        for path in sorted(directory.iterdir(), key=lambda path: path.name)
+        if path.name.endswith(".json")
     )

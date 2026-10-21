@@ -1,0 +1,31 @@
+{
+  "catalogue_id": "apb_fasta",
+  "catalogue_version": "0.1",
+  "producer": "apb-fasta",
+  "requires": [
+    "fasta",
+    "provenance",
+    "peptide_verification"
+  ],
+  "instruction": "run `apb-fasta verify-peptides`",
+  "entries": [
+    {
+      "entry_id": "apb_fasta.ion.fasta_matches_contaminant.contaminant",
+      "rules": [],
+      "reference": {
+        "level": "ion",
+        "location": "varm",
+        "name": "fasta_matches_contaminant",
+        "table": "fasta_validation"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "contaminant",
+        "origin": "apb_fasta"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    }
+  ]
+}

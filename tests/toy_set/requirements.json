@@ -1,0 +1,7 @@
+{
+  "ion": {
+    "group": "MUST",
+    "charge": "MUST",
+    "decoy": "MAY"
+  }
+}

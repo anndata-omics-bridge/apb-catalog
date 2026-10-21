@@ -1,8 +1,8 @@
 """Which catalogued fields every packaged rule supplies, and whether each level meets its set.
 
-A set with requirements, such as ``miape``, judges each rule level: ``fail`` when a MUST field
-is unsupported, ``warn`` when a SHOULD or MAY field is, ``pass`` otherwise. A set without
-requirements reports coverage only. Producer fields count where the rule's level retains their
+A set with requirements judges each rule level: ``fail`` when a MUST field is unsupported,
+``warn`` when a SHOULD or MAY field is, ``pass`` otherwise. A set without requirements reports
+coverage only. Producer fields count where the rule's level retains their
 column; fields a producer adds after conversion, such as apb-fasta's, count with what to run.
 """
 
@@ -22,8 +22,8 @@ from apb_catalog.source import (
     SourceCatalogue,
     SourceCatalogues,
     SourceEntry,
-    packaged_catalogues,
-    packaged_descriptions,
+    catalogue_descriptions,
+    catalogue_set,
 )
 
 type Verdict = Literal["pass", "warn", "fail"]
@@ -90,10 +90,10 @@ def version_label(pattern: str) -> str:
 
 
 def catalogues() -> pl.DataFrame:
-    """List every packaged catalogue set: what it is for, who uses it, and its entry count."""
+    """List every packaged and plugin catalogue set: purpose, users, and entry count."""
     rows: list[dict[str, object]] = []
-    for name, description in packaged_descriptions().items():
-        sources = packaged_catalogues(name)
+    for name, description in catalogue_descriptions().items():
+        sources = catalogue_set(name)
         rows.append(
             {
                 "catalogue": name,
@@ -118,9 +118,9 @@ def rule_coverage(catalogue: str) -> pl.DataFrame:
     exists) and ``verdict`` (the rule level's, null for a set without requirements).
 
     Raises:
-        ValueError: The catalogue set is not packaged.
+        ValueError: The catalogue set is neither packaged nor installed by a plugin.
     """
-    return coverage_of(packaged_catalogues(catalogue))
+    return coverage_of(catalogue_set(catalogue))
 
 
 def coverage_of(sources: SourceCatalogues) -> pl.DataFrame:

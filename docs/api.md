@@ -22,7 +22,7 @@ catalog = Catalog(parsed, "identification_confidence")
 - Per run versus per feature is the choice between `layer` and `var`
 - Confidence lookups mean identification; pass `stage="quantification"` for Sage's MS1-peak q-value
 - `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`
-- In `miape`, `origin="vendor"`, `"apb2"` or `"apb_fasta"` chooses where two origins answer one kind
+- In a set whose concept has an `origin` qualifier, `origin=...` chooses where two origins answer one kind
 - Misspelled concepts, kinds or catalogue names raise `ValueError`
 
 ## When there is no single answer
@@ -53,7 +53,7 @@ The snapshot is stored as JSON at `metadata["catalog"][<set>]["result"]`, beside
 from apb_catalog.api import catalogues, rule_coverage
 
 catalogues()             # one row per set: purpose, users, entries, whether it sets requirements
-rule_coverage("miape")   # one row per field of every packaged rule level, with the level's verdict
+rule_coverage("identification_confidence")   # one row per field of every packaged rule level
 ```
 
 | Column | Meaning |
@@ -67,7 +67,7 @@ rule_coverage("miape")   # one row per field of every packaged rule level, with 
 | `needs` | What to run before the field exists, such as `apb-fasta verify-peptides` |
 | `verdict` | The level's: `fail` when a MUST field is unsupported, `warn` when a SHOULD or MAY field is, `pass` otherwise; null for sets without requirements |
 
-- Requirements live in `src/apb_catalog/data/requirements.json`, per set, level and kind; only `miape` sets them
+- Requirements live in `src/apb_catalog/data/requirements.json`, per set, level and kind, or in a plugin set's own `requirements.json`; no packaged set sets them
 - APB2's fields count where the rule's level keeps their column; apb-fasta's count on every level, with `needs`
 - A level with no catalogued or required field has one row without a kind
-- The command line prints the same check: `apb-catalog check miape`, or `apb-catalog check miape spectronaut` for one vendor's fields; it exits 1 when a level fails
+- The command line prints the same check: `apb-catalog check SET`, or `apb-catalog check SET spectronaut` for one vendor's fields; it exits 1 when a level fails

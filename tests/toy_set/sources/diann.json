@@ -1,0 +1,87 @@
+{
+  "catalogue_id": "diann",
+  "catalogue_version": "0.1",
+  "software_name": "DIA-NN",
+  "variants": [
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^1\\.[89](\\.|$)"
+    },
+    {
+      "rule": "diann/v2/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^2\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "diann.ion.Precursor_Charge.charge",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "Precursor_Charge"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "charge",
+        "origin": "vendor"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    },
+    {
+      "entry_id": "diann.ion.Protein_Group.group",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "Protein_Group"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "group",
+        "origin": "vendor"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    },
+    {
+      "entry_id": "diann.ion.apb_Decoy.decoy",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "concept": "toy",
+      "qualifiers": {
+        "kind": "decoy",
+        "origin": "vendor"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    }
+  ]
+}

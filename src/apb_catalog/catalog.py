@@ -25,7 +25,7 @@ from apb_catalog.source import (
     Location,
     Reference,
     SourceCatalogues,
-    packaged_catalogues,
+    catalogue_set,
 )
 
 METADATA_KEY = "catalog"
@@ -37,7 +37,7 @@ class Catalog:
 
     ``Catalog(parsed, "identification_confidence").layer("ion", concept="confidence", kind="pep")`` returns
     MaxQuant's ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no
-    PEP; ``Catalog(parsed, "miape").var("protein", concept="miape", kind="gene_name")`` returns the
+    PEP. Leaving out ``kind`` lists the kinds the level holds.
     A level answers only for its own entity. Confidence lookups mean identification unless
     ``stage="quantification"`` says otherwise. Ambiguous or unreviewed answers raise
     :class:`~apb_catalog.resolver.UnresolvedField` naming the candidates.
@@ -48,7 +48,7 @@ class Catalog:
     def __init__(self, parsed: ParsedLevels, catalogue: str) -> None:
         self._parsed = parsed
         self._name = catalogue
-        self._catalogues = packaged_catalogues(catalogue)
+        self._catalogues = catalogue_set(catalogue)
         self._views: dict[str, ReviewedLevel | UnreviewedLevel] = {
             name: level_view(name, level, self._catalogues, parsed.metadata)
             for name, level in parsed.levels.items()
