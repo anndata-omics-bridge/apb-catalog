@@ -28,7 +28,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "<run> column of lfq.tsv: Sage's MS1 label-free intensity, per precursor charge. Whether the run's settings can normalise this column is not established."
@@ -47,7 +47,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "<run> column of lfq.tsv: Sage's MS1 label-free intensity, charge states combined. Whether the run's settings can normalise this column is not established."

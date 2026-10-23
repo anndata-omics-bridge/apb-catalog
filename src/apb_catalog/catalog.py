@@ -35,7 +35,7 @@ _DEFAULTS = {"stage": "identification"}
 class Catalog:
     """What one APB result's fields mean to one consumer, with the data handed back directly.
 
-    ``Catalog(parsed, "identification_confidence").layer("ion", concept="confidence", kind="pep")`` returns
+    ``Catalog(parsed, "identification_confidence").layer("ion", kind="pep")`` returns
     MaxQuant's ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no
     PEP. Leaving out ``kind`` lists the kinds the level holds.
     A level answers only for its own entity. Confidence lookups mean identification unless
@@ -62,41 +62,43 @@ class Catalog:
 
     @overload
     def layer(
-        self, level: str, concept: str, kind: str, **qualifiers: str
+        self, level: str, kind: str, concept: str | None = None, **qualifiers: str
     ) -> FinalLayerTable | None: ...
 
     @overload
     def layer(
-        self, level: str, concept: str, kind: None = None, **qualifiers: str
+        self, level: str, kind: None = None, concept: str | None = None, **qualifiers: str
     ) -> tuple[str, ...] | None: ...
 
     def layer(
-        self, level: str, concept: str, kind: str | None = None, **qualifiers: str
+        self, level: str, kind: str | None = None, concept: str | None = None, **qualifiers: str
     ) -> FinalLayerTable | tuple[str, ...] | None:
         """Return the sample-by-feature layer with this meaning, or the kinds on offer."""
         if kind is None:
-            return self._kinds(level, "layers", concept, qualifiers)
-        reference = self._find(level, "layers", concept, qualifiers | {"kind": kind})
+            return self._kinds(level, "layers", self._concept(concept), qualifiers)
+        reference = self._find(level, "layers", self._concept(concept), qualifiers | {"kind": kind})
         return None if reference is None else self._parsed.levels[level].layers[reference.name]
 
     @overload
-    def var(self, level: str, concept: str, kind: str, **qualifiers: str) -> pl.Series | None: ...
+    def var(
+        self, level: str, kind: str, concept: str | None = None, **qualifiers: str
+    ) -> pl.Series | None: ...
 
     @overload
     def var(
-        self, level: str, concept: str, kind: None = None, **qualifiers: str
+        self, level: str, kind: None = None, concept: str | None = None, **qualifiers: str
     ) -> tuple[str, ...] | None: ...
 
     def var(
-        self, level: str, concept: str, kind: str | None = None, **qualifiers: str
+        self, level: str, kind: str | None = None, concept: str | None = None, **qualifiers: str
     ) -> pl.Series | tuple[str, ...] | None:
         """Return the per-feature column with this meaning, or the kinds on offer.
 
         The column lives in ``var`` or in a feature-aligned ``varm`` table.
         """
         if kind is None:
-            return self._kinds(level, "var", concept, qualifiers)
-        reference = self._find(level, "var", concept, qualifiers | {"kind": kind})
+            return self._kinds(level, "var", self._concept(concept), qualifiers)
+        reference = self._find(level, "var", self._concept(concept), qualifiers | {"kind": kind})
         if reference is None:
             return None
         found = self._parsed.levels[level]
@@ -143,6 +145,24 @@ class Catalog:
             entries=entries,
             resolutions=tuple(self._resolutions),
         )
+
+    def _concept(self, concept: str | None) -> str:
+        """The concept asked for, or else the one concept the set's entries name."""
+        if concept is not None:
+            return concept
+        sources = self._catalogues
+        named = sorted(
+            {
+                entry.concept
+                for source in (*sources.catalogues, *sources.producers)
+                for entry in source.entries
+            }
+        )
+        if len(named) != 1:
+            raise ValueError(
+                f"catalogue {self._name!r} names the concepts {named}; pass concept= to choose one"
+            )
+        return named[0]
 
     def _find(
         self,

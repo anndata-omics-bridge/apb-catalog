@@ -1,5 +1,7 @@
 # Python API
 
+[Examples](examples.md) runs every call below on real results and shows what it returns.
+
 ## Lookups
 
 ```python
@@ -12,12 +14,15 @@ catalog = Catalog(parsed, "identification_confidence")
 
 | Call | Returns |
 | --- | --- |
-| `catalog.layer(level, concept=..., kind=...)` | The apb2 `FinalLayerTable`, samples × features, or `None` |
-| `catalog.var(level, concept=..., kind=...)` | The var column as a Polars `Series`, or `None` |
-| `catalog.layer(level, concept=...)` | The kinds the level offers as layers, or `None` |
-| `catalog.var(level, concept=...)` | The kinds the level offers as var columns, or `None` |
+| `catalog.layer(level, kind=...)` | The apb2 `FinalLayerTable`, samples × features, or `None` |
+| `catalog.var(level, kind=...)` | The var column as a Polars `Series`, or `None` |
+| `catalog.layer(level)` | The kinds the level offers as layers, or `None` |
+| `catalog.var(level)` | The kinds the level offers as var columns, or `None` |
 | `catalog.fields()` | A Polars `DataFrame` of every catalogued field the result retains |
 
+- `kind` may also come second without its keyword: `catalog.layer("ion", "pep")`
+- `concept=` defaults to the one concept the set's entries name; a set naming several raises `ValueError` until `concept=` chooses
+- Other qualifiers are keywords too: `Catalog(parsed, "abundance").layer("ion", kind="intensity", normalization="none")` returns the layer the software never normalizes
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Per run versus per feature is the choice between `layer` and `var`
 - Confidence lookups mean identification; pass `stage="quantification"` for Sage's MS1-peak q-value

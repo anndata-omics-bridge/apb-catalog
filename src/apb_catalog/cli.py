@@ -1,9 +1,11 @@
-"""Command line: list the catalogues and check the packaged APB2 rules against one."""
+"""Command line: list the catalogues, check the packaged APB2 rules against one, and print one
+as a table across every quantification tool."""
 
 from __future__ import annotations
 
+import re
 import sys
-from typing import cast
+from typing import Literal, cast
 
 import polars as pl
 from cyclopts import App
@@ -12,7 +14,7 @@ from apb_catalog.api import catalogues, rule_coverage
 
 app = App(
     name="apb-catalog",
-    help="List APB catalogues and check the packaged APB2 rules against one",
+    help="List APB catalogues, check the packaged APB2 rules against one, and print one as a table",
     help_on_error=True,
 )
 
@@ -60,6 +62,68 @@ def check(catalogue: str, software: str | None = None, /) -> int:
             for row in rows.iter_rows(named=True):
                 print(f"    {_field(row)}")
     return 1 if (coverage.get_column("verdict") == "fail").any() else 0
+
+
+@app.command
+def meaning(catalogue: str, /, *, format: Literal["text", "csv"] = "text") -> int:
+    """Print CATALOGUE as one table: the column holding each catalogued meaning per rule level.
+
+    One row per packaged rule level and field, with its kind and the catalogue's qualifiers;
+    ``none`` where the level has no column for it. With ``--format csv``, the same rows as CSV.
+    """
+    try:
+        coverage = rule_coverage(catalogue)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 2
+    table = _meanings(coverage)
+    if format == "csv":
+        sys.stdout.write(table.write_csv())
+    else:
+        print(_aligned(table))
+    return 0
+
+
+def _meanings(coverage: pl.DataFrame) -> pl.DataFrame:
+    """Software, version, level, column and kind, then one column per qualifier of the set."""
+    pairs = cast(list[str], coverage.get_column("qualifiers").drop_nulls().to_list())
+    names = sorted({pair.split("=", 1)[0] for text in pairs for pair in text.split(";")})
+    qualifiers = [
+        pl.col("qualifiers").str.extract(rf"(?:^|;){re.escape(name)}=([^;]*)").alias(name)
+        for name in names
+    ]
+    if coverage.get_column("origin").is_not_null().any():
+        qualifiers.append(pl.col("origin"))
+    column = (
+        pl.when(pl.col("table").is_not_null())
+        .then(pl.concat_str(pl.col("table"), pl.lit("."), pl.col("column")))
+        .otherwise(pl.col("column"))
+    )
+    column = (
+        pl.when(pl.col("producer").is_not_null())
+        .then(pl.concat_str(column, pl.lit(" ("), pl.col("producer"), pl.lit(")")))
+        .otherwise(column)
+    )
+    return coverage.select(
+        "software",
+        "version",
+        "level",
+        column.fill_null("none").alias("column"),
+        "kind",
+        *qualifiers,
+    )
+
+
+def _aligned(table: pl.DataFrame) -> str:
+    """Header and rows, each column padded to its widest cell; null cells stay empty."""
+    rows = [table.columns] + [
+        ["" if cell is None else str(cell) for cell in row] for row in table.iter_rows()
+    ]
+    widths = [max(len(row[index]) for row in rows) for index in range(table.width)]
+    return "\n".join(
+        "  ".join(cell.ljust(width) for cell, width in zip(row, widths, strict=True)).rstrip()
+        for row in rows
+    )
 
 
 def _summary(variant: str, rows: pl.DataFrame) -> str:

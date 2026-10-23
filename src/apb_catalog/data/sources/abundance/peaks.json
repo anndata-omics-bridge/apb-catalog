@@ -23,7 +23,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "<sample> Normalized Area: the feature area after PEAKS's normalisation; the run's Normalization Method, such as TIC or No Normalization, decides."

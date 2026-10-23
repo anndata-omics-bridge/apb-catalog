@@ -51,14 +51,14 @@ confidence.fields().select("level", "location", "name", "kind", "stage")
 Or ask one level which kinds it offers, per run (`layer`) or per feature (`var`):
 
 ```python
-confidence.layer("ion", concept="confidence")   # ('pep', 'q_value')
-confidence.var("ion", concept="confidence")     # None: no per-feature confidence
+confidence.layer("ion")   # ('pep', 'q_value')
+confidence.var("ion")     # None: no per-feature confidence
 ```
 
 ## Get the data
 
 ```python
-pep = confidence.layer("ion", concept="confidence", kind="pep")
+pep = confidence.layer("ion", kind="pep")
 pep.layer_name      # 'PEP'; Spectronaut gives 'EG_PEP', MaxQuant 'PEP'
 pep.values.head(3)
 ```
@@ -85,9 +85,9 @@ weights = 1 - pep.values.drop(pep.var_key_columns).to_numpy()              # (18
 When the vendor reports no such field, the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
 
 ```python
-pep = confidence.layer("ion", concept="confidence", kind="pep")
+pep = confidence.layer("ion", kind="pep")
 if pep is None:
-    q_value = confidence.layer("ion", concept="confidence", kind="q_value")
+    q_value = confidence.layer("ion", kind="q_value")
 ```
 
 ## When there is no single answer
@@ -96,7 +96,7 @@ if pep is None:
 from apb_catalog.api import UnresolvedField
 
 try:
-    pep = confidence.layer("ion", concept="confidence", kind="pep")
+    pep = confidence.layer("ion", kind="pep")
 except UnresolvedField as error:
     print(error)    # names the reason and any candidate fields
 ```

@@ -33,10 +33,10 @@ LEVELS = ("protein", "peptide", "peptidoform", "ion", "fragment")
 KIND_ORDER = ("pep", "q_value", "library_q_value", "global_q_value")
 STAGE_ORDER = ("identification", "quantification")
 ABUNDANCE_ORDER = ("intensity", "ms1_intensity", "maxlfq", "ibaq", "directlfq", "unknown")
-NORMALISATION_ORDER = ("none", "run_setting", "unknown")
+NORMALIZATION_ORDER = ("none", "run_setting", "unknown")
 QUALIFIER_LEADS = {
     "origin": "Origins, the `origin` qualifier every entry declares:",
-    "normalisation": "Normalisation, the `normalisation` qualifier every entry declares:",
+    "normalization": "Normalization, the `normalization` qualifier every entry declares:",
 }
 
 CELLS = (
@@ -46,7 +46,7 @@ CELLS = (
 LEGENDS: dict[str, str] = {
     "abundance": (
         f"Coverage by software version, one table per level. {CELLS} A column pairs a kind with"
-        " its normalisation; `unknown` marks what the evidence does not establish."
+        " its normalization; `unknown` marks what the evidence does not establish."
     ),
     "identification_confidence": (
         f"Coverage by software version, one table per level. {CELLS} Per run is a layer, one"
@@ -130,17 +130,17 @@ def _confidence_order(column: Column) -> tuple[int, ...]:
 
 
 def _abundance_column(row: Row) -> Column:
-    return (cast(str, row["kind"]), _qualifiers(row)["normalisation"])
+    return (cast(str, row["kind"]), _qualifiers(row)["normalization"])
 
 
 def _abundance_header(column: Column) -> str:
-    kind, normalisation = column
-    return f"`{kind}`, `{normalisation}`"
+    kind, normalization = column
+    return f"`{kind}`, `{normalization}`"
 
 
 def _abundance_order(column: Column) -> tuple[int, ...]:
-    kind, normalisation = column
-    return (ABUNDANCE_ORDER.index(kind), NORMALISATION_ORDER.index(normalisation))
+    kind, normalization = column
+    return (ABUNDANCE_ORDER.index(kind), NORMALIZATION_ORDER.index(normalization))
 
 
 @dataclass(frozen=True)
@@ -155,7 +155,7 @@ class Style:
 
 STYLES = {
     "abundance": Style(
-        _abundance_column, _abundance_header, _abundance_order, ("kind", "normalisation")
+        _abundance_column, _abundance_header, _abundance_order, ("kind", "normalization")
     ),
     "confidence": Style(_confidence_column, _confidence_header, _confidence_order, ("kind",)),
 }

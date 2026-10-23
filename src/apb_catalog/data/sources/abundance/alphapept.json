@@ -23,7 +23,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "ms1_int_sum_apex_dn: AlphaPept's summed MS1 apex intensity after its delayed normalisation, the _dn suffix."
@@ -42,7 +42,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "ms1_int_sum_apex: summed MS1 apex intensity, before AlphaPept's delayed normalisation."
@@ -61,7 +61,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "ms1_int_sum_area: summed MS1 peak area, before AlphaPept's delayed normalisation."
@@ -80,7 +80,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "ms1_int_max_apex: maximal MS1 apex intensity, before AlphaPept's delayed normalisation."
@@ -99,7 +99,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "ms1_int_max_area: maximal MS1 peak area, before AlphaPept's delayed normalisation."

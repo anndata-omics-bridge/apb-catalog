@@ -6,8 +6,8 @@ APB Catalog tells a consumer which field of an [APB2](https://github.com/anndata
 from apb_catalog.api import Catalog
 
 catalog = Catalog(parsed, "identification_confidence")
-catalog.layer("ion", concept="confidence")              # ('pep', 'q_value')
-pep = catalog.layer("ion", concept="confidence", kind="pep")
+catalog.layer("ion")                   # ('pep', 'q_value')
+pep = catalog.layer("ion", kind="pep")
 ```
 
 `pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP.
@@ -18,7 +18,7 @@ A catalogue annotates what its consumers need, never every vendor column; `abund
 
 | Set | Used by | Annotates |
 | --- | --- | --- |
-| `abundance` | apb-proteobench modules that ask for an un-normalised layer | Every layer APB2 marks `abundance`: what it measures and whether the software normalises it |
+| `abundance` | apb-proteobench modules that ask for an un-normalized layer | Every layer APB2 marks `abundance`: what it measures and whether the software normalizes it |
 | `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
 | `proteobench_entrapment` | apb-proteobench entrapment scoring | Run, library and experiment-wide precursor q-values, each its own kind |
 
@@ -33,7 +33,7 @@ Rule of thumb:
 - Meaning several tools need, or apb2 itself defines → role in `rules.json`
 - Meaning one consumer or an external standard needs → catalogue
 - A catalogue copy of a role would be a second source of truth
-- Qualifying a role is not a copy: `abundance` adds kind and normalisation to the layers APB2 marks `abundance`, and a test keeps its entries equal to those layers
+- Qualifying a role is not a copy: `abundance` adds kind and normalization to the layers APB2 marks `abundance`, and a test keeps its entries equal to those layers
 
 ## How it stays correct
 

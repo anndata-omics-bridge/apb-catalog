@@ -23,7 +23,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "<sample> Intensity in combined_ion.tsv: IonQuant's precursor intensity. IonQuant has a normalisation setting, ionquant.normalization, but whether these columns carry it is not established."

@@ -38,7 +38,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "evidence.txt Intensity: the summed extracted ion current of the feature's isotope clusters, never normalised."
@@ -57,7 +57,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "modificationSpecificPeptides.txt Intensity <run>: summed peptide intensity, never normalised."
@@ -76,7 +76,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "peptides.txt Intensity <run>: summed peptide intensity, never normalised."
@@ -95,7 +95,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "maxlfq",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "peptides.txt LFQ intensity <run>: MaxLFQ, with delayed normalisation unless the run skips it; present only when the run enables LFQ.",
@@ -115,7 +115,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "proteinGroups.txt Intensity <run>: the protein group's summed peptide intensities, never normalised."
@@ -134,7 +134,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "maxlfq",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "proteinGroups.txt LFQ intensity <run>: MaxLFQ, with delayed normalisation unless the run skips it; present only when the run enables LFQ.",
@@ -154,7 +154,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "ibaq",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "proteinGroups.txt iBAQ <run>: summed intensity divided by the number of theoretically observable peptides, from un-normalised intensities.",

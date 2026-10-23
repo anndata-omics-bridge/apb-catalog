@@ -1,0 +1,51 @@
+{
+  "catalogue_id": "maxquant",
+  "catalogue_version": "0.1",
+  "software_name": "MaxQuant",
+  "variants": [
+    {
+      "rule": "maxquant_wide/rules.json",
+      "level": "ion",
+      "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "maxquant.ion.PEP.pep",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "PEP"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "pep",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    },
+    {
+      "entry_id": "maxquant.ion.Intensity.intensity",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "layers",
+        "name": "Intensity"
+      },
+      "concept": "toy_signal",
+      "qualifiers": {
+        "kind": "intensity"
+      },
+      "evidence": {
+        "basis": "Synthetic test entry."
+      }
+    }
+  ]
+}

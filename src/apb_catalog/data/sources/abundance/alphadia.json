@@ -39,7 +39,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "directlfq",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "AlphaDIA's precursor-level directLFQ intensity matrix; normalised when the run sets search_output.normalize_lfq, on by default.",
@@ -59,7 +59,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "directlfq",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "precursor.intensity: AlphaDIA's precursor-level directLFQ intensity; normalised when the run sets search_output.normalize_directlfq, on by default.",
@@ -79,7 +79,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "directlfq",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "pg.intensity: AlphaDIA's protein-group directLFQ intensity; normalised when the run sets search_output.normalize_directlfq, on by default.",

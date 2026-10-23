@@ -1,9 +1,14 @@
-"""The command line lists the catalogues and checks the packaged rules against one."""
+"""The command line lists the catalogues, checks the packaged rules against one, and prints one
+as a table."""
 
 from __future__ import annotations
 
+import io
+
+import polars as pl
 import pytest
 
+from apb_catalog.api import rule_coverage
 from apb_catalog.cli import app
 
 
@@ -50,8 +55,46 @@ def test_software_shows_every_field_and_its_column(
     assert "DIA-NN" not in output
 
 
+def test_meaning_prints_the_column_of_every_meaning_per_rule_level(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """One row per rule level and field, with its kind and the set's qualifier as columns."""
+    assert _run("meaning", "abundance") == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].split() == ["software", "version", "level", "column", "kind", "normalization"]
+    assert ["DIA-NN", "2.x", "ion", "Precursor_Quantity", "intensity", "none"] in [
+        line.split() for line in lines
+    ]
+
+
+def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str]) -> None:
+    """CSV has the text table's columns and one row per field of the rule check."""
+    assert _run("meaning", "abundance", "--format", "csv") == 0
+    table = pl.read_csv(io.StringIO(capsys.readouterr().out))
+    assert table.columns == ["software", "version", "level", "column", "kind", "normalization"]
+    assert table.height == rule_coverage("abundance").height
+
+
+def test_a_level_without_an_entry_names_none(capsys: pytest.CaptureFixture[str]) -> None:
+    """A rule level the set has no entry for still gets a row, its column ``none``."""
+    _run("meaning", "identification_confidence", "--format", "csv")
+    table = pl.read_csv(io.StringIO(capsys.readouterr().out))
+    assert not table.filter(pl.col("column") == "none").is_empty()
+
+
+def test_meaning_names_who_writes_a_column(
+    toy_set: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A column another package writes carries its producer, and the origin becomes a column."""
+    _run("meaning", toy_set)
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].split()[-1] == "origin"
+    assert any("fasta_validation.fasta_matches_contaminant (apb-fasta)" in line for line in lines)
+
+
 @pytest.mark.parametrize(
-    "argv", [("check", "nope"), ("check", "identification_confidence", "nope")]
+    "argv",
+    [("check", "nope"), ("check", "identification_confidence", "nope"), ("meaning", "nope")],
 )
 def test_unknown_names_exit_2(argv: tuple[str, ...], capsys: pytest.CaptureFixture[str]) -> None:
     """An unknown set or software names what exists."""

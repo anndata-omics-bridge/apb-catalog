@@ -39,7 +39,7 @@ The folder holds:
 - `sources/<vendor>.json`: one catalogue per vendor, as for a packaged set
 - `producers/<producer>.json`, optional: fields APB writes itself
 
-Then `Catalog(parsed, "toy")`, `catalogues()`, `rule_coverage("toy")` and `apb-catalog check toy` work as for a packaged set. A set or concept name that a packaged set already uses raises `ValueError`, and so do two plugins naming one set.
+Then `Catalog(parsed, "toy")`, `catalogues()`, `rule_coverage("toy")` and `apb-catalog check toy` work as for a packaged set. A set or concept name that a packaged set already uses raises `ValueError`, and so do two plugins naming one set. Lookups default to the one concept a set's entries name; once its entries name several, every lookup needs `concept=`.
 
 ## APB's own fields
 
@@ -114,14 +114,14 @@ Three synthetic results with one ion level each, built like `_result` in `tests/
 from apb_catalog.api import Catalog
 
 confidence = Catalog(diann_2, "identification_confidence")   # DIA-NN 2.x, layers Q_Value and PEP
-confidence.layer("ion", concept="confidence")                # ('pep', 'q_value')
-confidence.layer("ion", concept="confidence", kind="pep")    # resolved: the PEP layer table
+confidence.layer("ion")                                      # ('pep', 'q_value')
+confidence.layer("ion", kind="pep")                          # resolved: the PEP layer table
 
 quantms = Catalog(quantms_1, "identification_confidence")    # quantms 1.x
-quantms.layer("ion", concept="confidence", kind="pep")       # missing: None
+quantms.layer("ion", kind="pep")                             # missing: None
 
 unreviewed = Catalog(diann_3, "identification_confidence")   # its rule declares DIA-NN ^3\.
-unreviewed.layer("ion", concept="confidence", kind="pep")    # unknown: raises UnresolvedField
+unreviewed.layer("ion", kind="pep")                          # unknown: raises UnresolvedField
 ```
 
 ```text

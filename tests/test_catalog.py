@@ -491,28 +491,83 @@ def test_proteobench_entrapment_offers_each_precursor_q_value_as_its_own_kind() 
     )
 
 
-def test_abundance_finds_the_un_normalised_layer_where_one_exists() -> None:
-    """DIA-NN writes its precursor quantity before and after normalisation; PEAKS only after."""
+def test_abundance_finds_the_un_normalized_layer_where_one_exists() -> None:
+    """DIA-NN writes its precursor quantity before and after normalization; PEAKS only after."""
     layers = ["Precursor_Normalised", "Precursor_Quantity", "Ms1_Area", "Ms1_Normalised"]
     parsed = _result("diann/v1_8/rules.json", layers)
     catalog = Catalog(parsed, "abundance")
     ion = parsed.levels["ion"].layers
-    raw = catalog.layer("ion", concept="abundance", kind="intensity", normalisation="none")
+    raw = catalog.layer("ion", kind="intensity", normalization="none")
     assert raw is ion["Precursor_Quantity"]
-    normalised = catalog.layer(
-        "ion", concept="abundance", kind="intensity", normalisation="run_setting"
+    normalized = catalog.layer(
+        "ion", concept="abundance", kind="intensity", normalization="run_setting"
     )
-    assert normalised is ion["Precursor_Normalised"]
+    assert normalized is ion["Precursor_Normalised"]
     peaks = Catalog(_result("peaks/rules.json", ["Normalized_Area"]), "abundance")
-    assert peaks.layer("ion", concept="abundance", kind="intensity", normalisation="none") is None
+    assert peaks.layer("ion", kind="intensity", normalization="none") is None
 
 
-def test_an_undocumented_normalisation_is_unknown_not_missing() -> None:
+def test_an_undocumented_normalization_is_unknown_not_missing() -> None:
     """A consumer can tell a layer nobody documented from a layer that does not exist."""
     catalog = Catalog(_result("fragpipe/rules.json", ["Intensity"]), "abundance")
     with pytest.raises(UnresolvedField) as raised:
-        catalog.layer("ion", concept="abundance", kind="intensity", normalisation="none")
+        catalog.layer("ion", concept="abundance", kind="intensity", normalization="none")
     assert raised.value.resolution.status == "unknown"
+
+
+def test_the_british_spelling_of_the_qualifier_is_rejected() -> None:
+    """``normalisation`` has no alias; the error names the qualifiers the concept declares."""
+    catalog = Catalog(_result("diann/v1_8/rules.json", ["Precursor_Quantity"]), "abundance")
+    with pytest.raises(ValueError, match=r"'normalisation'; declared: \['kind', 'normalization'\]"):
+        catalog.layer("ion", kind="intensity", normalisation="none")
+
+
+def test_the_concept_defaults_to_the_one_the_set_names() -> None:
+    """Each packaged set names one concept, so a lookup needs only the kind; the snapshot
+    still records the concept."""
+    parsed = _result(*MAXQUANT)
+    catalog = Catalog(parsed, "identification_confidence")
+    assert catalog.layer("ion", kind="pep") is parsed.levels["ion"].layers["PEP"]
+    assert catalog.snapshot().resolutions[0].request.concept == "confidence"
+
+
+def test_leaving_out_kind_and_concept_lists_the_kinds() -> None:
+    """Without either, a level lists the kinds of the set's one concept."""
+    spectronaut = Catalog(_result(*SPECTRONAUT), "identification_confidence")
+    assert spectronaut.layer("ion") == ("pep", "q_value")
+    sage = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
+    assert Catalog(sage, "identification_confidence").var("ion", stage="quantification") == (
+        "q_value",
+    )
+
+
+def test_kind_may_come_second_without_its_keyword() -> None:
+    """``layer("ion", "pep")`` reads the second argument as the kind, for layers and var."""
+    parsed = _result(*MAXQUANT)
+    assert (
+        Catalog(parsed, "identification_confidence").layer("ion", "pep")
+        is parsed.levels["ion"].layers["PEP"]
+    )
+    sage = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
+    column = Catalog(sage, "identification_confidence").var(
+        "ion", "q_value", stage="quantification"
+    )
+    assert column is not None
+    assert column.to_list() == [0.001, 0.002]
+
+
+def test_a_set_naming_two_concepts_needs_concept(two_concept_set: str) -> None:
+    """A plugin may add a concept; once a set's entries name two, a lookup must choose one."""
+    parsed = _result(*MAXQUANT)
+    catalog = Catalog(parsed, two_concept_set)
+    with pytest.raises(ValueError, match=r"\['confidence', 'toy_signal'\]; pass concept="):
+        catalog.layer("ion", kind="pep")
+    with pytest.raises(ValueError, match="pass concept="):
+        catalog.var("ion")
+    ion = parsed.levels["ion"].layers
+    assert catalog.layer("ion", kind="pep", concept="confidence") is ion["PEP"]
+    assert catalog.layer("ion", "intensity", "toy_signal") is ion["Intensity"]
+    assert catalog.layer("ion", concept="toy_signal") == ("intensity",)
 
 
 def test_each_level_counts_the_requests_its_snapshot_answered() -> None:

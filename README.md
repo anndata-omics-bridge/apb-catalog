@@ -19,12 +19,13 @@ pip install apb-catalog
 from apb_catalog.api import Catalog
 
 confidence = Catalog(parsed, "identification_confidence")                     # parsed: apb2 ParsedLevels
-confidence.layer("ion", concept="confidence")                 # ('pep', 'q_value') — kinds on offer, or None
-pep = confidence.layer("ion", concept="confidence", kind="pep")  # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
+confidence.layer("ion")                    # ('pep', 'q_value') — kinds on offer, or None
+pep = confidence.layer("ion", kind="pep")  # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
 ```
 
 - [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of every packaged set
 - `layer` returns the apb2 layer table, `var` the column; `None` means the vendor has no such field
+- `concept` defaults to the one concept the set's entries name; a set naming several raises `ValueError` until `concept=` chooses
 - A level answers only for its own entity: ion for precursors, protein for protein groups
 - Confidence lookups mean identification unless `stage="quantification"` says otherwise
 - Two equally good fields, or a rule nobody reviewed, raise `UnresolvedField` naming the candidates
@@ -38,20 +39,24 @@ pep = confidence.layer("ion", concept="confidence", kind="pep")  # MaxQuant PEP,
 apb-catalog                          # every catalogue set
 apb-catalog check SET                # FAIL, WARN or PASS per packaged rule level; exit 1 on a FAIL
 apb-catalog check SET spectronaut    # one vendor, with every field and its column
+apb-catalog meaning SET              # one table: column, kind and qualifiers of every meaning per rule level
+apb-catalog meaning SET --format csv # the same table as CSV
 ```
+
+- `meaning` shows which quantification tools report a meaning, and in which column; `unknown` in a qualifier means the entry is reviewed but the tool's documentation does not settle it
 
 - `rule_coverage(SET)` returns the same check as a Polars frame, one row per field
 - A level fails when it misses a MUST field and warns when it misses a SHOULD or MAY one; a set's requirements set them, and a set without requirements reports coverage only
 
 ## Catalogues
 
-- `abundance`: what each layer APB2 marks with the role `abundance` measures (intensity, MS1 intensity, MaxLFQ, iBAQ, directLFQ) and whether the software normalises it across runs (`none`, `run_setting`); used by apb-proteobench modules that ask for an un-normalised layer; 46 entries
+- `abundance`: what each layer APB2 marks with the role `abundance` measures (intensity, MS1 intensity, MaxLFQ, iBAQ, directLFQ) and whether the software normalizes it across runs (`none`, `run_setting`); used by apb-proteobench modules that ask for an un-normalized layer; 46 entries
 - `identification_confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 19 entries
 - `proteobench_entrapment`: run, library and experiment-wide precursor q-values, each its own kind; used by apb-proteobench's entrapment scoring; 7 entries
 - `Catalog(parsed, name).description`: the set's purpose and users, also embedded in its snapshot
 - Each set lists every packaged APB2 rule level, so a vendor without a relevant field answers `missing`; `unknown` comes from an unreviewed rule or from an entry whose evidence leaves a qualifier `unknown`
 - A level binds by the software name and version pattern its APB2 rule declares, plus the level; editing a rule within a version keeps its entries, and a new rule version needs its own variant
-- Vocabulary: `confidence` with `kind` (pep, q_value) and `stage`; `abundance` with `kind` and `normalisation`
+- Vocabulary: `confidence` with `kind` (pep, q_value) and `stage`; `abundance` with `kind` and `normalization`
 - Plugin sets: an installed package adds a set through the `apb_catalog.catalogues` entry-point group; [Maintaining](https://anndata-omics-bridge.github.io/apb-catalog/maintaining/#plugin-sets) describes its folder
 
 ## Snapshot contract

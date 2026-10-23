@@ -65,7 +65,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "FG.Quantity: the precursor quantity at the run's quantity MS level, after cross-run normalisation when the run enables it. The Cross-Run Normalization setting decides; its parameter file states it."
@@ -84,7 +84,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "FG.MS2RawQuantity: the precursor's MS2 quantity before normalisation; FG.Quantity's source when the run quantifies on MS2, the default."
@@ -103,7 +103,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "ms1_intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "FG.MS1RawQuantity: the precursor's MS1 quantity before normalisation."
@@ -124,7 +124,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "EG.TotalQuantity (Settings): the elution group's total quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
@@ -145,7 +145,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "EG.TargetQuantity (Settings): the elution group's target-channel quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
@@ -165,7 +165,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "EG.ReferenceQuantity (Settings): the elution group's reference-channel quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
@@ -186,7 +186,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "unknown",
-        "normalisation": "run_setting"
+        "normalization": "run_setting"
       },
       "evidence": {
         "basis": "PG.Quantity: the protein-group quantity from normalised precursor quantities; the run's protein quantity method, such as a top-N mean or MaxLFQ, decides the kind. The Cross-Run Normalization setting decides; its parameter file states it."
@@ -207,7 +207,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "F.PeakArea: the fragment's peak area; Spectronaut writes its normalised area as a separate column, F.NormalizedPeakArea."
@@ -226,7 +226,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "none"
+        "normalization": "none"
       },
       "evidence": {
         "basis": "F.PeakHeight: the height of the fragment's extracted ion chromatogram; Spectronaut's normalised fragment value is the separate F.NormalizedPeakArea."

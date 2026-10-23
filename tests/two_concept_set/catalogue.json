@@ -1,0 +1,6 @@
+{
+  "purpose": "Synthetic plugin set whose entries name two concepts: MaxQuant's PEP as the packaged confidence and its intensity as a concept the set adds.",
+  "used_by": [
+    "apb-catalog tests"
+  ]
+}

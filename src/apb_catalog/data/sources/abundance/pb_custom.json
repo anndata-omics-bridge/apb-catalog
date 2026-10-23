@@ -23,7 +23,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "ProteoBench's custom format: intensities the submitter supplies, with no parameter file to say how they were made."

@@ -23,7 +23,7 @@
       "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
-        "normalisation": "unknown"
+        "normalization": "unknown"
       },
       "evidence": {
         "basis": "area: MassChroQ's extracted ion chromatogram area per run. Whether the run's settings can normalise this column is not established."
