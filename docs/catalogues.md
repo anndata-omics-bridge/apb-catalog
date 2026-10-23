@@ -52,7 +52,7 @@ Peptidoform level:
 | --- | --- | :-: | :-: |
 | MaxQuant | 1.5, 1.6, 2.x | `PEP` | ✗ |
 | Sage | 0.x | ✗ | `Q_Value` |
-| WOMBAT | 0.9.11 | ✗ | ✗ |
+| WOMBAT-P | 0.9.11 | ✗ | ✗ |
 
 </div>
 
@@ -82,7 +82,7 @@ Ion level:
 | Spectronaut | 15 | `EG_PEP` | `EG_Qvalue` | ✗ |
 | Spectronaut | 19–20 | `EG_PEP` | `EG_Qvalue` | ✗ |
 | Spectronaut | 21 | `EG_PEP` | `EG_Qvalue` | ✗ |
-| WOMBAT | 0.9.11 | ✗ | ✗ | ✗ |
+| WOMBAT-P | 0.9.11 | ✗ | ✗ | ✗ |
 
 </div>
 
@@ -117,7 +117,7 @@ Every entry:
 | Spectronaut | spectronaut, spectronaut/v21 | protein | layers | `PG_QValue_Run_Wise` | `q_value` |
 | Spectronaut | spectronaut, spectronaut/v21 | protein | var | `PG_Qvalue` | `global_q_value` |
 | Spectronaut | spectronaut/v21 | protein | layers | `PG_LibraryQvalue` | `library_q_value` |
-| WOMBAT | all | — | — | none relevant | — |
+| WOMBAT-P | all | — | — | none relevant | — |
 
 <!-- end of generated block: identification_confidence -->
 
@@ -175,7 +175,7 @@ Every entry:
 | Sage | all | — | — | none relevant | — |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
 | Spectronaut | spectronaut/v21 | ion | layers | `EG_LibraryQvalue` | `library_q_value` |
-| WOMBAT | all | — | — | none relevant | — |
+| WOMBAT-P | all | — | — | none relevant | — |
 
 <!-- end of generated block: proteobench_entrapment -->
 
@@ -240,7 +240,7 @@ Peptidoform level:
 | --- | --- | :-: | :-: | :-: |
 | MaxQuant | 1.5, 1.6, 2.x | `Intensity` | ✗ | ✗ |
 | Sage | 0.x | ✗ | ✗ | `Intensity` |
-| WOMBAT | 0.9.11 | ✗ | `Abundance` | ✗ |
+| WOMBAT-P | 0.9.11 | ✗ | `Abundance` | ✗ |
 
 </div>
 
@@ -270,7 +270,7 @@ Ion level:
 | Spectronaut | 15 | `FG_MS2RawQuantity` | `FG_Quantity` | `EG_TotalQuantity_Settings`; `EG_TargetQuantity_Settings` | `FG_MS1RawQuantity` | ✗ | ✗ |
 | Spectronaut | 19–20 | ✗ | `FG_Quantity` | `EG_TotalQuantity_Settings`; `EG_TargetQuantity_Settings`; `EG_ReferenceQuantity_Settings` | ✗ | ✗ | ✗ |
 | Spectronaut | 21 | ✗ | `FG_Quantity` | `EG_TotalQuantity_Settings`; `EG_TargetQuantity_Settings`; `EG_ReferenceQuantity_Settings` | ✗ | ✗ | ✗ |
-| WOMBAT | 0.9.11 | ✗ | `Abundance` | ✗ | ✗ | ✗ | ✗ |
+| WOMBAT-P | 0.9.11 | ✗ | `Abundance` | ✗ | ✗ | ✗ | ✗ |
 
 </div>
 
@@ -336,8 +336,8 @@ Every entry:
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | protein | layers | `PG_Quantity` | `unknown` | `run_setting` |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | fragment | layers | `F_PeakArea` | `intensity` | `none` |
 | Spectronaut | spectronaut/v15 | fragment | layers | `F_PeakHeight` | `intensity` | `none` |
-| WOMBAT | wombat | ion | layers | `Abundance` | `intensity` | `run_setting` |
-| WOMBAT | wombat | peptidoform | layers | `Abundance` | `intensity` | `run_setting` |
+| WOMBAT-P | wombat | ion | layers | `Abundance` | `intensity` | `run_setting` |
+| WOMBAT-P | wombat | peptidoform | layers | `Abundance` | `intensity` | `run_setting` |
 
 <!-- end of generated block: abundance -->
 
