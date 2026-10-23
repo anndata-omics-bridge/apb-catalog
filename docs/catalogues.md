@@ -28,6 +28,7 @@ Protein level:
 | DIA-NN | 1.8–1.9 | `PG_Q_Value` | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
 | DIA-NN | 2.x | `PG_Q_Value` | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
 | MaxQuant | 1.5, 1.6, 2.x | ✗ | ✗ | `Q_Value` |
+| MSAngel | 2.x | ✗ | ✗ | ✗ |
 | Spectronaut | 15 | ✗ | ✗ | ✗ |
 | Spectronaut | 19–20 | `PG_QValue_Run_Wise` | ✗ | `PG_Qvalue` |
 | Spectronaut | 21 | `PG_QValue_Run_Wise` | `PG_LibraryQvalue` | `PG_Qvalue` |
@@ -210,16 +211,17 @@ Protein level:
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity`, `none` | `intensity`, `run_setting` | `maxlfq`, `run_setting` | `ibaq`, `none` | `directlfq`, `run_setting` | `unknown`, `run_setting` |
-| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: |
-| AlphaDIA | 2.x | ✗ | ✗ | ✗ | ✗ | `PG_Intensity` | ✗ |
-| DIA-NN | 1.0–1.7 | `PG_Quantity` | `PG_Normalised` | `PG_MaxLFQ` | ✗ | ✗ | ✗ |
-| DIA-NN | 1.8–1.9 | `PG_Quantity` | `PG_Normalised` | ✗ | ✗ | ✗ | `PG_MaxLFQ` |
-| DIA-NN | 2.x | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_MaxLFQ` |
-| MaxQuant | 1.5, 1.6, 2.x | `Intensity` | ✗ | `LFQ_Intensity` | `iBAQ` | ✗ | ✗ |
-| Spectronaut | 15 | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_Quantity` |
-| Spectronaut | 19–20 | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_Quantity` |
-| Spectronaut | 21 | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_Quantity` |
+| Software | Version | `intensity`, `none` | `intensity`, `run_setting` | `maxlfq`, `run_setting` | `ibaq`, `none` | `directlfq`, `run_setting` | `unknown`, `none` | `unknown`, `run_setting` |
+| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| AlphaDIA | 2.x | ✗ | ✗ | ✗ | ✗ | `PG_Intensity` | ✗ | ✗ |
+| DIA-NN | 1.0–1.7 | `PG_Quantity` | `PG_Normalised` | `PG_MaxLFQ` | ✗ | ✗ | ✗ | ✗ |
+| DIA-NN | 1.8–1.9 | `PG_Quantity` | `PG_Normalised` | ✗ | ✗ | ✗ | ✗ | `PG_MaxLFQ` |
+| DIA-NN | 2.x | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_MaxLFQ` |
+| MaxQuant | 1.5, 1.6, 2.x | `Intensity` | ✗ | `LFQ_Intensity` | `iBAQ` | ✗ | ✗ | ✗ |
+| MSAngel | 2.x | ✗ | ✗ | ✗ | ✗ | ✗ | `Raw_Abundance` | `Abundance` |
+| Spectronaut | 15 | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_Quantity` |
+| Spectronaut | 19–20 | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_Quantity` |
+| Spectronaut | 21 | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | `PG_Quantity` |
 
 </div>
 
@@ -322,6 +324,8 @@ Every entry:
 | MetaMorpheus | metamorpheus | ion | layers | `Intensity` | `intensity` | `unknown` |
 | MSAngel | msangel | ion | layers | `Abundance` | `intensity` | `run_setting` |
 | MSAngel | msangel | ion | layers | `Raw_Abundance` | `intensity` | `none` |
+| MSAngel | msangel | protein | layers | `Abundance` | `unknown` | `run_setting` |
+| MSAngel | msangel | protein | layers | `Raw_Abundance` | `unknown` | `none` |
 | pb_custom | pb_custom | ion | layers | `Intensity` | `intensity` | `unknown` |
 | PEAKS | peaks | ion | layers | `Normalized_Area` | `intensity` | `run_setting` |
 | ProlineStudio | prolinestudio | ion | layers | `Abundance` | `intensity` | `run_setting` |

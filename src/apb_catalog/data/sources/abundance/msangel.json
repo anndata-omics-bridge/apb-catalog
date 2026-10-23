@@ -7,6 +7,11 @@
       "rule": "msangel/rules.json",
       "level": "ion",
       "software_version_pattern": "^2\\..*"
+    },
+    {
+      "rule": "msangel/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^2\\..*"
     }
   ],
   "entries": [
@@ -46,6 +51,44 @@
       },
       "evidence": {
         "basis": "raw_abundance_<sample>: Proline's raw precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."
+      }
+    },
+    {
+      "entry_id": "msangel.protein.Abundance",
+      "rules": [
+        "msangel/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "unknown",
+        "normalization": "run_setting"
+      },
+      "evidence": {
+        "basis": "abundance_<sample> of the Protein sets sheet: Proline's protein-set abundance after its post-processing, which normalises when the run's quantitation settings ask for it. Proline sums or fits a protein set's peptide abundances as the run's quantitation settings choose, which the workbook does not state, so the kind is unknown."
+      }
+    },
+    {
+      "entry_id": "msangel.protein.Raw_Abundance",
+      "rules": [
+        "msangel/rules.json"
+      ],
+      "reference": {
+        "level": "protein",
+        "location": "layers",
+        "name": "Raw_Abundance"
+      },
+      "concept": "abundance",
+      "qualifiers": {
+        "kind": "unknown",
+        "normalization": "none"
+      },
+      "evidence": {
+        "basis": "raw_abundance_<sample> of the Protein sets sheet: Proline's raw protein-set abundance. Proline sums or fits a protein set's peptide abundances as the run's quantitation settings choose, which the workbook does not state, so the kind is unknown."
       }
     }
   ]

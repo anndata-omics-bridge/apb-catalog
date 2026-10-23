@@ -7,6 +7,11 @@
       "rule": "msangel/rules.json",
       "level": "ion",
       "software_version_pattern": "^2\\..*"
+    },
+    {
+      "rule": "msangel/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^2\\..*"
     }
   ],
   "entries": []
