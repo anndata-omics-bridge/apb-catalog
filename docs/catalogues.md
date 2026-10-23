@@ -21,12 +21,12 @@ Protein level:
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `q_value` per run | `library_q_value` per run | `global_q_value` per run | `global_q_value` per feature |
+| Software | Version | `q_value` per run | `library_q_value` per run | `library_q_value` per feature | `global_q_value` per feature |
 | --- | --- | :-: | :-: | :-: | :-: |
 | AlphaDIA | 2.x | ✗ | ✗ | ✗ | ✗ |
-| DIA-NN | 1.0–1.7 | `PG_Q_Value` | ✗ | `Global_PG_Q_Value` | ✗ |
-| DIA-NN | 1.8–1.9 | `PG_Q_Value` | `Lib_PG_Q_Value` | `Global_PG_Q_Value` | ✗ |
-| DIA-NN | 2.x | `PG_Q_Value` | `Lib_PG_Q_Value` | `Global_PG_Q_Value` | ✗ |
+| DIA-NN | 1.0–1.7 | `PG_Q_Value` | ✗ | ✗ | `Global_PG_Q_Value` |
+| DIA-NN | 1.8–1.9 | `PG_Q_Value` | ✗ | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
+| DIA-NN | 2.x | `PG_Q_Value` | ✗ | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
 | MaxQuant | 1.5, 1.6, 2.x | ✗ | ✗ | ✗ | `Q_Value` |
 | Spectronaut | 15 | ✗ | ✗ | ✗ | ✗ |
 | Spectronaut | 19–20 | `PG_QValue_Run_Wise` | ✗ | ✗ | `PG_Qvalue` |
@@ -60,29 +60,29 @@ Ion level:
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `pep` per run | `q_value` per run | `q_value` per feature, MS1 peak |
-| --- | --- | :-: | :-: | :-: |
-| AlphaDIA | 1.10 | ✗ | ✗ | ✗ |
-| AlphaDIA | 1.12 | ✗ | `QValue` | ✗ |
-| AlphaDIA | 2.x | ✗ | `QValue` | ✗ |
-| AlphaPept | 0.5 | ✗ | `Q_Value` | ✗ |
-| DIA-NN | 1.0–1.7 | ✗ | `Q_Value` | ✗ |
-| DIA-NN | 1.8–1.9 | `PEP` | `Q_Value` | ✗ |
-| DIA-NN | 2.x | `PEP` | `Q_Value` | ✗ |
-| FragPipe | 22–23 | ✗ | ✗ | ✗ |
-| i2MassChroQ | 1.x | ✗ | ✗ | ✗ |
-| MaxQuant | 1.5, 1.6, 2.x | `PEP` | ✗ | ✗ |
-| MetaMorpheus | 1.x | ✗ | ✗ | ✗ |
-| MSAngel | 2.x | ✗ | ✗ | ✗ |
-| pb_custom | any | ✗ | ✗ | ✗ |
-| PEAKS | 13 | ✗ | ✗ | ✗ |
-| ProlineStudio | 2.x | ✗ | ✗ | ✗ |
-| quantms | 1.x | ✗ | ✗ | ✗ |
-| Sage | 0.x | ✗ | ✗ | `Q_Value` |
-| Spectronaut | 15 | `EG_PEP` | `EG_Qvalue` | ✗ |
-| Spectronaut | 19–20 | `EG_PEP` | `EG_Qvalue` | ✗ |
-| Spectronaut | 21 | `EG_PEP` | `EG_Qvalue` | ✗ |
-| WOMBAT-P | 0.9.11 | ✗ | ✗ | ✗ |
+| Software | Version | `pep` per run | `q_value` per run | `q_value` per feature, MS1 peak | `global_q_value` per feature |
+| --- | --- | :-: | :-: | :-: | :-: |
+| AlphaDIA | 1.10 | ✗ | ✗ | ✗ | ✗ |
+| AlphaDIA | 1.12 | ✗ | `QValue` | ✗ | ✗ |
+| AlphaDIA | 2.x | ✗ | `QValue` | ✗ | ✗ |
+| AlphaPept | 0.5 | ✗ | `Q_Value` | ✗ | ✗ |
+| DIA-NN | 1.0–1.7 | ✗ | `Q_Value` | ✗ | `Global_Q_Value` |
+| DIA-NN | 1.8–1.9 | `PEP` | `Q_Value` | ✗ | `Global_Q_Value` |
+| DIA-NN | 2.x | `PEP` | `Q_Value` | ✗ | `Global_Q_Value` |
+| FragPipe | 22–23 | ✗ | ✗ | ✗ | ✗ |
+| i2MassChroQ | 1.x | ✗ | ✗ | ✗ | ✗ |
+| MaxQuant | 1.5, 1.6, 2.x | `PEP` | ✗ | ✗ | ✗ |
+| MetaMorpheus | 1.x | ✗ | ✗ | ✗ | ✗ |
+| MSAngel | 2.x | ✗ | ✗ | ✗ | ✗ |
+| pb_custom | any | ✗ | ✗ | ✗ | ✗ |
+| PEAKS | 13 | ✗ | ✗ | ✗ | ✗ |
+| ProlineStudio | 2.x | ✗ | ✗ | ✗ | ✗ |
+| quantms | 1.x | ✗ | ✗ | ✗ | ✗ |
+| Sage | 0.x | ✗ | ✗ | `Q_Value` | ✗ |
+| Spectronaut | 15 | `EG_PEP` | `EG_Qvalue` | ✗ | ✗ |
+| Spectronaut | 19–20 | `EG_PEP` | `EG_Qvalue` | ✗ | ✗ |
+| Spectronaut | 21 | `EG_PEP` | `EG_Qvalue` | ✗ | ✗ |
+| WOMBAT-P | 0.9.11 | ✗ | ✗ | ✗ | ✗ |
 
 </div>
 
@@ -95,9 +95,10 @@ Every entry:
 | AlphaPept | alphapept | ion | layers | `Q_Value` | `q_value` |
 | DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Q_Value` | `q_value` |
 | DIA-NN | diann/v1_8, diann/v2 | ion | layers | `PEP` | `pep` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | var | `Global_Q_Value` | `global_q_value` |
 | DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | layers | `PG_Q_Value` | `q_value` |
-| DIA-NN | diann/v1_8, diann/v2 | protein | layers | `Lib_PG_Q_Value` | `library_q_value` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | layers | `Global_PG_Q_Value` | `global_q_value` |
+| DIA-NN | diann/v1_8, diann/v2 | protein | var | `Lib_PG_Q_Value` | `library_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | var | `Global_PG_Q_Value` | `global_q_value` |
 | FragPipe | all | — | — | none relevant | — |
 | i2MassChroQ | all | — | — | none relevant | — |
 | MaxQuant | maxquant_wide | ion | layers | `PEP` | `pep` |
@@ -139,17 +140,17 @@ Ion level:
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `q_value` per run | `library_q_value` per run | `global_q_value` per run |
-| --- | --- | :-: | :-: | :-: |
-| AlphaDIA | 1.10 | ✗ | ✗ | ✗ |
-| AlphaDIA | 1.12 | `QValue` | ✗ | ✗ |
-| AlphaDIA | 2.x | `QValue` | ✗ | ✗ |
-| DIA-NN | 1.0–1.7 | `Q_Value` | `Lib_Q_Value` | `Global_Q_Value` |
-| DIA-NN | 1.8–1.9 | `Q_Value` | `Lib_Q_Value` | `Global_Q_Value` |
-| DIA-NN | 2.x | `Q_Value` | `Lib_Q_Value` | `Global_Q_Value` |
-| Spectronaut | 15 | `EG_Qvalue` | ✗ | ✗ |
-| Spectronaut | 19–20 | `EG_Qvalue` | ✗ | ✗ |
-| Spectronaut | 21 | `EG_Qvalue` | `EG_LibraryQvalue` | ✗ |
+| Software | Version | `q_value` per run | `library_q_value` per run | `library_q_value` per feature | `global_q_value` per feature |
+| --- | --- | :-: | :-: | :-: | :-: |
+| AlphaDIA | 1.10 | ✗ | ✗ | ✗ | ✗ |
+| AlphaDIA | 1.12 | `QValue` | ✗ | ✗ | ✗ |
+| AlphaDIA | 2.x | `QValue` | ✗ | ✗ | ✗ |
+| DIA-NN | 1.0–1.7 | `Q_Value` | ✗ | `Lib_Q_Value` | `Global_Q_Value` |
+| DIA-NN | 1.8–1.9 | `Q_Value` | ✗ | `Lib_Q_Value` | `Global_Q_Value` |
+| DIA-NN | 2.x | `Q_Value` | ✗ | `Lib_Q_Value` | `Global_Q_Value` |
+| Spectronaut | 15 | `EG_Qvalue` | ✗ | ✗ | ✗ |
+| Spectronaut | 19–20 | `EG_Qvalue` | ✗ | ✗ | ✗ |
+| Spectronaut | 21 | `EG_Qvalue` | `EG_LibraryQvalue` | ✗ | ✗ |
 
 </div>
 
@@ -161,8 +162,8 @@ Every entry:
 | AlphaDIA | alphadia/v2 | ion | layers | `QValue` | `q_value` |
 | AlphaPept | all | — | — | none relevant | — |
 | DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Q_Value` | `q_value` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Lib_Q_Value` | `library_q_value` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Global_Q_Value` | `global_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | var | `Lib_Q_Value` | `library_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | var | `Global_Q_Value` | `global_q_value` |
 | FragPipe | all | — | — | none relevant | — |
 | i2MassChroQ | all | — | — | none relevant | — |
 | MaxQuant | all | — | — | none relevant | — |

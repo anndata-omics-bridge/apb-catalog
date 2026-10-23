@@ -23,7 +23,7 @@ def test_without_arguments_every_catalogue_is_listed(
     assert _run() == 0
     output = capsys.readouterr().out
     assert f"{toy_set}: 8 entries, requirements" in output
-    assert "identification_confidence: 19 entries, coverage only" in output
+    assert "identification_confidence: 20 entries, coverage only" in output
 
 
 def test_check_fails_when_a_level_misses_a_must_field(

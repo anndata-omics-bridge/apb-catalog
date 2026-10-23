@@ -130,10 +130,10 @@ confidence on ion (stage=identification, kind=pep) is unknown: no source catalog
 
 Fix: add a variant for the new version.
 
-Suppose `diann.json` also tagged `Lib_Q_Value` as `q_value`. A result retaining both layers then answers `kind="q_value"` with:
+Suppose `diann.json` also tagged `PEP` as `q_value`. A result retaining both layers then answers `kind="q_value"` with:
 
 ```text
-confidence on ion (stage=identification, kind=q_value) is ambiguous: 2 entries match: Q_Value, Lib_Q_Value; candidates: Q_Value, Lib_Q_Value
+confidence on ion (stage=identification, kind=q_value) is ambiguous: 2 entries match: Q_Value, PEP; candidates: Q_Value, PEP
 ```
 
 No test catches this. Fix: give each field its own kind, as `proteobench_entrapment` does with `library_q_value`.

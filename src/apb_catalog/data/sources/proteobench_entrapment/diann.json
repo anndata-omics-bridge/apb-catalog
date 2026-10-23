@@ -76,7 +76,7 @@
       ],
       "reference": {
         "level": "ion",
-        "location": "layers",
+        "location": "var",
         "name": "Lib_Q_Value"
       },
       "concept": "confidence",
@@ -85,7 +85,7 @@
         "stage": "identification"
       },
       "evidence": {
-        "basis": "DIA-NN report column Lib.Q.Value: precursor q-value of the spectral-library entry; ProteoBench's entrapment module ranks DIA-NN uploads by it.",
+        "basis": "DIA-NN report column Lib.Q.Value: precursor q-value of the spectral-library entry, one per precursor, so a var column; ProteoBench's entrapment module ranks DIA-NN uploads by it.",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
     },
@@ -98,7 +98,7 @@
       ],
       "reference": {
         "level": "ion",
-        "location": "layers",
+        "location": "var",
         "name": "Global_Q_Value"
       },
       "concept": "confidence",
@@ -107,7 +107,7 @@
         "stage": "identification"
       },
       "evidence": {
-        "basis": "DIA-NN report column Global.Q.Value: experiment-wide precursor q-value; ProteoBench's entrapment module ranks FragPipe (DIA-NN quant) uploads by it.",
+        "basis": "DIA-NN report column Global.Q.Value: experiment-wide precursor q-value, one per precursor, so a var column; ProteoBench's entrapment module ranks FragPipe (DIA-NN quant) uploads by it.",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
     }

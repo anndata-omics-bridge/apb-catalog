@@ -65,14 +65,14 @@ A layer holds one value per run and feature; a `var` column one value per featur
 ```python
 confidence = Catalog(result, "identification_confidence")    # DIA-NN 2.6.0
 confidence.layer("ion")                                      # ('pep', 'q_value')
-confidence.var("ion")                                        # None: no per-feature confidence
-confidence.layer("ion", kind="q_value").layer_name           # 'Q_Value'
+confidence.var("ion")                                        # ('global_q_value',)
+confidence.layer("ion", kind="q_value").layer_name           # 'Q_Value', one per run
+confidence.var("ion", kind="global_q_value").name            # 'Global_Q_Value', one per precursor
 confidence.layer("protein", kind="q_value").layer_name       # 'PG_Q_Value'
-confidence.layer("protein", kind="global_q_value").layer_name   # 'Global_PG_Q_Value'
-confidence.var("protein", kind="global_q_value")             # None: DIA-NN stores it per run
+confidence.var("protein", kind="global_q_value").name        # 'Global_PG_Q_Value'
 ```
 
-`Spectronaut` 20 reports the global protein q-value once per protein group, so `var` finds it:
+`Spectronaut` 20 also reports the global protein q-value once per protein group:
 
 ```python
 confidence = Catalog(spectronaut, "identification_confidence")
@@ -132,9 +132,10 @@ Catalog(result, "identification_confidence").fields()    # DIA-NN 2.6.0
 ╞═════════╪══════════╪═══════╪═══════════════════╪════════════╪═════════════════╪════════════════╡
 │ ion     ┆ layers   ┆ null  ┆ Q_Value           ┆ confidence ┆ q_value         ┆ identification │
 │ ion     ┆ layers   ┆ null  ┆ PEP               ┆ confidence ┆ pep             ┆ identification │
+│ ion     ┆ var      ┆ null  ┆ Global_Q_Value    ┆ confidence ┆ global_q_value  ┆ identification │
 │ protein ┆ layers   ┆ null  ┆ PG_Q_Value        ┆ confidence ┆ q_value         ┆ identification │
-│ protein ┆ layers   ┆ null  ┆ Lib_PG_Q_Value    ┆ confidence ┆ library_q_value ┆ identification │
-│ protein ┆ layers   ┆ null  ┆ Global_PG_Q_Value ┆ confidence ┆ global_q_value  ┆ identification │
+│ protein ┆ var      ┆ null  ┆ Lib_PG_Q_Value    ┆ confidence ┆ library_q_value ┆ identification │
+│ protein ┆ var      ┆ null  ┆ Global_PG_Q_Value ┆ confidence ┆ global_q_value  ┆ identification │
 └─────────┴──────────┴───────┴───────────────────┴────────────┴─────────────────┴────────────────┘
 ```
 
@@ -143,7 +144,8 @@ Catalog(result, "identification_confidence").fields()    # DIA-NN 2.6.0
 `apb-proteobench` asks this set for every precursor q-value it can score:
 
 ```python
-Catalog(result, "proteobench_entrapment").layer("ion")         # ('global_q_value', 'library_q_value', 'q_value')
+Catalog(result, "proteobench_entrapment").layer("ion")         # ('q_value',)
+Catalog(result, "proteobench_entrapment").var("ion")           # ('global_q_value', 'library_q_value')
 Catalog(spectronaut, "proteobench_entrapment").layer("ion")    # ('q_value',)
 Catalog(maxquant, "proteobench_entrapment").layer("ion")       # None: no entry for MaxQuant
 ```

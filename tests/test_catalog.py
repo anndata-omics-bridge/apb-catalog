@@ -473,17 +473,23 @@ def test_snapshot_embeds_the_set_description() -> None:
 
 
 def test_proteobench_entrapment_offers_each_precursor_q_value_as_its_own_kind() -> None:
-    """Entrapment ranks by run, library or experiment-wide q-values; each is one kind."""
-    layers = ["Precursor_Normalised", "Q_Value", "Lib_Q_Value", "Global_Q_Value", "PEP"]
-    parsed = _result("diann/v2/rules.json", layers)
-    catalog = Catalog(parsed, "proteobench_entrapment")
-    assert catalog.layer("ion", concept="confidence") == (
-        "global_q_value",
-        "library_q_value",
-        "q_value",
+    """Entrapment ranks by run, library or experiment-wide q-values; each is one kind.
+
+    The run's q-value is a layer; the library's and the experiment-wide one are one value per
+    precursor, so DIA-NN's rule stores them in var.
+    """
+    library = [0.01, 0.02]
+    parsed = _result(
+        "diann/v2/rules.json",
+        ["Precursor_Normalised", "Q_Value", "PEP"],
+        var={"Lib_Q_Value": library, "Global_Q_Value": [0.01, 0.03]},
     )
-    found = catalog.layer("ion", concept="confidence", kind="library_q_value")
-    assert found is parsed.levels["ion"].layers["Lib_Q_Value"]
+    catalog = Catalog(parsed, "proteobench_entrapment")
+    assert catalog.layer("ion", concept="confidence") == ("q_value",)
+    assert catalog.var("ion", concept="confidence") == ("global_q_value", "library_q_value")
+    found = catalog.var("ion", concept="confidence", kind="library_q_value")
+    assert found is not None
+    assert (found.name, found.to_list()) == ("Lib_Q_Value", library)
     assert catalog.layer("ion", concept="confidence", kind="pep") is None, "PEP is not ranked by"
     assert (
         Catalog(_result(*MAXQUANT), "proteobench_entrapment").layer("ion", concept="confidence")

@@ -89,6 +89,28 @@
       }
     },
     {
+      "entry_id": "diann.ion.Global_Q_Value",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "ion",
+        "location": "var",
+        "name": "Global_Q_Value"
+      },
+      "concept": "confidence",
+      "qualifiers": {
+        "kind": "global_q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "DIA-NN README: experiment-wide precursor q-value, one per precursor, so a var column. Global.Q.Value never differs across runs for a precursor: fixture 300beac4 (2.x parquet, 17,536) and 1cd54fe0 (1.8 TSV, 96,860).",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
       "entry_id": "diann.protein.PG_Q_Value",
       "rules": [
         "diann/v1_7/rules.json",
@@ -106,7 +128,7 @@
         "stage": "identification"
       },
       "evidence": {
-        "basis": "Run-specific protein-group q-value. PG.Q.Value differs across runs for every multi-run protein group, while Lib.PG.Q.Value and Global.PG.Q.Value never do: fixture 300beac4 (2.x parquet, 3,631 groups) and 1cd54fe0 (1.8 TSV, 8,584).",
+        "basis": "Run-specific protein-group q-value. PG.Q.Value differs across runs for every multi-run protein group: fixture 300beac4 (2.x parquet, 3,631 groups) and 1cd54fe0 (1.8 TSV, 8,584).",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
     },
@@ -118,7 +140,7 @@
       ],
       "reference": {
         "level": "protein",
-        "location": "layers",
+        "location": "var",
         "name": "Lib_PG_Q_Value"
       },
       "concept": "confidence",
@@ -127,7 +149,7 @@
         "stage": "identification"
       },
       "evidence": {
-        "basis": "Protein-group q-value of the spectral library; DIA-NN 1.7 does not report it. PG.Q.Value differs across runs for every multi-run protein group, while Lib.PG.Q.Value and Global.PG.Q.Value never do: fixture 300beac4 (2.x parquet, 3,631 groups) and 1cd54fe0 (1.8 TSV, 8,584).",
+        "basis": "Protein-group q-value of the spectral library, one per group, so a var column; DIA-NN 1.7 does not report it. Lib.PG.Q.Value never differs within a protein group: fixture 300beac4 (2.x parquet, 3,631 groups) and 1cd54fe0 (1.8 TSV, 8,584).",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
     },
@@ -140,7 +162,7 @@
       ],
       "reference": {
         "level": "protein",
-        "location": "layers",
+        "location": "var",
         "name": "Global_PG_Q_Value"
       },
       "concept": "confidence",
@@ -149,7 +171,7 @@
         "stage": "identification"
       },
       "evidence": {
-        "basis": "Experiment-wide protein-group q-value. PG.Q.Value differs across runs for every multi-run protein group, while Lib.PG.Q.Value and Global.PG.Q.Value never do: fixture 300beac4 (2.x parquet, 3,631 groups) and 1cd54fe0 (1.8 TSV, 8,584).",
+        "basis": "Experiment-wide protein-group q-value, one per group, so a var column. DIA-NN writes 1.0 into the rows of precursors without a global q-value: in submission 4cc229a7 (DIA-NN 2.3.0) 563 of 3,258 protein groups carry two values, and apb2 keeps the smaller (duplicates mode min).",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
     }
