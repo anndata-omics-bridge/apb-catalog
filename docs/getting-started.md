@@ -21,7 +21,7 @@ anndata_bridge/
 
 ## Read a converted result
 
-Any APB2 result works: h5ad, h5mu, Parquet or DuckDB. The outputs below come from a DIA-NN 2.x ProteoBench submission converted by APB2, with an ion and a protein level.
+Any APB2 result works: h5ad, h5mu, Parquet or DuckDB. The outputs below come from a DIA-NN 2.6.0 ProteoBench submission converted by APB2, with an ion and a protein level.
 
 ```python
 from pathlib import Path
@@ -40,19 +40,23 @@ confidence.fields().select("level", "location", "name", "kind", "stage")
 ```
 
 ```text
-┌───────┬──────────┬─────────┬─────────┬────────────────┐
-│ level ┆ location ┆ name    ┆ kind    ┆ stage          │
-╞═══════╪══════════╪═════════╪═════════╪════════════════╡
-│ ion   ┆ layers   ┆ Q_Value ┆ q_value ┆ identification │
-│ ion   ┆ layers   ┆ PEP     ┆ pep     ┆ identification │
-└───────┴──────────┴─────────┴─────────┴────────────────┘
+┌─────────┬──────────┬───────────────────┬─────────────────┬────────────────┐
+│ level   ┆ location ┆ name              ┆ kind            ┆ stage          │
+╞═════════╪══════════╪═══════════════════╪═════════════════╪════════════════╡
+│ ion     ┆ layers   ┆ Q_Value           ┆ q_value         ┆ identification │
+│ ion     ┆ layers   ┆ PEP               ┆ pep             ┆ identification │
+│ ion     ┆ var      ┆ Global_Q_Value    ┆ global_q_value  ┆ identification │
+│ protein ┆ layers   ┆ PG_Q_Value        ┆ q_value         ┆ identification │
+│ protein ┆ var      ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification │
+│ protein ┆ var      ┆ Global_PG_Q_Value ┆ global_q_value  ┆ identification │
+└─────────┴──────────┴───────────────────┴─────────────────┴────────────────┘
 ```
 
 Or ask one level which kinds it offers, per run (`layer`) or per feature (`var`):
 
 ```python
 confidence.layer("ion")   # ('pep', 'q_value')
-confidence.var("ion")     # None: no per-feature confidence
+confidence.var("ion")     # ('global_q_value',)
 ```
 
 ## Get the data
@@ -64,22 +68,30 @@ pep.values.head(3)
 ```
 
 ```text
-┌───────────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-│ ProForma_ion              ┆ obs_0    ┆ obs_1    ┆ obs_2    ┆ obs_3    ┆ obs_4    ┆ obs_5    │
-╞═══════════════════════════╪══════════╪══════════╪══════════╪══════════╪══════════╪══════════╡
-│ [UNIMOD:1]-AAAAAGTATSQR/2 ┆ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.000223 ┆ 0.000128 ┆ 0.000038 │
-│ [UNIMOD:1]-AAADGGGPGGA…   ┆ 0.000002 ┆ 0.000002 ┆ 0.000062 ┆ 0.000041 ┆ 0.000064 ┆ NaN      │
-│ [UNIMOD:1]-AAAETQSLR/2    ┆ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.001122 ┆ 0.000445 ┆ 0.000207 │
-└───────────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ obs_0    ┆ obs_1    ┆ obs_2    ┆ obs_3    ┆ obs_4    ┆ obs_5    │
+╞══════════╪══════════╪══════════╪══════════╪══════════╪══════════╡
+│ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.000223 ┆ 0.000128 ┆ 0.000038 │
+│ 0.000002 ┆ 0.000002 ┆ 0.000062 ┆ 0.000041 ┆ 0.000064 ┆ NaN      │
+│ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.001122 ┆ 0.000445 ┆ 0.000207 │
+└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
-The layer has the same ions and runs, in the same order, as the abundance layer, so it can become weights directly:
+`values` holds one column per run; its rows are the level's features in their order, `ion.var.frame`. The layer has the same ions and runs, in the same order, as the abundance layer, so it can become weights directly:
 
 ```python
 ion = parsed.levels["ion"]
 abundance = ion.layers[ion.primary_layer_name]
-intensities = abundance.values.drop(abundance.var_key_columns).to_numpy()   # (18182, 6)
-weights = 1 - pep.values.drop(pep.var_key_columns).to_numpy()              # (18182, 6), NaN where absent
+intensities = abundance.values.to_numpy()   # (18182, 6)
+weights = 1 - pep.values.to_numpy()         # (18182, 6), NaN where absent
+```
+
+A per-feature field is a column of the feature table, one value per ion:
+
+```python
+global_q = confidence.var("ion", kind="global_q_value")
+global_q.name       # 'Global_Q_Value'
+global_q.len()      # 18182
 ```
 
 When the vendor reports no such field, the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
@@ -111,7 +123,7 @@ from apb_catalog.api import attach_snapshot, stored_snapshot
 
 write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
 stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_confidence").resolutions
-# one resolved lookup, referencing layer 'PEP'
+# two resolved lookups: layer 'PEP' and var column 'Global_Q_Value'
 ```
 
 The snapshot sits at `metadata["catalog"]["identification_confidence"]["result"]` and can be read as plain JSON without APB Catalog installed.
