@@ -21,16 +21,16 @@ Protein level:
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `q_value` per run | `library_q_value` per run | `library_q_value` per feature | `global_q_value` per feature |
-| --- | --- | :-: | :-: | :-: | :-: |
-| AlphaDIA | 2.x | ✗ | ✗ | ✗ | ✗ |
-| DIA-NN | 1.0–1.7 | `PG_Q_Value` | ✗ | ✗ | `Global_PG_Q_Value` |
-| DIA-NN | 1.8–1.9 | `PG_Q_Value` | ✗ | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
-| DIA-NN | 2.x | `PG_Q_Value` | ✗ | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
-| MaxQuant | 1.5, 1.6, 2.x | ✗ | ✗ | ✗ | `Q_Value` |
-| Spectronaut | 15 | ✗ | ✗ | ✗ | ✗ |
-| Spectronaut | 19–20 | `PG_QValue_Run_Wise` | ✗ | ✗ | `PG_Qvalue` |
-| Spectronaut | 21 | `PG_QValue_Run_Wise` | `PG_LibraryQvalue` | ✗ | `PG_Qvalue` |
+| Software | Version | `q_value` per run | `library_q_value` per feature | `global_q_value` per feature |
+| --- | --- | :-: | :-: | :-: |
+| AlphaDIA | 2.x | ✗ | ✗ | ✗ |
+| DIA-NN | 1.0–1.7 | `PG_Q_Value` | ✗ | `Global_PG_Q_Value` |
+| DIA-NN | 1.8–1.9 | `PG_Q_Value` | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
+| DIA-NN | 2.x | `PG_Q_Value` | `Lib_PG_Q_Value` | `Global_PG_Q_Value` |
+| MaxQuant | 1.5, 1.6, 2.x | ✗ | ✗ | `Q_Value` |
+| Spectronaut | 15 | ✗ | ✗ | ✗ |
+| Spectronaut | 19–20 | `PG_QValue_Run_Wise` | ✗ | `PG_Qvalue` |
+| Spectronaut | 21 | `PG_QValue_Run_Wise` | `PG_LibraryQvalue` | `PG_Qvalue` |
 
 </div>
 
@@ -117,7 +117,7 @@ Every entry:
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
 | Spectronaut | spectronaut, spectronaut/v21 | protein | layers | `PG_QValue_Run_Wise` | `q_value` |
 | Spectronaut | spectronaut, spectronaut/v21 | protein | var | `PG_Qvalue` | `global_q_value` |
-| Spectronaut | spectronaut/v21 | protein | layers | `PG_LibraryQvalue` | `library_q_value` |
+| Spectronaut | spectronaut/v21 | protein | var | `PG_LibraryQvalue` | `library_q_value` |
 | WOMBAT-P | all | — | — | none relevant | — |
 
 <!-- end of generated block: identification_confidence -->
@@ -140,17 +140,17 @@ Ion level:
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `q_value` per run | `library_q_value` per run | `library_q_value` per feature | `global_q_value` per feature |
-| --- | --- | :-: | :-: | :-: | :-: |
-| AlphaDIA | 1.10 | ✗ | ✗ | ✗ | ✗ |
-| AlphaDIA | 1.12 | `QValue` | ✗ | ✗ | ✗ |
-| AlphaDIA | 2.x | `QValue` | ✗ | ✗ | ✗ |
-| DIA-NN | 1.0–1.7 | `Q_Value` | ✗ | `Lib_Q_Value` | `Global_Q_Value` |
-| DIA-NN | 1.8–1.9 | `Q_Value` | ✗ | `Lib_Q_Value` | `Global_Q_Value` |
-| DIA-NN | 2.x | `Q_Value` | ✗ | `Lib_Q_Value` | `Global_Q_Value` |
-| Spectronaut | 15 | `EG_Qvalue` | ✗ | ✗ | ✗ |
-| Spectronaut | 19–20 | `EG_Qvalue` | ✗ | ✗ | ✗ |
-| Spectronaut | 21 | `EG_Qvalue` | `EG_LibraryQvalue` | ✗ | ✗ |
+| Software | Version | `q_value` per run | `library_q_value` per feature | `global_q_value` per feature |
+| --- | --- | :-: | :-: | :-: |
+| AlphaDIA | 1.10 | ✗ | ✗ | ✗ |
+| AlphaDIA | 1.12 | `QValue` | ✗ | ✗ |
+| AlphaDIA | 2.x | `QValue` | ✗ | ✗ |
+| DIA-NN | 1.0–1.7 | `Q_Value` | `Lib_Q_Value` | `Global_Q_Value` |
+| DIA-NN | 1.8–1.9 | `Q_Value` | `Lib_Q_Value` | `Global_Q_Value` |
+| DIA-NN | 2.x | `Q_Value` | `Lib_Q_Value` | `Global_Q_Value` |
+| Spectronaut | 15 | `EG_Qvalue` | ✗ | ✗ |
+| Spectronaut | 19–20 | `EG_Qvalue` | ✗ | ✗ |
+| Spectronaut | 21 | `EG_Qvalue` | `EG_LibraryQvalue` | ✗ |
 
 </div>
 
@@ -175,7 +175,7 @@ Every entry:
 | quantms | all | — | — | none relevant | — |
 | Sage | all | — | — | none relevant | — |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
-| Spectronaut | spectronaut/v21 | ion | layers | `EG_LibraryQvalue` | `library_q_value` |
+| Spectronaut | spectronaut/v21 | ion | var | `EG_LibraryQvalue` | `library_q_value` |
 | WOMBAT-P | all | — | — | none relevant | — |
 
 <!-- end of generated block: proteobench_entrapment -->

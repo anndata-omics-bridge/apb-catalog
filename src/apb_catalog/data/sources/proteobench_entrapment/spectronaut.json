@@ -79,7 +79,7 @@
       ],
       "reference": {
         "level": "ion",
-        "location": "layers",
+        "location": "var",
         "name": "EG_LibraryQvalue"
       },
       "concept": "confidence",

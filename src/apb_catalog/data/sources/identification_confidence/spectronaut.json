@@ -139,7 +139,7 @@
       ],
       "reference": {
         "level": "protein",
-        "location": "layers",
+        "location": "var",
         "name": "PG_LibraryQvalue"
       },
       "concept": "confidence",
