@@ -54,7 +54,8 @@ LEGENDS: dict[str, str] = {
     ),
     "proteobench_entrapment": (
         f"Coverage by software version, for the vendors that carry entries. {CELLS} Per run is"
-        " a layer, one value per sample."
+        " a layer, one value per sample; per feature is a var column, one value across the"
+        " experiment."
     ),
 }
 EVERY_VENDOR_ROW = {

@@ -194,8 +194,8 @@ stale_levels(annotated, Catalog(maxquant, "identification_confidence").snapshot(
 ```python
 from apb_catalog.api import catalogues, rule_coverage
 
-catalogues()                   # 3 rows: abundance (46 entries), identification_confidence (19), proteobench_entrapment (7)
-rule_coverage("abundance")     # 69 rows × 15 columns, one per field of every packaged rule level
+catalogues()                   # 3 rows: abundance (48 entries), identification_confidence (20), proteobench_entrapment (7)
+rule_coverage("abundance")     # 71 rows × 15 columns, one per field of every packaged rule level
 ```
 
 ```text

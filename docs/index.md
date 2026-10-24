@@ -10,7 +10,7 @@ catalog.layer("ion")                   # ('pep', 'q_value')
 pep = catalog.layer("ion", kind="pep")
 ```
 
-`pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP.
+`pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP or APB2 left it out of this result because it held one value or none.
 
 ## Catalogues per consumer
 
@@ -20,9 +20,9 @@ A catalogue annotates what its consumers need, never every vendor column; `abund
 | --- | --- | --- |
 | `abundance` | apb-proteobench modules that ask for an un-normalized layer | Every layer APB2 marks `abundance`: what it measures and whether the software normalizes it |
 | `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
-| `proteobench_entrapment` | apb-proteobench entrapment scoring | Run, library and experiment-wide precursor q-values, each its own kind |
+| `proteobench_entrapment` | apb-proteobench entrapment scoring; apb-export's msmu `q_value` and prolfqua `qValue` fallback | Run, library and experiment-wide precursor q-values, each its own kind |
 
-Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry. An installed package can add a set as a plugin; see [Maintaining](maintaining.md#plugin-sets).
+Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, as does a field APB2 left out of a result because it held one value or none, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry. An installed package can add a set as a plugin; see [Maintaining](maintaining.md#plugin-sets).
 
 ## Catalogue or column role?
 

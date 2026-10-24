@@ -94,7 +94,7 @@ global_q.name       # 'Global_Q_Value'
 global_q.len()      # 18182
 ```
 
-When the vendor reports no such field, the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
+When the vendor reports no such field, or APB2 left it out of this result because it held one value or none (the level's parse record lists it under `result.uninformative_fields`), the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
 
 ```python
 pep = confidence.layer("ion", kind="pep")

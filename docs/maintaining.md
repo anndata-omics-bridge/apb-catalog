@@ -5,7 +5,7 @@
 A level binds to a catalogue variant by the `software_name` and `software_version_pattern` its stored rule declares, plus the level. Editing a rule within one version therefore keeps its entries.
 
 1. Check that the change leaves each catalogued field's meaning intact; update or remove entries otherwise
-2. Renamed or dropped output field: the entries test names every entry that still refers to it
+2. Renamed, dropped or moved (layers ↔ var) output field: the entries test names every entry that still refers to it; a moved field changes the entry's `location`
 3. New rule version: add one variant per level to `src/apb_catalog/data/sources/<set>/<vendor>.json` in every set; the coverage test lists the missing ones. Add the rule to the `rules` of each entry whose meaning still holds
 4. Changed software name or version pattern: edit the catalogue's `software_name` or the variant's pattern; the variant test reports each mismatch
 5. New vendor: add `<vendor>.json` to every set, with `"entries": []` where the set needs nothing from it
