@@ -31,7 +31,7 @@ abundance.layer("protein")                     # ('unknown',): PG_MaxLFQ's kind 
 ```python
 layer = abundance.layer("ion", kind="intensity", normalization="none")
 layer.layer_name    # 'Precursor_Quantity'
-layer.values.head(3)
+layer.wide().head(3)
 ```
 
 ```text

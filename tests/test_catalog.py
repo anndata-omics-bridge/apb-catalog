@@ -418,7 +418,7 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
     assert stored_snapshot(restored, "identification_confidence") == snapshot
     assert stale_levels(restored, snapshot) == ()
     for name, table in parsed.levels["ion"].layers.items():
-        assert_frame_equal(restored.levels["ion"].layers[name].values, table.values)
+        assert_frame_equal(restored.levels["ion"].layers[name].wide(), table.wide())
 
 
 def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:

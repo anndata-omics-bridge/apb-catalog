@@ -64,7 +64,7 @@ confidence.var("ion")     # ('global_q_value',)
 ```python
 pep = confidence.layer("ion", kind="pep")
 pep.layer_name      # 'PEP'; Spectronaut gives 'EG_PEP', MaxQuant 'PEP'
-pep.values.head(3)
+pep.wide().head(3)
 ```
 
 ```text
@@ -77,13 +77,13 @@ pep.values.head(3)
 └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
-`values` holds one column per run; its rows are the level's features in their order, `ion.var.frame`. The layer has the same ions and runs, in the same order, as the abundance layer, so it can become weights directly:
+`wide()` returns one column per run; its rows are the level's features in their order, `ion.var.frame`. The layer has the same ions and runs, in the same order, as the abundance layer, so it can become weights directly:
 
 ```python
 ion = parsed.levels["ion"]
 abundance = ion.layers[ion.primary_layer_name]
-intensities = abundance.values.to_numpy()   # (18182, 6)
-weights = 1 - pep.values.to_numpy()         # (18182, 6), NaN where absent
+intensities = abundance.wide().to_numpy()   # (18182, 6)
+weights = 1 - pep.wide().to_numpy()         # (18182, 6), NaN where absent
 ```
 
 A per-feature field is a column of the feature table, one value per ion:
