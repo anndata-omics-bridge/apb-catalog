@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "fragpipe",
+  "catalogue_version": "0.1",
+  "software_name": "FragPipe",
+  "variants": [
+    {
+      "rule": "fragpipe/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^2[23]\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "fragpipe.peptidoform_ion.Apex_Retention_Time",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Apex_Retention_Time"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "FragPipe output reference defines Apex Retention Time as the retention time of the precursor apex intensity, usually seconds but with units varying by instrument type; the report/rule alone does not establish the unit.",
+        "source": "https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html"
+      }
+    }
+  ]
+}

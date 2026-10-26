@@ -1,0 +1,13 @@
+{
+  "catalogue_id": "peaks",
+  "catalogue_version": "0.1",
+  "software_name": "PEAKS",
+  "variants": [
+    {
+      "rule": "peaks/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^13(?:\\.|\\s|$)"
+    }
+  ],
+  "entries": []
+}

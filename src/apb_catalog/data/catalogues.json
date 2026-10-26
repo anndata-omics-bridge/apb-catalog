@@ -24,5 +24,11 @@
     "used_by": [
       "apb-export: export rules ask for APB's own columns by kind"
     ]
+  },
+  "chromatography": {
+    "purpose": "Observed chromatographic retention times retained by APB2, with their reviewed original time unit. Predicted RT and library iRT are not interchangeable with acquisition RT. Units that depend on the acquisition or are not established remain unknown.",
+    "used_by": [
+      "apb-export: QPX feature retention times in seconds for pMultiQC"
+    ]
   }
 }

@@ -1,0 +1,33 @@
+{
+  "catalogue_id": "alphapept",
+  "catalogue_version": "0.1",
+  "software_name": "AlphaPept",
+  "variants": [
+    {
+      "rule": "alphapept/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^0\\.5\\."
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "alphapept.peptidoform_ion.Retention_Time",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "The retained rt is an observed acquisition retention time, not a prediction. IO implementations retain acquisition RT and the Bruker path converts seconds to minutes; a uniform unit for every supported input route has not been established, so consumers must not assume one.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/io.py"
+      }
+    }
+  ]
+}

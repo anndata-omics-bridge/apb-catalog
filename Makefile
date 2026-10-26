@@ -1,7 +1,7 @@
 VENV_BIN := .venv/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help sync format format-check lint typecheck deps test build docs docs-tables check clean schema
+.PHONY: help sync format format-check lint typecheck deps test build docs docs-tables check check-full clean schema
 
 help:  ## Show developer commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -44,6 +44,8 @@ docs:  ## Build user documentation with strict warnings
 
 check:  ## Run every merge-blocking quality gate
 	$(MAKE) format-check lint typecheck deps test build docs
+
+check-full: check  ## Run every pre-push quality gate
 
 clean:  ## Remove generated build and quality artifacts
 	$(VENV_BIN)/python -c "import shutil; [shutil.rmtree(path, ignore_errors=True) for path in ('build', 'dist', 'public', '.pytest_cache', '.ruff_cache')]"

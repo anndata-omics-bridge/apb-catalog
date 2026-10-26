@@ -1,0 +1,13 @@
+{
+  "catalogue_id": "quantms",
+  "catalogue_version": "0.1",
+  "software_name": "quantms",
+  "variants": [
+    {
+      "rule": "quantms/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^v?1\\..*"
+    }
+  ],
+  "entries": []
+}

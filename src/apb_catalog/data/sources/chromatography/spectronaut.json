@@ -1,0 +1,53 @@
+{
+  "catalogue_id": "spectronaut",
+  "catalogue_version": "0.1",
+  "software_name": "Spectronaut",
+  "variants": [
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^15\\..*"
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^15\\..*"
+    },
+    {
+      "rule": "spectronaut/v15/rules.json",
+      "level": "peptidoform_fragment",
+      "software_version_pattern": "^15\\..*"
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^(19|20)\\..*"
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^(19|20)\\..*"
+    },
+    {
+      "rule": "spectronaut/rules.json",
+      "level": "peptidoform_fragment",
+      "software_version_pattern": "^(19|20)\\..*"
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^21\\..*"
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^21\\..*"
+    },
+    {
+      "rule": "spectronaut/v21/rules.json",
+      "level": "peptidoform_fragment",
+      "software_version_pattern": "^21\\..*"
+    }
+  ],
+  "entries": []
+}

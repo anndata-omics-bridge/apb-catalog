@@ -242,6 +242,7 @@ def test_the_long_table_lists_every_set() -> None:
         "confidence",
         "proteobench_entrapment",
         "apb",
+        "chromatography",
     }
     library = table.filter(
         (pl.col("set") == "confidence") & (pl.col("qualifier.kind") == "library_q_value")

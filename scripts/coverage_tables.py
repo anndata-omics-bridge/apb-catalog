@@ -37,6 +37,7 @@ NORMALIZATION_ORDER = ("none", "run_setting", "unknown")
 QUALIFIER_LEADS = {
     "origin": "Origins, the `origin` qualifier every entry declares:",
     "normalization": "Normalization, the `normalization` qualifier every entry declares:",
+    "unit": "Original time units, the `unit` qualifier every entry declares:",
 }
 
 CELLS = (
@@ -44,6 +45,11 @@ CELLS = (
     f" (`apb_Decoy` ← `Decoy`); {ABSENT} means nothing is catalogued."
 )
 LEGENDS: dict[str, str] = {
+    "chromatography": (
+        f"Coverage by software version, one table per level. {CELLS} Units describe the original"
+        " values; `unknown` units must be resolved before converting to seconds. Per-run RT"
+        " layers and a feature's experiment-wide RT annotation are different locations."
+    ),
     "abundance": (
         f"Coverage by software version, one table per level. {CELLS} A column pairs a kind with"
         " its normalization; `unknown` marks what the evidence does not establish."
@@ -65,6 +71,7 @@ LEGENDS: dict[str, str] = {
     ),
 }
 EVERY_VENDOR_ROW = {
+    "chromatography": True,
     "abundance": True,
     "confidence": True,
     "proteobench_entrapment": False,
@@ -185,6 +192,7 @@ STYLES = {
     "confidence": CONFIDENCE,
     "proteobench_entrapment": CONFIDENCE,
     "apb": Style(_kind_column, _kind_header, _kind_order, ("kind",)),
+    "chromatography": Style(_kind_column, _kind_header, _kind_order, ("kind", "unit")),
 }
 
 
