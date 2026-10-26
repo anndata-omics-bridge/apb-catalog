@@ -25,7 +25,64 @@
         "unit": "unknown"
       },
       "evidence": {
-        "basis": "FragPipe output reference defines Apex Retention Time as the retention time of the precursor apex intensity, usually seconds but with units varying by instrument type; the report/rule alone does not establish the unit.",
+        "basis": "FragPipe output reference defines Apex Retention Time as the retention time of the precursor apex intensity. FragPipe documents the unit as usually seconds but instrument-dependent, so the rule alone does not establish it.",
+        "source": "https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html"
+      }
+    },
+    {
+      "entry_id": "fragpipe.peptidoform_ion.Retention_Time_Start",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time_Start"
+      },
+      "qualifiers": {
+        "kind": "peak_start",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "Where the precursor's elution peak begins in the sample. FragPipe documents the unit as usually seconds but instrument-dependent, so the rule alone does not establish it.",
+        "source": "https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html"
+      }
+    },
+    {
+      "entry_id": "fragpipe.peptidoform_ion.Retention_Time_End",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time_End"
+      },
+      "qualifiers": {
+        "kind": "peak_end",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "Where the precursor's elution peak ends in the sample. FragPipe documents the unit as usually seconds but instrument-dependent, so the rule alone does not establish it.",
+        "source": "https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html"
+      }
+    },
+    {
+      "entry_id": "fragpipe.peptidoform_ion.Retention_Time_FWHM",
+      "rules": [
+        "fragpipe/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time_FWHM"
+      },
+      "qualifiers": {
+        "kind": "peak_fwhm",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "Width of the precursor's elution peak at half maximum in the sample. FragPipe documents the unit as usually seconds but instrument-dependent, so the rule alone does not establish it.",
         "source": "https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html"
       }
     }

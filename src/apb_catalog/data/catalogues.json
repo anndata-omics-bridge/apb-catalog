@@ -26,7 +26,7 @@
     ]
   },
   "chromatography": {
-    "purpose": "Observed chromatographic retention times retained by APB2, with their reviewed original time unit. Predicted RT and library iRT are not interchangeable with acquisition RT. Units that depend on the acquisition or are not established remain unknown.",
+    "purpose": "Chromatographic retention times, elution-peak bounds and peak widths retained by APB2, with their reviewed original unit. Measured, aligned, predicted and library retention times are different kinds and are not interchangeable; iRT values are not times. Units that depend on the acquisition or are not established remain unknown.",
     "used_by": [
       "apb-export: QPX feature retention times in seconds for pMultiQC"
     ]

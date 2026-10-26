@@ -9,5 +9,82 @@
       "software_version_pattern": "^1\\."
     }
   ],
-  "entries": []
+  "entries": [
+    {
+      "entry_id": "metamorpheus.peptidoform_ion.MS2_Retention_Time",
+      "rules": [
+        "metamorpheus/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "MS2_Retention_Time"
+      },
+      "qualifiers": {
+        "kind": "ms2_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "FlashLFQ's MS2 Retention Time, the scan time of the identifying MS/MS spectrum, in minutes: the committed sample spans 35-131.",
+        "source": "https://github.com/smith-chem-wisc/FlashLFQ"
+      }
+    },
+    {
+      "entry_id": "metamorpheus.peptidoform_ion.Peak_RT_Apex",
+      "rules": [
+        "metamorpheus/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Peak_RT_Apex"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "FlashLFQ's Peak RT Apex, the apex of the peptide's MS1 peak in the run, in minutes like MS2 Retention Time; - where no peak was found.",
+        "source": "https://github.com/smith-chem-wisc/FlashLFQ"
+      }
+    },
+    {
+      "entry_id": "metamorpheus.peptidoform_ion.Peak_RT_Start",
+      "rules": [
+        "metamorpheus/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Peak_RT_Start"
+      },
+      "qualifiers": {
+        "kind": "peak_start",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "FlashLFQ's Peak RT Start, where the MS1 peak begins, in minutes; - where no peak was found.",
+        "source": "https://github.com/smith-chem-wisc/FlashLFQ"
+      }
+    },
+    {
+      "entry_id": "metamorpheus.peptidoform_ion.Peak_RT_End",
+      "rules": [
+        "metamorpheus/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Peak_RT_End"
+      },
+      "qualifiers": {
+        "kind": "peak_end",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "FlashLFQ's Peak RT End, where the MS1 peak ends, in minutes; - where no peak was found.",
+        "source": "https://github.com/smith-chem-wisc/FlashLFQ"
+      }
+    }
+  ]
 }

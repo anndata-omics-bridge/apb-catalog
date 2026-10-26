@@ -44,6 +44,84 @@
         "basis": "Observed precursor RT. AlphaDIA output-format documentation specifies seconds for precursor.rt.observed; the 1.12 raw-data wrapper constructs rt_values by multiplying AlphaRaw minute values by 60.",
         "source": "https://alphadia.readthedocs.io/en/latest/methods/output-format.html"
       }
+    },
+    {
+      "entry_id": "alphadia.peptidoform_ion.RT_Calibrated",
+      "rules": [
+        "alphadia/v1_12/rules.json",
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "RT_Calibrated"
+      },
+      "qualifiers": {
+        "kind": "predicted_retention_time",
+        "unit": "second"
+      },
+      "evidence": {
+        "basis": "precursor.rt.calibrated is the library RT calibrated into the run: where AlphaDIA expects the precursor, on the run's seconds axis; it differs from RT_Observed by tens of seconds.",
+        "source": "https://alphadia.readthedocs.io/en/latest/methods/output-format.html"
+      }
+    },
+    {
+      "entry_id": "alphadia.peptidoform_ion.RT_Library",
+      "rules": [
+        "alphadia/v1_12/rules.json",
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "RT_Library"
+      },
+      "qualifiers": {
+        "kind": "library_retention_time",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "The spectral library's RT; the library's own scale, which AlphaDIA calibrates into the run as RT_Calibrated. A layer only because AlphaDIA writes it with run-to-run differences of up to 0.03.",
+        "source": "https://alphadia.readthedocs.io/en/latest/methods/output-format.html"
+      }
+    },
+    {
+      "entry_id": "alphadia.peptidoform_ion.Cycle_FWHM",
+      "rules": [
+        "alphadia/v1_12/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Cycle_FWHM"
+      },
+      "qualifiers": {
+        "kind": "peak_fwhm",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "cycle_fwhm, the peak width at half maximum counted in DIA cycles, not time; its duration depends on the cycle time.",
+        "source": "https://alphadia.readthedocs.io/en/latest/methods/output-format.html"
+      }
+    },
+    {
+      "entry_id": "alphadia.peptidoform_ion.RT_FWHM",
+      "rules": [
+        "alphadia/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "RT_FWHM"
+      },
+      "qualifiers": {
+        "kind": "peak_fwhm",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "precursor.rt.fwhm, 3 for every precursor of a 2.1 submission like cycle_fwhm in 1.12: a count of DIA cycles rather than a time.",
+        "source": "https://alphadia.readthedocs.io/en/latest/methods/output-format.html"
+      }
     }
   ]
 }

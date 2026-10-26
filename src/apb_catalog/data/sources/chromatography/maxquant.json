@@ -45,6 +45,82 @@
       }
     },
     {
+      "entry_id": "maxquant.peptidoform_ion.Calibrated_Retention_Time",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Calibrated_Retention_Time"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Evidence Calibrated retention time is the retention time in minutes after MaxQuant aligns the runs for matching between runs.",
+        "source": "https://cox-labs.github.io/coxdocs/output_tables.html"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform_ion.Calibrated_Retention_Time_Start",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Calibrated_Retention_Time_Start"
+      },
+      "qualifiers": {
+        "kind": "aligned_peak_start",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Evidence Calibrated retention time start, where the elution peak begins on the calibrated time scale, in minutes.",
+        "source": "https://cox-labs.github.io/coxdocs/output_tables.html"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform_ion.Calibrated_Retention_Time_Finish",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Calibrated_Retention_Time_Finish"
+      },
+      "qualifiers": {
+        "kind": "aligned_peak_end",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Evidence Calibrated retention time finish, where the elution peak ends on the calibrated time scale, in minutes.",
+        "source": "https://cox-labs.github.io/coxdocs/output_tables.html"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform_ion.Retention_Length",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Length"
+      },
+      "qualifiers": {
+        "kind": "peak_width",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Evidence Retention length, the total width of the elution peak in minutes.",
+        "source": "https://cox-labs.github.io/coxdocs/output_tables.html"
+      }
+    },
+    {
       "entry_id": "maxquant.peptidoform.Retention_Time",
       "rules": [
         "maxquant_wide/rules.json"
@@ -60,6 +136,25 @@
       },
       "evidence": {
         "basis": "Modification-specific peptide Retention time is in minutes, averaged over its evidence entries; this is a feature annotation, not a per-run RT measurement.",
+        "source": "https://cox-labs.github.io/coxdocs/output_tables.html"
+      }
+    },
+    {
+      "entry_id": "maxquant.peptidoform.Calibrated_Retention_Time",
+      "rules": [
+        "maxquant_wide/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "Calibrated_Retention_Time"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Modification-specific peptide Calibrated retention time, the calibrated RT in minutes averaged over its evidence entries; a feature annotation.",
         "source": "https://cox-labs.github.io/coxdocs/output_tables.html"
       }
     }

@@ -49,5 +49,246 @@
       "software_version_pattern": "^21\\..*"
     }
   ],
-  "entries": []
+  "entries": [
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_ApexRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_ApexRT"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.ApexRT, the apex of the precursor's elution peak in the run. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_StartRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_StartRT"
+      },
+      "qualifiers": {
+        "kind": "peak_start",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.StartRT, where the elution peak begins; it precedes EG.ApexRT in all but 0.01% of rows. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_EndRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_EndRT"
+      },
+      "qualifiers": {
+        "kind": "peak_end",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.EndRT, where the elution peak ends; it follows EG.ApexRT. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_FWHM",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_FWHM"
+      },
+      "qualifiers": {
+        "kind": "peak_fwhm",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.FWHM, the peak width at half maximum on the RT axis; EG.FWHM (iRT) is the iRT-scale twin. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_PeakWidth",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_PeakWidth"
+      },
+      "qualifiers": {
+        "kind": "peak_width",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.PeakWidth, the full width of the elution peak, wider than EG.FWHM. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_RTPredicted",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_RTPredicted"
+      },
+      "qualifiers": {
+        "kind": "predicted_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.RTPredicted, the library iRT calibrated into the run: where Spectronaut expects the precursor. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_iRTEmpirical",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_iRTEmpirical"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "EG.iRTEmpirical, the observed apex converted to the iRT scale; it tracks EG.iRTPredicted."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_StartiRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_StartiRT"
+      },
+      "qualifiers": {
+        "kind": "aligned_peak_start",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "EG.StartiRT, the peak start on the iRT scale. It brackets EG.iRTEmpirical in only a quarter of the rows of a 240-minute report, so its relation to the apex is not established."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_EndiRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_EndiRT"
+      },
+      "qualifiers": {
+        "kind": "aligned_peak_end",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "EG.EndiRT, the peak end on the iRT scale; see EG_StartiRT for the open question."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_FWHM_iRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_FWHM_iRT"
+      },
+      "qualifiers": {
+        "kind": "aligned_peak_fwhm",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "EG.FWHM (iRT), the width at half maximum on the iRT scale."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_MeanApexRT",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "EG_MeanApexRT"
+      },
+      "qualifiers": {
+        "kind": "mean_apex_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "EG.MeanApexRT differs between runs for one precursor and equals EG.ApexRT in most rows, so it is not an experiment-wide mean; what it averages over is not documented. Spectronaut reports EG retention times in minutes: EG.ApexRT lies around 14 in a ProteoBench 15-minute Astral submission and reaches 249 in a 240-minute run."
+      }
+    },
+    {
+      "entry_id": "spectronaut.peptidoform_ion.EG_iRTPredicted",
+      "rules": [
+        "spectronaut/v15/rules.json",
+        "spectronaut/rules.json",
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "EG_iRTPredicted"
+      },
+      "qualifiers": {
+        "kind": "library_retention_time",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "EG.iRTPredicted, the library iRT of the precursor, the same in every run."
+      }
+    }
+  ]
 }

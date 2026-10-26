@@ -65,6 +65,131 @@
         "basis": "Observed precursor retention time in minutes, distinct from library iRT and Predicted.RT.",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
+    },
+    {
+      "entry_id": "diann.peptidoform_ion.RT_Start",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "RT_Start"
+      },
+      "qualifiers": {
+        "kind": "peak_start",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "RT.Start, where the precursor's elution peak begins, in minutes like RT.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.peptidoform_ion.RT_Stop",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "RT_Stop"
+      },
+      "qualifiers": {
+        "kind": "peak_end",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "RT.Stop, where the precursor's elution peak ends, in minutes like RT.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.peptidoform_ion.FWHM",
+      "rules": [
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "FWHM"
+      },
+      "qualifiers": {
+        "kind": "peak_fwhm",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Estimated peak width at half maximum, in minutes: about 0.06 for RT around 16 in the 2.3 Astral submission.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.peptidoform_ion.Predicted_RT",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Predicted_RT"
+      },
+      "qualifiers": {
+        "kind": "predicted_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Predicted.RT, the RT DIA-NN predicts in this run from the library iRT, in minutes.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.peptidoform_ion.Predicted_iRT",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Predicted_iRT"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "Predicted.iRT, the observed RT mapped onto the library's iRT scale; it tracks iRT closely.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    },
+    {
+      "entry_id": "diann.peptidoform_ion.iRT",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "iRT"
+      },
+      "qualifiers": {
+        "kind": "library_retention_time",
+        "unit": "irt"
+      },
+      "evidence": {
+        "basis": "iRT, the reference RT recorded in the spectral library, the same in every run.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
     }
   ]
 }

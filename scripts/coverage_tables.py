@@ -34,6 +34,21 @@ KIND_ORDER = ("pep", "q_value", "library_q_value", "global_q_value")
 STAGE_ORDER = ("identification", "quantification")
 ABUNDANCE_ORDER = ("intensity", "ms1_intensity", "maxlfq", "ibaq", "directlfq", "unknown")
 NORMALIZATION_ORDER = ("none", "run_setting", "unknown")
+RT_KIND_ORDER = (
+    "retention_time",
+    "aligned_retention_time",
+    "predicted_retention_time",
+    "library_retention_time",
+    "mean_apex_retention_time",
+    "ms2_retention_time",
+    "peak_start",
+    "peak_end",
+    "aligned_peak_start",
+    "aligned_peak_end",
+    "peak_fwhm",
+    "aligned_peak_fwhm",
+    "peak_width",
+)
 QUALIFIER_LEADS = {
     "origin": "Origins, the `origin` qualifier every entry declares:",
     "normalization": "Normalization, the `normalization` qualifier every entry declares:",
@@ -46,9 +61,10 @@ CELLS = (
 )
 LEGENDS: dict[str, str] = {
     "chromatography": (
-        f"Coverage by software version, one table per level. {CELLS} Units describe the original"
-        " values; `unknown` units must be resolved before converting to seconds. Per-run RT"
-        " layers and a feature's experiment-wide RT annotation are different locations."
+        f"Coverage by software version, one table per level. {CELLS} Per run is a layer, one"
+        " value per sample; per feature is a var column, one value across the experiment."
+        " Units describe the original values; `unknown` units must be resolved before"
+        " converting to seconds."
     ),
     "abundance": (
         f"Coverage by software version, one table per level. {CELLS} A column pairs a kind with"
@@ -162,6 +178,21 @@ def _abundance_order(column: Column) -> tuple[int, ...]:
     return (ABUNDANCE_ORDER.index(kind), NORMALIZATION_ORDER.index(normalization))
 
 
+def _chromatography_column(row: Row) -> Column:
+    feature = "run" if row["location"] == "layers" else "feature"
+    return (cast(str, row["kind"]), feature)
+
+
+def _chromatography_header(column: Column) -> str:
+    kind, feature = column
+    return f"`{kind}` per {feature}"
+
+
+def _chromatography_order(column: Column) -> tuple[int, ...]:
+    kind, feature = column
+    return (RT_KIND_ORDER.index(kind), feature != "run")
+
+
 def _kind_column(row: Row) -> Column:
     return (cast(str, row["kind"]),)
 
@@ -192,7 +223,12 @@ STYLES = {
     "confidence": CONFIDENCE,
     "proteobench_entrapment": CONFIDENCE,
     "apb": Style(_kind_column, _kind_header, _kind_order, ("kind",)),
-    "chromatography": Style(_kind_column, _kind_header, _kind_order, ("kind", "unit")),
+    "chromatography": Style(
+        _chromatography_column,
+        _chromatography_header,
+        _chromatography_order,
+        ("kind", "unit"),
+    ),
 }
 
 

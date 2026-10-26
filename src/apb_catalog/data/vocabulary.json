@@ -1,5 +1,5 @@
 {
-  "vocabulary_version": "0.10",
+  "vocabulary_version": "0.11",
   "sets": {
     "abundance": {
       "definition": "A quantity an APB2 rule marks with the layer role abundance: what it measures, and whether the producing software normalizes it across runs.",
@@ -87,19 +87,32 @@
       }
     },
     "chromatography": {
-      "definition": "Observed chromatographic retention times and the units of the original retained values. The catalogue identifies fields; consumers perform any unit conversion.",
+      "definition": "Chromatographic retention times of a feature and the bounds and widths of its elution peak, with their original unit. Measured, aligned, predicted and library values are different kinds, as run, library and global q-values are in confidence. The catalogue identifies fields; consumers perform any unit conversion.",
       "qualifiers": {
         "kind": {
-          "definition": "The observed chromatographic quantity.",
+          "definition": "Which chromatographic quantity the value is.",
           "values": {
-            "retention_time": "Observed retention time of the identified feature, rather than predicted RT or library iRT."
+            "retention_time": "Where the feature eluted in this run, measured on the run's own time axis: the apex or centre of its elution peak.",
+            "aligned_retention_time": "The measured retention time, moved by the software's alignment onto a scale shared by all runs: a reference run's time axis or the library's iRT scale.",
+            "predicted_retention_time": "Where the software expects the feature to elute in this run, from its library or prediction model calibrated to the run; not a measurement.",
+            "library_retention_time": "The spectral library's reference retention time, the same in every run.",
+            "mean_apex_retention_time": "A mean of apex times the software reports beside its apex retention time; what it averages over is not established.",
+            "ms2_retention_time": "The time of the MS/MS spectrum that identified the feature, rather than the apex of its elution peak.",
+            "peak_start": "Where the feature's elution peak begins, on the run's own time axis.",
+            "peak_end": "Where the feature's elution peak ends, on the run's own time axis.",
+            "aligned_peak_start": "Where the elution peak begins, on the aligned scale of aligned_retention_time.",
+            "aligned_peak_end": "Where the elution peak ends, on the aligned scale of aligned_retention_time.",
+            "peak_fwhm": "The width of the elution peak at half its maximum height.",
+            "aligned_peak_fwhm": "The width at half maximum, on the aligned scale of aligned_retention_time.",
+            "peak_width": "The full width of the elution peak, from its start to its end."
           }
         },
         "unit": {
-          "definition": "Physical time unit of the retained numeric value, before any consumer conversion. Unknown means the source does not establish one unit for this field.",
+          "definition": "Time unit or scale of the retained numeric value, before any consumer conversion. Unknown means the source does not establish one unit for this field.",
           "values": {
             "second": "Seconds; multiply by 1 to express the value in QPX seconds.",
-            "minute": "Minutes; multiply by 60 to express the value in QPX seconds."
+            "minute": "Minutes; multiply by 60 to express the value in QPX seconds.",
+            "irt": "Indexed retention time: the dimensionless scale of the software's library or reference peptides. It is not a physical time and cannot be converted to seconds."
           }
         }
       }

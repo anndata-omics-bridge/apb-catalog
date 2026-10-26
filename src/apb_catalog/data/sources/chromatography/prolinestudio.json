@@ -9,5 +9,78 @@
       "software_version_pattern": "^2\\..*"
     }
   ],
-  "entries": []
+  "entries": [
+    {
+      "entry_id": "prolinestudio.peptidoform_ion.Elution_Time",
+      "rules": [
+        "prolinestudio/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Elution_Time"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Proline's per-run elution_time of the quantified peptide ion. The ProteoBench DDA submission spans 17-135, the range MaxQuant reports in minutes for the same raw files."
+      }
+    },
+    {
+      "entry_id": "prolinestudio.peptidoform_ion.Corrected_Time",
+      "rules": [
+        "prolinestudio/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Corrected_Time"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Proline's per-run corrected_time, the elution time after map alignment: the runs' values agree within seconds where elution_time differs by minutes."
+      }
+    },
+    {
+      "entry_id": "prolinestudio.peptidoform_ion.Master_Ion_Elution_Time",
+      "rules": [
+        "prolinestudio/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "Master_Ion_Elution_Time"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "master_quant_peptide_ion_elution_time, one value per ion within seconds of the median per-run corrected_time."
+      }
+    },
+    {
+      "entry_id": "prolinestudio.peptidoform_ion.Master_Elution_Time",
+      "rules": [
+        "prolinestudio/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "Master_Elution_Time"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "master_elution_time, one value per ion: within 0.3 min of the earliest run's elution_time and up to minutes from master_quant_peptide_ion_elution_time. Proline does not document which time it is; read as a measured RT."
+      }
+    }
+  ]
 }

@@ -9,5 +9,42 @@
       "software_version_pattern": "^13(?:\\.|\\s|$)"
     }
   ],
-  "entries": []
+  "entries": [
+    {
+      "entry_id": "peaks.peptidoform_ion.Sample_RT_Mean",
+      "rules": [
+        "peaks/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Sample_RT_Mean"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "The per-sample RT mean of the feature, in minutes: the ProteoBench DDA submission spans the range MaxQuant reports in minutes for the same raw files."
+      }
+    },
+    {
+      "entry_id": "peaks.peptidoform_ion.RT_Mean",
+      "rules": [
+        "peaks/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "RT_Mean"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "The feature's RT mean across samples, in minutes like the per-sample values; a feature annotation."
+      }
+    }
+  ]
 }

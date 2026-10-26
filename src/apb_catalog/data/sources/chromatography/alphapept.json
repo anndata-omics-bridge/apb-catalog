@@ -25,8 +25,84 @@
         "unit": "unknown"
       },
       "evidence": {
-        "basis": "The retained rt is an observed acquisition retention time, not a prediction. IO implementations retain acquisition RT and the Bruker path converts seconds to minutes; a uniform unit for every supported input route has not been established, so consumers must not assume one.",
+        "basis": "rt equals rt_apex, the apex of the feature's MS1 peak in the run. A uniform unit for every supported AlphaPept input route has not been established, so consumers must not assume one.",
         "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/io.py"
+      }
+    },
+    {
+      "entry_id": "alphapept.peptidoform_ion.Retention_Time_Start",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time_Start"
+      },
+      "qualifiers": {
+        "kind": "peak_start",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "rt_start, where the feature's MS1 peak begins. A uniform unit for every supported AlphaPept input route has not been established, so consumers must not assume one.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/io.py"
+      }
+    },
+    {
+      "entry_id": "alphapept.peptidoform_ion.Retention_Time_End",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time_End"
+      },
+      "qualifiers": {
+        "kind": "peak_end",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "rt_end, where the feature's MS1 peak ends. A uniform unit for every supported AlphaPept input route has not been established, so consumers must not assume one.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/io.py"
+      }
+    },
+    {
+      "entry_id": "alphapept.peptidoform_ion.FWHM",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "FWHM"
+      },
+      "qualifiers": {
+        "kind": "peak_fwhm",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "fwhm of the feature's MS1 peak, on the same axis as rt. A uniform unit for every supported AlphaPept input route has not been established, so consumers must not assume one.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/io.py"
+      }
+    },
+    {
+      "entry_id": "alphapept.peptidoform_ion.Retention_Time_Calibrated",
+      "rules": [
+        "alphapept/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "Retention_Time_Calibrated"
+      },
+      "qualifiers": {
+        "kind": "aligned_retention_time",
+        "unit": "unknown"
+      },
+      "evidence": {
+        "basis": "rt_calib, the apex after AlphaPept aligns the runs for matching between runs; it differs from rt by up to minutes. A uniform unit for every supported AlphaPept input route has not been established, so consumers must not assume one.",
+        "source": "https://github.com/MannLabs/alphapept/blob/master/alphapept/matching.py"
       }
     }
   ]

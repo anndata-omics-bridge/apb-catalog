@@ -1,6 +1,8 @@
-"""Observed RT and its original units resolve without vendor names in consumers."""
+"""RT fields of every kind and their original units resolve without vendor names."""
 
 from __future__ import annotations
+
+from typing import Literal
 
 import polars as pl
 import pytest
@@ -91,3 +93,74 @@ def test_instrument_dependent_units_are_not_assumed() -> None:
     )
     with pytest.raises(UnresolvedField, match="unknown"):
         catalog.layer("peptidoform_ion", kind="retention_time", unit="second")
+
+
+@pytest.mark.parametrize(
+    "software,version,kind,location,column,unit",
+    [
+        ("DIA-NN", "2.3.0", "predicted_retention_time", "layers", "Predicted_RT", "minute"),
+        ("DIA-NN", "2.3.0", "aligned_retention_time", "layers", "Predicted_iRT", "irt"),
+        ("DIA-NN", "2.3.0", "library_retention_time", "var", "iRT", "irt"),
+        ("Spectronaut", "19.9", "predicted_retention_time", "layers", "EG_RTPredicted", "minute"),
+        ("Spectronaut", "19.9", "aligned_retention_time", "layers", "EG_iRTEmpirical", "irt"),
+        ("Spectronaut", "19.9", "library_retention_time", "var", "EG_iRTPredicted", "irt"),
+        (
+            "MaxQuant",
+            "2.4.0.0",
+            "aligned_retention_time",
+            "layers",
+            "Calibrated_Retention_Time",
+            "minute",
+        ),
+        ("AlphaDIA", "2.1.0", "predicted_retention_time", "layers", "RT_Calibrated", "second"),
+        ("AlphaDIA", "2.1.0", "library_retention_time", "layers", "RT_Library", "unknown"),
+        ("ProlineStudio", "2.3.0", "aligned_retention_time", "layers", "Corrected_Time", "minute"),
+        (
+            "ProlineStudio",
+            "2.3.0",
+            "aligned_retention_time",
+            "var",
+            "Master_Ion_Elution_Time",
+            "minute",
+        ),
+        ("ProlineStudio", "2.3.0", "retention_time", "var", "Master_Elution_Time", "minute"),
+    ],
+)
+def test_measured_aligned_predicted_and_library_rt_are_separate_kinds(
+    software: str,
+    version: str,
+    kind: str,
+    location: Literal["layers", "var"],
+    column: str,
+    unit: str,
+) -> None:
+    catalog = Catalog(software, version, "chromatography")
+    lookup = catalog.layer if location == "layers" else catalog.var
+    found = lookup("peptidoform_ion", kind=kind, unit=unit)
+    assert found == Reference(level="peptidoform_ion", location=location, name=column)
+
+
+@pytest.mark.parametrize(
+    "software,version,kind,column,unit",
+    [
+        ("DIA-NN", "2.3.0", "peak_start", "RT_Start", "minute"),
+        ("DIA-NN", "2.3.0", "peak_end", "RT_Stop", "minute"),
+        ("DIA-NN", "2.3.0", "peak_fwhm", "FWHM", "minute"),
+        ("Spectronaut", "21.0", "peak_width", "EG_PeakWidth", "minute"),
+        ("Spectronaut", "21.0", "aligned_peak_start", "EG_StartiRT", "irt"),
+        ("Spectronaut", "21.0", "mean_apex_retention_time", "EG_MeanApexRT", "minute"),
+        ("MaxQuant", "2.4.0.0", "aligned_peak_end", "Calibrated_Retention_Time_Finish", "minute"),
+        ("MaxQuant", "2.4.0.0", "peak_width", "Retention_Length", "minute"),
+        ("MetaMorpheus", "1.0.5", "ms2_retention_time", "MS2_Retention_Time", "minute"),
+        ("MetaMorpheus", "1.0.5", "retention_time", "Peak_RT_Apex", "minute"),
+        ("MetaMorpheus", "1.0.5", "peak_end", "Peak_RT_End", "minute"),
+        ("AlphaDIA", "1.12.2", "peak_fwhm", "Cycle_FWHM", "unknown"),
+    ],
+)
+def test_peak_bounds_widths_and_scan_times_are_their_own_kinds(
+    software: str, version: str, kind: str, column: str, unit: str
+) -> None:
+    found = Catalog(software, version, "chromatography").layer(
+        "peptidoform_ion", kind=kind, unit=unit
+    )
+    assert found == Reference(level="peptidoform_ion", location="layers", name=column)
