@@ -22,6 +22,7 @@ A catalogue annotates what its consumers need, never every vendor column; `abund
 | `confidence` | apb-aggregate; apb-export's prolfqua target | Per-run and per-feature PEP and q-value, at the identification or quantification stage |
 | `proteobench_entrapment` | apb-proteobench entrapment scoring; apb-export's msmu `q_value` and prolfqua `qValue` fallback | Run, library and experiment-wide precursor q-values, each its own kind |
 | `apb` | apb-export's export rules | The fields APB writes for every vendor, by kind: ProForma identifiers, decoy and contaminant flags, role columns, sample condition and biological replicate |
+| `chromatography` | apb-export's QPX target | Observed retention time with original time unit; predicted/library RT excluded, unknown units kept explicit |
 
 Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, as does a field APB2 left out of a result because it held one value or none, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry. An installed package can add a set as a plugin; see [Maintaining](maintaining.md#plugin-sets).
 

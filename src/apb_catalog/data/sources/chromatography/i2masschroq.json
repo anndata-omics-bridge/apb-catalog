@@ -1,0 +1,13 @@
+{
+  "catalogue_id": "i2masschroq",
+  "catalogue_version": "0.1",
+  "software_name": "i2MassChroQ",
+  "variants": [
+    {
+      "rule": "i2masschroq/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^1\\..*"
+    }
+  ],
+  "entries": []
+}

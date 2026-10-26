@@ -1,0 +1,13 @@
+{
+  "catalogue_id": "pb_custom",
+  "catalogue_version": "0.1",
+  "software_name": "pb_custom",
+  "variants": [
+    {
+      "rule": "pb_custom/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^.*$"
+    }
+  ],
+  "entries": []
+}

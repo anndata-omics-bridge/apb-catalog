@@ -21,6 +21,7 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
         "confidence",
         "proteobench_entrapment",
         "apb",
+        "chromatography",
         toy_set,
     ]
     toy = listed.filter(pl.col("catalogue") == toy_set).row(0, named=True)

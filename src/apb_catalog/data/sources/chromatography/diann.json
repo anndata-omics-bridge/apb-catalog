@@ -1,0 +1,70 @@
+{
+  "catalogue_id": "diann",
+  "catalogue_version": "0.1",
+  "software_name": "DIA-NN",
+  "variants": [
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
+    },
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
+    },
+    {
+      "rule": "diann/v1_7/rules.json",
+      "level": "peptidoform_fragment",
+      "software_version_pattern": "^1\\.[0-7](\\.|$)"
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^1\\.[89](\\.|$)"
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^1\\.[89](\\.|$)"
+    },
+    {
+      "rule": "diann/v1_8/rules.json",
+      "level": "peptidoform_fragment",
+      "software_version_pattern": "^1\\.[89](\\.|$)"
+    },
+    {
+      "rule": "diann/v2/rules.json",
+      "level": "peptidoform_ion",
+      "software_version_pattern": "^2\\..*"
+    },
+    {
+      "rule": "diann/v2/rules.json",
+      "level": "protein",
+      "software_version_pattern": "^2\\..*"
+    }
+  ],
+  "entries": [
+    {
+      "entry_id": "diann.peptidoform_ion.RT",
+      "rules": [
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "layers",
+        "name": "RT"
+      },
+      "qualifiers": {
+        "kind": "retention_time",
+        "unit": "minute"
+      },
+      "evidence": {
+        "basis": "Observed precursor retention time in minutes, distinct from library iRT and Predicted.RT.",
+        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
+      }
+    }
+  ]
+}

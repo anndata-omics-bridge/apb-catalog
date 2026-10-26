@@ -51,6 +51,7 @@ apb-catalog meaning SET --format csv # the same table as CSV
 
 ## Catalogues
 
+- `chromatography`: observed retention time and its original unit (`second`, `minute`, or explicitly `unknown`); used by the QPX exporter; six entries cover nine retained fields across APB2 rule variants; no required RT field and no value conversion in the catalogue
 - `abundance`: what each layer APB2 marks with the role `abundance` measures (intensity, MS1 intensity, MaxLFQ, iBAQ, directLFQ) and whether the software normalizes it across runs (`none`, `run_setting`); used by apb-proteobench modules that ask for an un-normalized layer; 48 entries
 - `confidence`: how likely each identification is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, and DIA-NN's, Spectronaut's and MaxQuant's protein-group q-values, and DIA-NN's and Spectronaut 21's library q-values; used by apb-aggregate's confidence-weighted rollups and apb-export's prolfqua target; 22 entries
 - `proteobench_entrapment`: run, library and experiment-wide precursor q-values, each its own kind; used by apb-proteobench's entrapment scoring and by apb-export's msmu `q_value` and prolfqua `qValue` fallback; 7 entries

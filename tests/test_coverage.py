@@ -165,8 +165,9 @@ def test_every_packaged_set_is_listed() -> None:
         "confidence",
         "proteobench_entrapment",
         "apb",
+        "chromatography",
     ]
-    assert listed.get_column("has_requirements").to_list() == [True, False, False, True]
+    assert listed.get_column("has_requirements").to_list() == [True, False, False, True, False]
     assert (listed.get_column("entries") > 0).all()
 
 

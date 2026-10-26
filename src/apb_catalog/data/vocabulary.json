@@ -1,5 +1,5 @@
 {
-  "vocabulary_version": "0.9",
+  "vocabulary_version": "0.10",
   "sets": {
     "abundance": {
       "definition": "A quantity an APB2 rule marks with the layer role abundance: what it measures, and whether the producing software normalizes it across runs.",
@@ -82,6 +82,24 @@
             "fasta_accessions": "The FASTA accessions the vendor lists for the feature: the var column the level's rule marks with the role fasta_accessions.",
             "condition": "The experimental group a sample belongs to, as MSstats' Condition.",
             "bioreplicate": "The biological replicate a sample comes from; one value across conditions marks a repeated subject, as MSstats' BioReplicate."
+          }
+        }
+      }
+    },
+    "chromatography": {
+      "definition": "Observed chromatographic retention times and the units of the original retained values. The catalogue identifies fields; consumers perform any unit conversion.",
+      "qualifiers": {
+        "kind": {
+          "definition": "The observed chromatographic quantity.",
+          "values": {
+            "retention_time": "Observed retention time of the identified feature, rather than predicted RT or library iRT."
+          }
+        },
+        "unit": {
+          "definition": "Physical time unit of the retained numeric value, before any consumer conversion. Unknown means the source does not establish one unit for this field.",
+          "values": {
+            "second": "Seconds; multiply by 1 to express the value in QPX seconds.",
+            "minute": "Minutes; multiply by 60 to express the value in QPX seconds."
           }
         }
       }
