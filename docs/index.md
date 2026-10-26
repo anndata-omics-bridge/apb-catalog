@@ -1,52 +1,35 @@
 # APB Catalog
 
-APB Catalog tells a consumer which field of an [APB2](https://github.com/anndata-omics-bridge/apb2) result carries the meaning it needs, so the consumer never names vendor columns such as MaxQuant's `PEP`, Spectronaut's `EG_PEP` or DIA-NN's `Q_Value`.
+APB Catalog finds a field of an [APB2](https://github.com/anndata-omics-bridge/apb2) result by what it means, so a consumer never names vendor columns such as MaxQuant's `PEP`, Spectronaut's `EG_PEP` or DIA-NN's `Q_Value`.
 
 ```python
 from apb_catalog.api import DataCatalog
 
-catalog = DataCatalog(parsed, "confidence")
-catalog.kinds("peptidoform_ion", "layers")                   # ('pep', 'q_value')
-pep = catalog.layer("peptidoform_ion", kind="pep")
+pep = DataCatalog(result, "confidence").layer("peptidoform_ion", kind="pep")
 ```
 
-`pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP or APB2 left it out of this result because it held one value or none.
+`pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP.
 
-## Catalogues per consumer
+| Page | For |
+| --- | --- |
+| [Get started](getting-started.md) | Install, look up fields, use the data |
+| [Catalogues](catalogues.md) | Every set: its vocabulary, which software has which field |
+| [Python API](api.md) | Every call, answer, table and command |
+| [Maintaining](maintaining.md) | APB2 rule changes, new sets, the checks |
 
-A catalogue annotates what its consumers need, never every vendor column; `abundance` describes the layers of one APB2 role.
+## Catalogue or rule role?
 
-| Set | Used by | Annotates |
-| --- | --- | --- |
-| `abundance` | apb-proteobench modules that ask for an un-normalized layer | Every layer APB2 marks `abundance`: what it measures and whether the software normalizes it |
-| `confidence` | apb-aggregate; apb-export's prolfqua target | Per-run and per-feature PEP and q-value, at the identification or quantification stage |
-| `proteobench_entrapment` | apb-proteobench entrapment scoring; apb-export's msmu `q_value` and prolfqua `qValue` fallback | Run, library and experiment-wide precursor q-values, each its own kind |
-| `apb` | apb-export's export rules | The fields APB writes for every vendor, by kind: ProForma identifiers, decoy and contaminant flags, role columns, sample condition and biological replicate |
-| `chromatography` | apb-export's QPX target | Observed retention time with original time unit; predicted/library RT excluded, unknown units kept explicit |
+APB2 rules can mark a column with a [semantic role](https://anndata-omics-bridge.github.io/apb2/rule-based/#semantic-roles) such as `abundance` or `protein_assignment`; the [role policy](https://github.com/anndata-omics-bridge/apb2/blob/main/src/apb2/parserV2/vendor_parse_rules/schema/role_policy.json) owns that vocabulary.
 
-Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, as does a field APB2 left out of a result because it held one value or none, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry. An installed package can add a set as a plugin; see [Maintaining](maintaining.md#plugin-sets).
-
-## Catalogue or column role?
-
-APB2 rules already declare some meanings themselves: each column entry in `rules.json` can carry [semantic roles](https://anndata-omics-bridge.github.io/apb2/rule-based/#semantic-roles) such as `abundance`, `protein_assignment` or `fasta_accessions`, and every result records them in `uns["column_roles"]` and `uns["layer_roles"]`. The [role policy](https://github.com/anndata-omics-bridge/apb2/blob/main/src/apb2/parserV2/vendor_parse_rules/schema/role_policy.json) owns the vocabulary.
-
-Rule of thumb:
-
-- Meaning several tools need, or apb2 itself defines → role in `rules.json`
-- Meaning one consumer or an external standard needs → catalogue
-- A catalogue copy of a role would be a second source of truth
-- Qualifying a role is not a copy: `abundance` adds kind and normalization to the layers APB2 marks `abundance`, and a test keeps its entries equal to those layers
+| Meaning | Lives in |
+| --- | --- |
+| Needed by several tools, or defined by APB2 itself | A role in the rule |
+| Needed by one consumer or an external standard | A catalogue set |
+| More detail about a role, such as an abundance layer's normalization | A catalogue set that qualifies the role; a test keeps the two equal |
 
 ## How it stays correct
 
-- An entry holds for the software versions it was reviewed against: the `software_name` and `software_version_pattern` each level's stored `rule_json` declares
-- Tests fail when APB2 adds a rule version or level, until a reviewer adds its variant; editing a rule within a version keeps its entries
-- Lookups never transform values; the consumer reads the layer or column it is handed
+- An entry holds for the software versions it was reviewed against: the software name and version pattern each level's stored rule declares
+- Tests fail when APB2 adds a rule version or level, until a reviewer adds it
+- Lookups never transform values; the consumer reads the field it is handed
 - A snapshot of every lookup can be stored in the result, readable without this package
-
-## Pages
-
-- [Get started](getting-started.md): install, look up, use the data
-- [Catalogues](catalogues.md): every entry of every packaged set
-- [Python API](api.md): lookups, errors and snapshots
-- [Maintaining](maintaining.md): APB2 rule changes, new consumers, a worked catalogue example

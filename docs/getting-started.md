@@ -1,27 +1,14 @@
 # Get started
 
+Every output below is what the call returned on 26 October 2026, on APB2 results of four ProteoBench submissions: DIA-NN 2.6.0, MaxQuant 2.8.1.0, Spectronaut 20 and Sage 0.15.
+
 ## Install
 
-APB Catalog requires Python 3.13 and APB2. A new APB2 rule version needs its own catalogue variant (see [Maintaining](maintaining.md)). Clone both repositories as siblings:
-
 ```bash
-mkdir anndata_bridge
-cd anndata_bridge
-git clone https://github.com/anndata-omics-bridge/apb2.git
-git clone https://github.com/anndata-omics-bridge/apb-catalog.git
-cd apb-catalog
-uv sync
+pip install apb-catalog
 ```
 
-```text
-anndata_bridge/
-├── apb2/
-└── apb-catalog/
-```
-
-## Read a converted result
-
-Any APB2 result works: h5ad, h5mu, Parquet or DuckDB. The outputs below come from a DIA-NN 2.6.0 ProteoBench submission converted by APB2, with an ion and a protein level.
+## Open a result
 
 ```python
 from pathlib import Path
@@ -29,41 +16,50 @@ from pathlib import Path
 from apb2.api import read_parsed_levels
 from apb_catalog.api import DataCatalog
 
-parsed = read_parsed_levels(Path("converted.h5mu"))
-confidence = DataCatalog(parsed, "confidence")
+diann = read_parsed_levels(Path("diann.h5mu"))   # any APB2 result: h5ad, h5mu, Parquet, DuckDB
+confidence = DataCatalog(diann, "confidence")
 ```
 
-## See what the result holds
+The second argument names the set; [Catalogues](catalogues.md) lists them all.
+
+## See what it holds
 
 ```python
-confidence.fields().select("level", "location", "name", "kind", "stage")
+confidence.fields().select("level", "location", "name", "qualifier.kind", "qualifier.stage", "present")
 ```
 
 ```text
-┌─────────┬──────────┬───────────────────┬─────────────────┬────────────────┐
-│ level   ┆ location ┆ name              ┆ kind            ┆ stage          │
-╞═════════╪══════════╪═══════════════════╪═════════════════╪════════════════╡
-│ ion     ┆ layers   ┆ Q_Value           ┆ q_value         ┆ identification │
-│ ion     ┆ layers   ┆ PEP               ┆ pep             ┆ identification │
-│ ion     ┆ var      ┆ Global_Q_Value    ┆ global_q_value  ┆ identification │
-│ protein ┆ layers   ┆ PG_Q_Value        ┆ q_value         ┆ identification │
-│ protein ┆ var      ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification │
-│ protein ┆ var      ┆ Global_PG_Q_Value ┆ global_q_value  ┆ identification │
-└─────────┴──────────┴───────────────────┴─────────────────┴────────────────┘
+┌─────────────────┬──────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
+│ level           ┆ location ┆ name              ┆ qualifier.kind  ┆ qualifier.stage ┆ present │
+╞═════════════════╪══════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
+│ peptidoform_ion ┆ layers   ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ layers   ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var      ┆ Global_Q_Value    ┆ global_q_value  ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var      ┆ Lib_Q_Value       ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ layers   ┆ PG_Q_Value        ┆ q_value         ┆ identification  ┆ true    │
+│ protein         ┆ var      ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ var      ┆ Global_PG_Q_Value ┆ global_q_value  ┆ identification  ┆ true    │
+└─────────────────┴──────────┴───────────────────┴─────────────────┴─────────────────┴─────────┘
 ```
 
-Or ask one level which kinds it offers, per run (`layer`) or per feature (`var`):
+Or ask one level which kinds it offers at one location:
 
 ```python
 confidence.kinds("peptidoform_ion", "layers")   # ('pep', 'q_value')
-confidence.kinds("peptidoform_ion", "var")     # ('global_q_value',)
+confidence.kinds("peptidoform_ion", "var")      # ('global_q_value', 'library_q_value')
 ```
 
 ## Get the data
 
+| Call | Returns | One value per |
+| --- | --- | --- |
+| `layer(level, kind=...)` | the apb2 layer table | run and feature |
+| `var(level, kind=...)` | the var column, a Polars `Series` | feature |
+| `obs(level, kind=...)` | the obs column, a Polars `Series` | run |
+
 ```python
 pep = confidence.layer("peptidoform_ion", kind="pep")
-pep.layer_name      # 'PEP'; Spectronaut gives 'EG_PEP', MaxQuant 'PEP'
+pep.layer_name        # 'PEP'; Spectronaut's is 'EG_PEP', MaxQuant's 'PEP'
 pep.wide().head(3)
 ```
 
@@ -72,29 +68,22 @@ pep.wide().head(3)
 │ obs_0    ┆ obs_1    ┆ obs_2    ┆ obs_3    ┆ obs_4    ┆ obs_5    │
 ╞══════════╪══════════╪══════════╪══════════╪══════════╪══════════╡
 │ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.000223 ┆ 0.000128 ┆ 0.000038 │
-│ 0.000002 ┆ 0.000002 ┆ 0.000062 ┆ 0.000041 ┆ 0.000064 ┆ NaN      │
+│ 0.000002 ┆ 0.000002 ┆ 0.000062 ┆ 0.000041 ┆ 0.000064 ┆ null     │
 │ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.001122 ┆ 0.000445 ┆ 0.000207 │
 └──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
 ```
 
-`wide()` returns one column per run; its rows are the level's features in their order, `ion.var.frame`. The layer has the same ions and runs, in the same order, as the abundance layer, so it can become weights directly:
+The layer has the same features and runs, in the same order, as the level's abundance layer, so it can become weights directly:
 
 ```python
-ion = parsed.levels["peptidoform_ion"]
-abundance = ion.layers[ion.primary_layer_name]
-intensities = abundance.wide().to_numpy()   # (18182, 6)
-weights = 1 - pep.wide().to_numpy()         # (18182, 6), NaN where absent
+ion = diann.levels["peptidoform_ion"]
+intensities = ion.layers[ion.primary_layer_name].wide().to_numpy()   # (18182, 6)
+weights = 1 - pep.wide().to_numpy()                                  # (18182, 6)
+
+confidence.var("peptidoform_ion", kind="global_q_value").name        # 'Global_Q_Value', 18182 values
 ```
 
-A per-feature field is a column of the feature table, one value per ion:
-
-```python
-global_q = confidence.var("peptidoform_ion", kind="global_q_value")
-global_q.name       # 'Global_Q_Value'
-global_q.len()      # 18182
-```
-
-When the vendor reports no such field, or APB2 left it out of this result because it held one value or none (the level's parse record lists it under `result.uninformative_fields`), the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
+`None` means the vendor reports no such field, or APB2 left it out because it held one value or none. Fall back explicitly:
 
 ```python
 pep = confidence.layer("peptidoform_ion", kind="pep")
@@ -102,28 +91,71 @@ if pep is None:
     q_value = confidence.layer("peptidoform_ion", kind="q_value")
 ```
 
+## Narrow with qualifiers
+
+Every qualifier besides `kind` is a keyword; [Catalogues](catalogues.md) lists each set's values.
+
+| Set | Call | Returns |
+| --- | --- | --- |
+| `abundance` | `layer("peptidoform_ion", kind="intensity", normalization="none")` | DIA-NN `Precursor_Quantity`, MaxQuant `Intensity` |
+| `abundance` | `layer("peptidoform_ion", kind="intensity", normalization="run_setting")` | DIA-NN `Precursor_Normalised` |
+| `confidence` | `var("peptidoform_ion", kind="q_value", stage="quantification")` | Sage `Q_Value`, the q-value of its MS1 peak |
+| `chromatography` | `layer("peptidoform_ion", kind="retention_time", unit="minute")` | DIA-NN `RT` |
+| `chromatography` | `layer("peptidoform_ion", kind="retention_time", unit="second")` | DIA-NN `None`: its RT is in minutes |
+| `chromatography` | `layer("peptidoform_ion", kind="aligned_retention_time")` | MaxQuant `Calibrated_Retention_Time` |
+
+- Confidence lookups mean the identification unless `stage="quantification"` says otherwise
+- `kinds` takes the same keywords: `kinds("peptidoform_ion", "var", stage="quantification")` is `('q_value',)` for Sage
+
+## Names without data
+
+`Catalog` takes a software name and version instead of a result, and returns a `Reference`:
+
+```python
+from apb_catalog.api import Catalog
+
+Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity", normalization="none").name
+# 'Precursor_Quantity'
+Catalog("DIA-NN", "2.6.0", "apb").var("peptidoform_ion", kind="protein_assignment").name
+# 'Protein_Group'
+```
+
 ## When there is no single answer
+
+| Call | Raises |
+| --- | --- |
+| DIA-NN `abundance.layer("peptidoform_ion", kind="intensity")` | `UnresolvedField`, ambiguous: `Precursor_Quantity`, `Precursor_Normalised` both match |
+| Spectronaut `abundance.layer("peptidoform_ion", kind="intensity", normalization="none")` | `UnresolvedField`, unknown: `EG_TotalQuantity_Settings` and `EG_TargetQuantity_Settings` leave normalization unknown |
+| DIA-NN `abundance.layer("protein", kind="maxlfq")` | `UnresolvedField`, unknown: `PG_MaxLFQ` leaves kind unknown |
+| `layer("peptidoform_ion", kind="intensity", normalisation="none")` | `ValueError`: unknown qualifier `normalisation` |
+| `layer("peptidoform_ion", kind="intensities")` | `ValueError`: `kind` does not admit `intensities`, with the admitted kinds |
+| `Catalog("DIA-NN", "3.0", "confidence")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |
 
 ```python
 from apb_catalog.api import UnresolvedField
 
+abundance = DataCatalog(diann, "abundance")
 try:
-    pep = confidence.layer("peptidoform_ion", kind="pep")
+    layer = abundance.layer("peptidoform_ion", kind="intensity")
 except UnresolvedField as error:
-    print(error)    # names the reason and any candidate fields
+    print(error)   # names the reason and the candidate fields
 ```
-
-It is raised when no catalogue variant names the level's software version, typically a new APB2 rule version, or when a level was produced by another tool. Add the variant as described in [Maintaining](maintaining.md).
 
 ## Record what was looked up
 
 ```python
 from apb2.api import write_parsed_levels
-from apb_catalog.api import attach_snapshot, stored_snapshot
+from apb_catalog.api import attach_snapshot, stale_levels, stored_snapshot
 
-write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
-stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "confidence").resolutions
-# two resolved lookups: layer 'PEP' and var column 'Global_Q_Value'
+confidence.layer("peptidoform_ion", kind="q_value")
+annotated = attach_snapshot(diann, confidence.snapshot())
+write_parsed_levels(annotated, Path("annotated.h5mu"))
+
+stored = stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "confidence")
+[(r.request.level, r.status, r.reference.name) for r in stored.resolutions]
+# [('peptidoform_ion', 'resolved', 'Q_Value')]
+
+stale_levels(annotated, confidence.snapshot())   # (): software name and version unchanged
 ```
 
-The snapshot sits at `metadata["catalog"]["confidence"]["result"]` and can be read as plain JSON without APB Catalog installed.
+The snapshot is plain JSON in the result, readable without APB Catalog; [Python API](api.md#snapshots) says where.

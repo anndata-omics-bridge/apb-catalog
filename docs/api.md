@@ -1,120 +1,104 @@
 # Python API
 
-[Examples](examples.md) runs every call below on real results and shows what it returns.
+Everything is imported from `apb_catalog.api`. [Get started](getting-started.md) shows each call on real results.
 
-## Lookups on a result
+## Catalogs
 
-```python
-from apb2.api import read_parsed_levels
-from apb_catalog.api import DataCatalog
-
-parsed = read_parsed_levels(path)
-catalog = DataCatalog(parsed, "confidence")
-```
-
-| Call | Returns |
+| Constructor | Answers from |
 | --- | --- |
-| `catalog.layer(level, kind=...)` | The apb2 `FinalLayerTable`, samples × features, or `None` |
-| `catalog.var(level, kind=...)` | The var column as a Polars `Series`, or `None` |
-| `catalog.obs(level, kind=...)` | The obs column as a Polars `Series`, or `None` |
-| `catalog.kinds(level, location)` | The kinds the level offers at `"layers"`, `"var"` or `"obs"`; `()` for none |
-| `catalog.fields()` | A Polars `DataFrame` of every catalogued field of the result, `apb-catalog table`'s columns plus `present` and `constant` |
+| `DataCatalog(result, catalog, enforce=None)` | An apb2 `ParsedLevels` result: the rule each level was converted with |
+| `Catalog(software, version, catalog, enforce=None)` | The packaged APB2 rule whose version pattern admits `version`; no data |
 
-- `kind` may also come second without its keyword: `catalog.layer("peptidoform_ion", "pep")`
-- Other qualifiers are keywords too: `DataCatalog(parsed, "abundance").layer("peptidoform_ion", kind="intensity", normalization="none")` returns the layer the software never normalizes
-- A level answers only for its own entity: peptidoform_ion for precursors, protein for protein groups
-- Per run versus per feature is the choice between `layer` and `var`
-- Confidence lookups mean identification; pass `stage="quantification"` for Sage's MS1-peak q-value
+| Method | `DataCatalog` returns | `Catalog` returns |
+| --- | --- | --- |
+| `layer(level, kind, **qualifiers)` | apb2 `FinalLayerTable` or `None` | `Reference` or `None` |
+| `var(level, kind, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
+| `obs(level, kind, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
+| `kinds(level, location, **qualifiers)` | kinds offered at `"layers"`, `"var"` or `"obs"`; `()` for none | same |
+| `fields()` | Polars `DataFrame`: the [long table](#the-long-table)'s columns plus `present`, `constant` | same |
+| `snapshot()` | `ResolutionSnapshot` of every lookup so far | same |
+| `description` | the set's `purpose` and `used_by` | same |
+
+- `kind` may be passed by position: `layer("peptidoform_ion", "pep")`
+- A `Reference` has `level`, `location`, `name` and `table`
 - `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`
-- In a set whose vocabulary has an `origin` qualifier, `origin=...` chooses where two origins answer one kind
-- Misspelled kinds, qualifiers or catalogue names raise `ValueError`
 - `fields()` lists a field APB2 left out because it held one value with `present` false and that value as `constant`
+- A level answers only for its own entity: `peptidoform_ion` for precursors, `protein` for protein groups
 
-## Names without data
+## Answers
 
-```python
-from apb_catalog.api import Catalog
-
-Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity", normalization="none").name
-# 'Precursor_Quantity'
-```
-
-`Catalog(software, version, set)` answers from the software's packaged APB2 rule whose version pattern admits `version`. `layer`, `var` and `obs` return a `Reference` (`level`, `location`, `name`, `table`) or `None`; `kinds` and `fields` work as on a result. A version no packaged rule admits raises `ValueError` naming the patterns. `apb-catalog meaning SET --software DIA-NN --version 2.6.0` prints the same fields.
+| Answer | Means |
+| --- | --- |
+| a field | Exactly one catalogued field matches |
+| `None` | The level is absent, or its software version was reviewed and has no such field |
+| `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or a later producer such as `apb-fasta verify-peptides` has not run; names the reason and candidates |
+| `StaleField` | The result's stored rule declares the answering field differently from the current packaged rule; reconvert |
+| `ValueError` | A misspelled set, kind or qualifier, or a version no packaged rule admits |
 
 ## Requirements and `enforce`
 
-```python
-DataCatalog(parsed, "abundance", enforce="MUST")
-```
+A set's requirement rows say how strongly a consumer needs a kind on a level. `enforce` makes them binding, like a log level:
 
-A set's requirement rows say how strongly a consumer needs a meaning on a level: level, location, kind, other qualifiers and `MUST`, `SHOULD` or `MAY`. `enforce`, on both classes, makes them binding like a log level:
-
-| Created with | MUST absent | SHOULD absent | MAY absent |
+| Created with | `MUST` absent | `SHOULD` absent | `MAY` absent |
 | --- | --- | --- | --- |
 | no `enforce` | `None` | `None` | `None` |
-| `enforce="MUST"` | raises `MissingRequiredField` | `None`, logged warning, summary entry needing attention | `None` |
+| `enforce="MUST"` | raises `MissingRequiredField` | `None` and a logged warning | `None` |
 | `enforce="SHOULD"` | raises | raises | `None` |
 
-- The abundance set's row: `peptidoform_ion`, `layers`, `intensity`, `normalization: none`, SHOULD. apb-export's prolfqua target sets `enforce="MUST"`, so a result without an un-normalized layer exports its primary layer with a warning
-- The `apb` set's rows state which levels carry each fixed column
 - `enforce` on a set without requirement rows raises `ValueError`
-
-## When there is no single answer
-
-`UnresolvedField` (from `apb_catalog.api`) is raised, naming the reason and the candidates, when:
-
-- two catalogued fields fit equally well, or
-- no catalogue variant names the level's software version, for example a new rule version, or a level produced by another tool, or
-- the field is apb-fasta's and `apb-fasta verify-peptides` has not run; the message names that command
-
-`StaleField` is raised when the result's stored rule declares the answering field differently from the current packaged rule, or not at all; it names the field and both sources. Anything else in the rule may change. `UnresolvedField` and `StaleField` raise whatever `enforce` says.
-
-`None` means the result lacks the level, or its software version was reviewed and the field is not there.
+- `UnresolvedField` and `StaleField` raise whatever `enforce` says
+- [Catalogues](catalogues.md) shows each set's requirements
 
 ## Snapshots
 
-```python
-from apb_catalog.api import attach_snapshot, stale_levels, stored_snapshot
+| Function | Does |
+| --- | --- |
+| `attach_snapshot(parsed, snapshot)` | Returns a new result holding the snapshot; data is shared, not copied |
+| `stored_snapshot(parsed, catalogue)` | Reads a stored snapshot back, or `None` |
+| `stale_levels(parsed, snapshot)` | Levels whose software name or version changed since the snapshot |
 
-annotated = attach_snapshot(parsed, catalog.snapshot())   # new result; data shared, not copied
-stored_snapshot(annotated, "confidence")                  # read it back
-stale_levels(annotated, catalog.snapshot())               # levels whose software name or version changed since
-```
-
-The snapshot is stored as JSON at `metadata["catalog"][<set>]["result"]`, beside other sets' snapshots, with each level's request counts in that level's `metadata["catalog"][<set>]["summary"]`. Both persist in h5ad, h5mu, Parquet and DuckDB. It embeds the set's description, its vocabulary, level bindings, catalogued fields and every answer, so a reader needs neither this package nor its catalogues. Its JSON Schema ships as `apb_catalog/data/apb-catalog-resolution-0.5.schema.json`.
+- Stored as JSON at `metadata["catalog"][<set>]["result"]`, beside other sets' snapshots
+- Each level's request counts sit at that level's `metadata["catalog"][<set>]["summary"]`
+- Both persist in h5ad, h5mu, Parquet and DuckDB
+- Self-contained: the set's description, vocabulary, level bindings, catalogued fields and every answer
+- JSON Schema: `apb_catalog/data/apb-catalog-resolution-0.5.schema.json`, regenerated by `make schema`
 
 ## The long table
 
-```python
-from apb_catalog.api import catalogue_table
+`catalogue_table(catalogue=None)` returns every set, or one, as one row per entry and rule; `apb-catalog table [SET] [--output PATH]` writes it as CSV.
 
-catalogue_table()           # every set; catalogue_table("apb") for one
-```
-
-One row per entry and rule it applies to: `set`, `source` (the vendor, `producer:<name>` or `annotation:<convention>`), `version_pattern`, `rule` (`*` for an entry of every rule), `level`, `location`, `table`, `name` (`role:<role>` or `prefix:<prefix>` for a field found by role or column-name prefix), one `qualifier.<name>` column per qualifier, `requirement` and `entry_id`. A row is identified by `set`, `entry_id` and `rule`. `apb-catalog table [SET] [--output PATH]` writes it as CSV.
+| Column | Holds |
+| --- | --- |
+| `set` | The catalogue set |
+| `source` | The vendor, `producer:<name>` or `annotation:<convention>` |
+| `version_pattern`, `rule` | The rule the entry applies to; `rule` is `*` for every rule |
+| `level`, `location`, `table` | Where the field lives; `table` only for `varm` |
+| `name` | The APB column, `role:<role>` or `prefix:<prefix>` |
+| `qualifier.<name>` | One column per qualifier of any set |
+| `requirement` | `MUST`, `SHOULD` or `MAY` where the set requires the field |
+| `entry_id` | The entry; `set`, `entry_id` and `rule` identify a row |
 
 ## Rule check
 
-```python
-from apb_catalog.api import catalogues, rule_coverage
+`catalogues()` returns one row per set: purpose, users, entry count, whether it has requirements. `rule_coverage(set)` checks every packaged rule level against one set, one row per field:
 
-catalogues()                # one row per set: purpose, users, entries, whether it sets requirements
-rule_coverage("confidence")   # one row per field of every packaged rule level
-```
-
-| Column | Meaning |
+| Column | Holds |
 | --- | --- |
-| `software`, `version`, `rule`, `level` | The packaged APB2 rule level; `version` is the concise reading of its version pattern |
-| `kind`, `qualifiers`, `origin` | The catalogued meaning; `qualifiers` holds the others as `key=value` |
+| `software`, `version`, `rule`, `level` | The packaged rule level; `version` is a short reading of its version pattern |
+| `kind`, `qualifiers`, `origin` | The meaning; `qualifiers` as `key=value` pairs |
 | `producer` | `APB2` or `apb-fasta` for fields APB writes; null for the vendor's own |
-| `requirement` | `MUST`, `SHOULD` or `MAY` where the set sets requirements |
+| `requirement` | `MUST`, `SHOULD` or `MAY` where the set has requirements |
 | `location`, `table`, `column` | Where the field lives; `column` is null when nothing supplies a required field |
-| `inputs` | The vendor columns APB2 computes the column from |
+| `inputs` | The vendor columns APB2 computes a var column from |
 | `needs` | What to run before the field exists, such as `apb-fasta verify-peptides` |
-| `verdict` | The level's: `fail` when a MUST field is unsupported, `warn` when a SHOULD or MAY field is, `pass` otherwise; null for sets without requirements |
+| `verdict` | `fail` when a `MUST` field is missing, `warn` for `SHOULD` or `MAY`, `pass` otherwise; null without requirements |
 
-- Requirement rows live in `src/apb_catalog/data/requirements.json`, per set, or in a plugin set's own `requirements.json`; the abundance and `apb` sets set them
-- APB2's fields count where the rule's level keeps their column; apb-fasta's count on every level, with `needs`
-- A set without vendor catalogues, such as `apb`, is checked against every packaged rule level
-- A level with no catalogued or required field has one row without a kind
-- The command line prints the same check: `apb-catalog check SET`, or `apb-catalog check SET spectronaut` for one vendor's fields; it exits 1 when a level fails
+## Command line
+
+| Command | Prints |
+| --- | --- |
+| `apb-catalog` | Every set with its entry count and purpose |
+| `apb-catalog check SET` | `FAIL`, `WARN` or `PASS` per rule level; exits 1 on a `FAIL` |
+| `apb-catalog check SET SOFTWARE` | One vendor's rule levels, with every field and its column |
+| `apb-catalog meaning SET` | One row per rule level and field; `--software`, `--version` narrow it, `--format csv` |
+| `apb-catalog table [SET]` | The long table as CSV; `--output PATH` |

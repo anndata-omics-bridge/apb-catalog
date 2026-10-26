@@ -1,32 +1,32 @@
 {
   "abundance": {
-    "purpose": "What each abundance layer APB2 writes measures, and whether the software normalizes it across runs: intensity, MS1 intensity, MaxLFQ, iBAQ or directLFQ, normalized never or as the run's settings chose. Every layer an APB2 rule marks with the role abundance carries an entry, except DIA-NN's gene-group Genes.MaxLFQ on the protein-group level.",
+    "purpose": "What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs.",
     "used_by": [
       "apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma"
     ]
   },
   "confidence": {
-    "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, DIA-NN's and Spectronaut's protein-group q-values per run, per library and across the experiment, and MaxQuant's across the experiment. Scores, vendor summaries and other vendors' protein-level confidence are left out.",
+    "purpose": "How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature.",
     "used_by": [
       "apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision",
       "apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers"
     ]
   },
   "proteobench_entrapment": {
-    "purpose": "The precursor q-values ProteoBench's entrapment scoring ranks by: run, library and experiment-wide q-values on the peptidoform-ion level, each its own kind. Only the vendors ProteoBench's entrapment module accepts carry entries.",
+    "purpose": "The precursor q-values ProteoBench's entrapment scoring ranks by, each its own kind.",
     "used_by": [
       "apb-proteobench: EntrapmentAnalyzer and run entrapment",
       "apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback"
     ]
   },
   "apb": {
-    "purpose": "The fields APB writes for every vendor, by kind instead of by name: ProForma_peptide, ProForma_peptidoform, ProForma_ion and ProForma_fragment, apb_Decoy and apb_Contaminant, the var columns a rule marks with the roles protein_assignment and fasta_accessions, and a sample annotation's condition and biological replicate. Its requirements say which levels carry each.",
+    "purpose": "The fields APB writes itself for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns and sample annotations.",
     "used_by": [
       "apb-export: export rules ask for APB's own columns by kind"
     ]
   },
   "chromatography": {
-    "purpose": "Chromatographic retention times, elution-peak bounds and peak widths retained by APB2, with their reviewed original unit. Measured, aligned, predicted and library retention times are different kinds and are not interchangeable; iRT values are not times. Units that depend on the acquisition or are not established remain unknown.",
+    "purpose": "Retention times, elution-peak bounds and peak widths, with the unit the software reports them in.",
     "used_by": [
       "apb-export: QPX feature retention times in seconds for pMultiQC"
     ]

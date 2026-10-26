@@ -11,3 +11,13 @@
   white-space: nowrap;
   vertical-align: middle;
 }
+
+/* Tables need the room: a wider page, and identifiers that never break mid-word.
+   A table wider than the page scrolls sideways instead. */
+.md-grid {
+  max-width: 80rem;
+}
+
+.md-typeset table:not([class]) code {
+  white-space: nowrap;
+}

@@ -31,7 +31,6 @@ nav:
   - Get started: getting-started.md
   - Catalogues: catalogues.md
   - Python API: api.md
-  - Examples: examples.md
   - Maintaining: maintaining.md
 
 extra_css:
