@@ -57,7 +57,6 @@
         "location": "layers",
         "name": "Q_Value"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "identification"
@@ -79,7 +78,6 @@
         "location": "var",
         "name": "Lib_Q_Value"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "library_q_value",
         "stage": "identification"
@@ -101,7 +99,6 @@
         "location": "var",
         "name": "Global_Q_Value"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "global_q_value",
         "stage": "identification"

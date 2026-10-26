@@ -58,70 +58,6 @@
       "title": "CatalogueDescription",
       "type": "object"
     },
-    "Concept": {
-      "additionalProperties": false,
-      "description": "One meaning a consumer can ask for, with every qualifier it must be described by.",
-      "properties": {
-        "definition": {
-          "title": "Definition",
-          "type": "string"
-        },
-        "qualifiers": {
-          "additionalProperties": {
-            "$ref": "#/$defs/Qualifier"
-          },
-          "title": "Qualifiers",
-          "type": "object"
-        }
-      },
-      "required": [
-        "definition",
-        "qualifiers"
-      ],
-      "title": "Concept",
-      "type": "object"
-    },
-    "ConceptRequest": {
-      "additionalProperties": false,
-      "description": "A consumer's question: one concept on one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``\ntables.",
-      "properties": {
-        "concept": {
-          "title": "Concept",
-          "type": "string"
-        },
-        "level": {
-          "title": "Level",
-          "type": "string"
-        },
-        "location": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/Location"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null
-        },
-        "qualifiers": {
-          "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "title": "Qualifiers",
-          "type": "object"
-        }
-      },
-      "required": [
-        "concept",
-        "level"
-      ],
-      "title": "ConceptRequest",
-      "type": "object"
-    },
     "Evidence": {
       "additionalProperties": false,
       "description": "Why a reviewer assigned an entry's meaning.",
@@ -149,9 +85,46 @@
       "title": "Evidence",
       "type": "object"
     },
+    "FieldRequest": {
+      "additionalProperties": false,
+      "description": "A consumer's question: one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``\ntables.",
+      "properties": {
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "title": "FieldRequest",
+      "type": "object"
+    },
     "LevelBinding": {
       "discriminator": {
         "mapping": {
+          "produced": "#/$defs/ProducedBinding",
           "reviewed": "#/$defs/ReviewedBinding",
           "unreviewed": "#/$defs/UnreviewedBinding"
         },
@@ -162,17 +135,66 @@
           "$ref": "#/$defs/ReviewedBinding"
         },
         {
+          "$ref": "#/$defs/ProducedBinding"
+        },
+        {
           "$ref": "#/$defs/UnreviewedBinding"
         }
       ]
     },
     "Location": {
       "enum": [
+        "obs",
         "layers",
         "var",
         "varm"
       ],
       "type": "string"
+    },
+    "ProducedBinding": {
+      "additionalProperties": false,
+      "description": "A level of a set without vendor catalogues: only APB's own fields answer.",
+      "properties": {
+        "status": {
+          "const": "produced",
+          "default": "produced",
+          "title": "Status",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "software_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Name"
+        },
+        "software_version_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Version Pattern"
+        }
+      },
+      "required": [
+        "level",
+        "software_name",
+        "software_version_pattern"
+      ],
+      "title": "ProducedBinding",
+      "type": "object"
     },
     "Producer": {
       "additionalProperties": false,
@@ -196,7 +218,7 @@
     },
     "Qualifier": {
       "additionalProperties": false,
-      "description": "One dimension of a concept and the meanings of its admitted values.",
+      "description": "One dimension of a set's meanings and the meanings of its admitted values.",
       "properties": {
         "definition": {
           "title": "Definition",
@@ -219,7 +241,7 @@
     },
     "Reference": {
       "additionalProperties": false,
-      "description": "Where one retained field lives in an APB result, by its APB output name.\n\nA ``varm`` field also names its feature-aligned table.",
+      "description": "Where one field lives in an APB result: by its APB output name, its role or a prefix.\n\nA ``varm`` field also names its feature-aligned table. A ``var`` field may be named by the\nrole the level's rule gives it, and an ``obs`` field of a sample annotation by the prefix of\nits column name; both are bound to the column a level holds before they answer.",
       "properties": {
         "level": {
           "title": "Level",
@@ -229,8 +251,16 @@
           "$ref": "#/$defs/Location"
         },
         "name": {
-          "title": "Name",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
         },
         "table": {
           "anyOf": [
@@ -243,22 +273,53 @@
           ],
           "default": null,
           "title": "Table"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        },
+        "prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prefix"
         }
       },
       "required": [
         "level",
-        "location",
-        "name"
+        "location"
       ],
       "title": "Reference",
       "type": "object"
     },
+    "Requirement": {
+      "enum": [
+        "MUST",
+        "SHOULD",
+        "MAY"
+      ],
+      "type": "string"
+    },
     "Resolution": {
       "additionalProperties": false,
-      "description": "The answer to one request; only ``resolved`` carries a reference.",
+      "description": "The answer to one request; only ``resolved`` carries a reference.\n\n``requirement`` records the requirement a missing field had when the lookup enforced it.",
       "properties": {
         "request": {
-          "$ref": "#/$defs/ConceptRequest"
+          "$ref": "#/$defs/FieldRequest"
         },
         "status": {
           "$ref": "#/$defs/ResolutionStatus"
@@ -289,6 +350,17 @@
           },
           "title": "Reasons",
           "type": "array"
+        },
+        "requirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Requirement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -353,6 +425,29 @@
       "title": "ReviewedBinding",
       "type": "object"
     },
+    "SetVocabulary": {
+      "additionalProperties": false,
+      "description": "What one set's entries mean, with every qualifier they must be described by.\n\nEvery set has a ``kind`` qualifier.",
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Qualifier"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "definition",
+        "qualifiers"
+      ],
+      "title": "SetVocabulary",
+      "type": "object"
+    },
     "SourceEntry": {
       "additionalProperties": false,
       "description": "The reviewed meaning of one retained field under the listed rule documents.",
@@ -371,10 +466,6 @@
         "reference": {
           "$ref": "#/$defs/Reference"
         },
-        "concept": {
-          "title": "Concept",
-          "type": "string"
-        },
         "qualifiers": {
           "additionalProperties": {
             "type": "string"
@@ -390,7 +481,6 @@
         "entry_id",
         "rules",
         "reference",
-        "concept",
         "qualifiers",
         "evidence"
       ],
@@ -458,8 +548,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.4",
-      "default": "0.4",
+      "const": "0.5",
+      "default": "0.5",
       "title": "Contract Version",
       "type": "string"
     },
@@ -477,12 +567,8 @@
       "title": "Vocabulary Version",
       "type": "string"
     },
-    "concepts": {
-      "additionalProperties": {
-        "$ref": "#/$defs/Concept"
-      },
-      "title": "Concepts",
-      "type": "object"
+    "vocabulary": {
+      "$ref": "#/$defs/SetVocabulary"
     },
     "levels": {
       "items": {
@@ -511,7 +597,7 @@
     "catalogue",
     "description",
     "vocabulary_version",
-    "concepts",
+    "vocabulary",
     "levels",
     "entries",
     "resolutions"

@@ -48,9 +48,15 @@ LEGENDS: dict[str, str] = {
         f"Coverage by software version, one table per level. {CELLS} A column pairs a kind with"
         " its normalization; `unknown` marks what the evidence does not establish."
     ),
-    "identification_confidence": (
+    "confidence": (
         f"Coverage by software version, one table per level. {CELLS} Per run is a layer, one"
         " value per sample; per feature is a var column, one value across the experiment."
+    ),
+    "apb": (
+        "APB writes these fields itself, so they need no vendor review: the fixed columns keep"
+        " their names for every vendor, a role names the var column the level's rule marks, and"
+        " a prefix finds a sample-annotation column of the convention the result records."
+        " `apb-catalog check apb` checks every packaged rule level against the requirements."
     ),
     "proteobench_entrapment": (
         f"Coverage by software version, for the vendors that carry entries. {CELLS} Per run is"
@@ -60,8 +66,9 @@ LEGENDS: dict[str, str] = {
 }
 EVERY_VENDOR_ROW = {
     "abundance": True,
-    "identification_confidence": True,
+    "confidence": True,
     "proteobench_entrapment": False,
+    "apb": False,
 }
 
 
@@ -72,6 +79,10 @@ def _version_key(label: str) -> tuple[int, ...]:
 
 def _field(entry: SourceEntry) -> str:
     reference = entry.reference
+    if reference.role is not None:
+        return f"role `{reference.role}`"
+    if reference.prefix is not None:
+        return f"column starting `{reference.prefix}`"
     if reference.table is not None:
         return f"`{reference.table}.{reference.name}`"
     return f"`{reference.name}`"
@@ -144,9 +155,21 @@ def _abundance_order(column: Column) -> tuple[int, ...]:
     return (ABUNDANCE_ORDER.index(kind), NORMALIZATION_ORDER.index(normalization))
 
 
+def _kind_column(row: Row) -> Column:
+    return (cast(str, row["kind"]),)
+
+
+def _kind_header(column: Column) -> str:
+    return f"`{column[0]}`"
+
+
+def _kind_order(column: Column) -> tuple[int, ...]:
+    return (0,)
+
+
 @dataclass(frozen=True)
 class Style:
-    """How one concept's coverage rows become table columns, and what its entry rows show."""
+    """How one set's coverage rows become table columns, and what its entry rows show."""
 
     column: Callable[[Row], Column]
     header: Callable[[Column], str]
@@ -154,11 +177,14 @@ class Style:
     shown: tuple[str, ...]
 
 
+CONFIDENCE = Style(_confidence_column, _confidence_header, _confidence_order, ("kind",))
 STYLES = {
     "abundance": Style(
         _abundance_column, _abundance_header, _abundance_order, ("kind", "normalization")
     ),
-    "confidence": Style(_confidence_column, _confidence_header, _confidence_order, ("kind",)),
+    "confidence": CONFIDENCE,
+    "proteobench_entrapment": CONFIDENCE,
+    "apb": Style(_kind_column, _kind_header, _kind_order, ("kind",)),
 }
 
 
@@ -240,9 +266,10 @@ def _producer_scope(producer: ProducerCatalogue) -> str:
 def _requirement_levels(sources: SourceCatalogues, kind: str) -> str:
     """Where a kind is required and how strongly, such as ``MUST on protein and ion``."""
     by_requirement: dict[str, list[str]] = {}
-    for level, required in sources.requirements.items():
-        if kind in required:
-            by_requirement.setdefault(required[kind], []).append(level)
+    for row in sources.requirements:
+        if row.kind == kind:
+            qualified = "".join(f" with {name} `{value}`" for name, value in row.qualifiers.items())
+            by_requirement.setdefault(row.requirement + qualified, []).append(row.level)
     return "; ".join(
         f"{requirement} on "
         + ", ".join(levels[:-1])
@@ -253,32 +280,26 @@ def _requirement_levels(sources: SourceCatalogues, kind: str) -> str:
 
 
 def _kinds(sources: SourceCatalogues) -> list[str]:
-    entries = [
-        entry for source in (*sources.catalogues, *sources.producers) for entry in source.entries
+    entries = [entry for source in sources.sources() for entry in source.entries]
+    vocabulary = sources.vocabulary
+    required = {row.kind for row in sources.requirements}
+    used = {entry.qualifiers["kind"] for entry in entries} | required
+    heading = "Kinds and where they are required" if required else "Kinds"
+    lines = [f"{heading}:", ""]
+    lines += [
+        f"- `{kind}`, {_requirement_levels(sources, kind)}: {text}"
+        if kind in required
+        else f"- `{kind}`: {text}"
+        for kind, text in vocabulary.qualifiers["kind"].values.items()
+        if kind in used
     ]
-    concepts = sorted({entry.concept for entry in entries})
-    required = {kind for kinds in sources.requirements.values() for kind in kinds}
-    lines: list[str] = []
-    for concept_name in concepts:
-        concept = sources.vocabulary.concept(concept_name)
-        used = {entry.qualifiers["kind"] for entry in entries if entry.concept == concept_name}
-        used |= required
-        heading = "kinds and where they are required" if required else "kinds"
-        lines += [f"Concept `{concept_name}`, {heading}:", ""]
-        lines += [
-            f"- `{kind}`, {_requirement_levels(sources, kind)}: {text}"
-            if kind in required
-            else f"- `{kind}`: {text}"
-            for kind, text in concept.qualifiers["kind"].values.items()
-            if kind in used
-        ]
-        for qualifier, lead in QUALIFIER_LEADS.items():
-            if qualifier in concept.qualifiers:
-                lines += ["", lead, ""]
-                lines += [
-                    f"- `{value}`: {text}"
-                    for value, text in concept.qualifiers[qualifier].values.items()
-                ]
+    for qualifier, lead in QUALIFIER_LEADS.items():
+        if qualifier in vocabulary.qualifiers:
+            lines += ["", lead, ""]
+            lines += [
+                f"- `{value}`: {text}"
+                for value, text in vocabulary.qualifiers[qualifier].values.items()
+            ]
     return lines
 
 
@@ -303,6 +324,10 @@ def _entries(sources: SourceCatalogues, style: Style) -> list[str]:
     for producer in sources.producers:
         for entry in producer.entries:
             lines.append(_entry_row(style, producer.producer, _producer_scope(producer), entry))
+    for annotation in sources.annotations:
+        scope = f"{annotation.convention} annotation"
+        for entry in annotation.entries:
+            lines.append(_entry_row(style, "APB2 annotate", scope, entry))
     return lines
 
 
@@ -320,24 +345,10 @@ def _entry_row(style: Style, software: str, rules: str, entry: SourceEntry) -> s
     )
 
 
-def _style(name: str, sources: SourceCatalogues) -> Style:
-    """The style of the one concept a set's entries use."""
-    concepts = {
-        entry.concept
-        for source in (*sources.catalogues, *sources.producers)
-        for entry in source.entries
-    }
-    if len(concepts) != 1:
-        raise ValueError(
-            f"set {name!r} uses {sorted(concepts)}; the page shows one concept per set"
-        )
-    return STYLES[concepts.pop()]
-
-
 def block(name: str) -> str:
     """The generated part of one catalogue set's section."""
     sources = packaged_catalogues(name)
-    style = _style(name, sources)
+    style = STYLES[name]
     parts = [
         "\n".join(_kinds(sources)),
         LEGENDS[name],

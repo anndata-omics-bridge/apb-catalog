@@ -8,18 +8,16 @@ column; fields a producer adds after conversion, such as apb-fasta's, count with
 
 from __future__ import annotations
 
-import json
-from functools import cache
 from typing import Literal, cast
 
 import polars as pl
-from apb2.api import JsonValue, packaged_rule_declarations
 
+from apb_catalog import rules
 from apb_catalog.source import (
     Address,
     ProducerCatalogue,
+    RequirementRow,
     RuleVariant,
-    SourceCatalogue,
     SourceCatalogues,
     SourceEntry,
     catalogue_descriptions,
@@ -100,9 +98,7 @@ def catalogues() -> pl.DataFrame:
                 "purpose": description.purpose,
                 "used_by": list(description.used_by),
                 "has_requirements": bool(sources.requirements),
-                "entries": sum(
-                    len(source.entries) for source in (*sources.catalogues, *sources.producers)
-                ),
+                "entries": sum(len(source.entries) for source in sources.sources()),
             }
         )
     return pl.DataFrame(rows, schema=CATALOGUES_SCHEMA)
@@ -124,52 +120,99 @@ def rule_coverage(catalogue: str) -> pl.DataFrame:
 
 
 def coverage_of(sources: SourceCatalogues) -> pl.DataFrame:
-    """Check every rule variant of one loaded catalogue set; see :func:`rule_coverage`."""
+    """Check every rule variant of one loaded catalogue set; see :func:`rule_coverage`.
+
+    A set without vendor catalogues answers for every packaged rule level, so each is checked.
+    """
     rows: list[dict[str, object]] = []
     for vendor in sources.catalogues:
         for variant in vendor.variants:
-            rows += _variant_rows(sources, vendor, variant)
+            rows += _variant_rows(
+                sources, vendor.software_name, variant, vendor.entries_for(variant)
+            )
+    if not sources.needs_review:
+        for found in rules.rule_levels():
+            variant = RuleVariant(
+                rule=found.rule,
+                level=found.level,
+                software_version_pattern=found.software_version_pattern,
+            )
+            rows += _variant_rows(sources, found.software_name, variant, ())
     return pl.DataFrame(rows, schema=COVERAGE_SCHEMA)
 
 
 def _variant_rows(
-    sources: SourceCatalogues, vendor: SourceCatalogue, variant: RuleVariant
+    sources: SourceCatalogues,
+    software: str,
+    variant: RuleVariant,
+    vendor_entries: tuple[SourceEntry, ...],
 ) -> list[dict[str, object]]:
-    found = [(entry, None) for entry in vendor.entries_for(variant)]
+    found: list[tuple[SourceEntry, ProducerCatalogue | None]] = [
+        (entry, None) for entry in vendor_entries
+    ]
+    roles = rules.roles(variant.rule, variant.level)
     found += [
-        (entry, producer)
+        (bound, producer)
         for producer in sources.producers
         for entry in producer.entries_on(variant.level)
-        if _counts(producer, entry, variant)
+        for bound in _bound(entry, roles)
+        if _counts(producer, bound, variant)
     ]
-    required = sources.requirements.get(variant.level, {})
-    missing = [kind for kind in required if not any(e.qualifiers["kind"] == kind for e, _ in found)]
-    verdict = _verdict([required[kind] for kind in missing]) if required else None
+    required = [row for row in sources.requirements if row.level == variant.level]
+    missing = [row for row in required if not any(row.describes(entry) for entry, _ in found)]
+    verdict = _verdict([row.requirement for row in missing]) if required else None
     base: dict[str, object] = {
-        "software": vendor.software_name,
+        "software": software,
         "version": version_label(variant.software_version_pattern),
         "rule": variant.rule,
         "level": variant.level,
         "verdict": verdict,
     }
     rows = [
-        {**base, **_field(entry, producer, variant), "requirement": required.get(_kind(entry))}
+        {**base, **_field(entry, producer, variant), "requirement": _requirement(required, entry)}
         for entry, producer in found
     ]
-    rows += [{**base, "kind": kind, "requirement": required[kind]} for kind in missing]
+    rows += [
+        {
+            **base,
+            "kind": row.kind,
+            "qualifiers": _pairs(row.qualifiers),
+            "location": row.location,
+            "requirement": row.requirement,
+        }
+        for row in missing
+    ]
     if not rows:
         rows.append(base)
-    order = list(required)
-    return sorted(rows, key=lambda row: _position(order, row))
+    return sorted(rows, key=lambda row: _position(required, row))
+
+
+def _bound(entry: SourceEntry, roles: dict[str, str]) -> tuple[SourceEntry, ...]:
+    """A producer entry bound to the rule's column: its role's column when it names a role."""
+    role = entry.reference.role
+    if role is None:
+        return (entry,)
+    return (entry.bound(roles[role]),) if role in roles else ()
+
+
+def _requirement(required: list[RequirementRow], entry: SourceEntry) -> str | None:
+    row = next((row for row in required if row.describes(entry)), None)
+    return None if row is None else row.requirement
+
+
+def _pairs(qualifiers: dict[str, str]) -> str | None:
+    return ";".join(f"{name}={value}" for name, value in sorted(qualifiers.items())) or None
 
 
 def _kind(entry: SourceEntry) -> str:
     return entry.qualifiers["kind"]
 
 
-def _position(order: list[str], row: dict[str, object]) -> tuple[int, bool]:
+def _position(required: list[RequirementRow], row: dict[str, object]) -> tuple[int, bool]:
     kind = cast(str | None, row.get("kind"))
-    rank = order.index(kind) if kind is not None and kind in order else len(order)
+    rank = next(
+        (index for index, found in enumerate(required) if found.kind == kind), len(required)
+    )
     return (rank, row.get("producer") is not None)
 
 
@@ -187,13 +230,13 @@ def _field(
     others = {name: value for name, value in entry.qualifiers.items() if name != "kind"}
     origin = others.pop("origin", None)
     inputs = (
-        _var_inputs(variant.rule, variant.level, reference.name)
+        rules.var_inputs(variant.rule, variant.level, reference.address()[2])
         if reference.location == "var" and _retains(variant, reference.address())
         else ()
     )
     return {
         "kind": _kind(entry),
-        "qualifiers": ";".join(f"{name}={value}" for name, value in sorted(others.items())) or None,
+        "qualifiers": _pairs(others),
         "origin": origin,
         "producer": None if producer is None else producer.producer,
         "location": reference.location,
@@ -210,25 +253,4 @@ def _counts(producer: ProducerCatalogue, entry: SourceEntry, variant: RuleVarian
 
 
 def _retains(variant: RuleVariant, address: Address) -> bool:
-    return address in _retained(variant.rule, variant.level)
-
-
-@cache
-def _declaration(rule: str, level: str) -> dict[str, JsonValue]:
-    return cast(dict[str, JsonValue], json.loads(packaged_rule_declarations()[(rule, level)][0]))
-
-
-@cache
-def _retained(rule: str, level: str) -> frozenset[Address]:
-    declaration = _declaration(rule, level)
-    measurements = cast(dict[str, list[dict[str, str]]], declaration["measurements"])
-    columns = cast(dict[str, list[dict[str, str]]], declaration["columns"])
-    layers = {("layers", None, layer["name"]) for layer in measurements["layers"]}
-    var = {("var", None, column["name"]) for column in columns.get("var", [])}
-    return frozenset(cast(set[Address], layers | var))
-
-
-def _var_inputs(rule: str, level: str, name: str) -> tuple[str, ...]:
-    columns = cast(dict[str, list[dict[str, JsonValue]]], _declaration(rule, level)["columns"])
-    column = next(column for column in columns.get("var", []) if column["name"] == name)
-    return tuple(cast(list[str], column.get("inputs") or []))
+    return address in rules.retained(variant.rule, variant.level)

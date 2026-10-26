@@ -18,8 +18,9 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
     listed = catalogues()
     assert listed.get_column("catalogue").to_list() == [
         "abundance",
-        "identification_confidence",
+        "confidence",
         "proteobench_entrapment",
+        "apb",
         toy_set,
     ]
     toy = listed.filter(pl.col("catalogue") == toy_set).row(0, named=True)
@@ -38,12 +39,11 @@ def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> No
     assert dict(judged.iter_rows()) == {"DIA-NN": ["pass"], "FragPipe": ["fail"]}
 
 
-def test_the_plugin_vocabulary_joins_the_packaged_one(toy_set: str) -> None:
-    """Its concepts sit beside the packaged ones, under the packaged version."""
-    vocabulary = catalogue_set(toy_set).vocabulary
-    packaged = packaged_vocabulary()
-    assert set(vocabulary.concepts) == {*packaged.concepts, "toy"}
-    assert vocabulary.vocabulary_version == packaged.vocabulary_version
+def test_a_plugin_set_brings_its_own_vocabulary(toy_set: str) -> None:
+    """Its qualifiers are its own, under the packaged vocabulary version."""
+    sources = catalogue_set(toy_set)
+    assert set(sources.vocabulary.qualifiers) == {"kind", "origin"}
+    assert sources.vocabulary_version == packaged_vocabulary().vocabulary_version
 
 
 def test_an_unknown_set_names_packaged_and_plugin_sets(toy_set: str) -> None:
@@ -56,19 +56,10 @@ def test_a_plugin_cannot_take_a_packaged_sets_name(monkeypatch: pytest.MonkeyPat
     """A packaged set keeps its name."""
     monkeypatch.setattr(
         "apb_catalog.source._plugin_folders",
-        lambda: {"identification_confidence": TESTS / "toy_set"},
+        lambda: {"confidence": TESTS / "toy_set"},
     )
     with pytest.raises(ValueError, match="names of packaged sets"):
         catalogue_descriptions()
-
-
-def test_a_plugin_cannot_redefine_a_packaged_concept(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A packaged concept keeps its meaning."""
-    monkeypatch.setattr(
-        "apb_catalog.source._plugin_folders", lambda: {"clash": TESTS / "clash_set"}
-    )
-    with pytest.raises(ValueError, match=r"redefines packaged concepts \['confidence'\]"):
-        catalogue_set("clash")
 
 
 def test_an_entry_point_names_the_package_holding_the_set() -> None:

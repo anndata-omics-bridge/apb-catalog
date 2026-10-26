@@ -62,7 +62,6 @@
         "location": "layers",
         "name": "FG_Quantity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "run_setting"
@@ -81,7 +80,6 @@
         "location": "layers",
         "name": "FG_MS2RawQuantity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -100,7 +98,6 @@
         "location": "layers",
         "name": "FG_MS1RawQuantity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "ms1_intensity",
         "normalization": "none"
@@ -121,7 +118,6 @@
         "location": "layers",
         "name": "EG_TotalQuantity_Settings"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "unknown"
@@ -142,7 +138,6 @@
         "location": "layers",
         "name": "EG_TargetQuantity_Settings"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "unknown"
@@ -162,7 +157,6 @@
         "location": "layers",
         "name": "EG_ReferenceQuantity_Settings"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "unknown"
@@ -183,7 +177,6 @@
         "location": "layers",
         "name": "PG_Quantity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "unknown",
         "normalization": "run_setting"
@@ -204,7 +197,6 @@
         "location": "layers",
         "name": "F_PeakArea"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -223,7 +215,6 @@
         "location": "layers",
         "name": "F_PeakHeight"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"

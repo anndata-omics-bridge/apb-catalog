@@ -12,13 +12,13 @@ A level binds to a catalogue variant by the `software_name` and `software_versio
 
 ## Checking the rules
 
-`apb-catalog check <set>` prints one line per packaged rule level, FAIL, WARN or PASS with its unsupported fields, and exits 1 when a level misses a MUST field; `apb-catalog check <set> <software>` adds every field and the column answering it. A set's requirement levels live in `src/apb_catalog/data/requirements.json`; a set without them gets coverage only.
+`apb-catalog check <set>` prints one line per packaged rule level, FAIL, WARN or PASS with its unsupported fields, and exits 1 when a level misses a MUST field; `apb-catalog check <set> <software>` adds every field and the column answering it. A set's requirement rows (level, location, kind, other qualifiers, requirement) live in `src/apb_catalog/data/requirements.json`; a set without them gets coverage only.
 
 ## Adding a consumer
 
 1. Add `src/apb_catalog/data/sources/<set>/` with one catalogue per vendor, covering every packaged rule level
 2. Add the set's purpose and users to `src/apb_catalog/data/catalogues.json`
-3. Add a concept and its qualifiers to `src/apb_catalog/data/vocabulary.json`, only if no existing concept fits
+3. Add the set's vocabulary, its `kind` and other qualifiers, under its name in `src/apb_catalog/data/vocabulary.json`
 4. Catalogue only the fields that consumer reads, or, for a set that describes one APB2 role such as `abundance`, every field with that role
 5. List the set on [Catalogues](catalogues.md), in the [home page](index.md) table and in the README
 
@@ -34,12 +34,13 @@ toy = "toy_package.catalogue"
 The folder holds:
 
 - `catalogue.json`: the set's `purpose` and `used_by`, as one value of `catalogues.json`
-- `vocabulary.json`: `{"concepts": {...}}`, the concepts the set adds; they join the packaged vocabulary and keep its version
-- `requirements.json`, optional: `{level: {kind: "MUST" | "SHOULD" | "MAY"}}`
+- `vocabulary.json`: the set's own vocabulary, `{"definition": ..., "qualifiers": {"kind": ..., ...}}`, under the packaged vocabulary version
+- `requirements.json`, optional: a list of rows `{"level", "location", "kind", "qualifiers", "requirement"}`, the requirement `MUST`, `SHOULD` or `MAY`
 - `sources/<vendor>.json`: one catalogue per vendor, as for a packaged set
 - `producers/<producer>.json`, optional: fields APB writes itself
+- `annotations/<convention>.json`, optional: sample-annotation fields of the `sdrf` or `prolfquapp` convention, found by column-name prefix
 
-Then `Catalog(parsed, "toy")`, `catalogues()`, `rule_coverage("toy")` and `apb-catalog check toy` work as for a packaged set. A set or concept name that a packaged set already uses raises `ValueError`, and so do two plugins naming one set. Lookups default to the one concept a set's entries name; once its entries name several, every lookup needs `concept=`.
+Then `DataCatalog(parsed, "toy")`, `catalogues()`, `rule_coverage("toy")` and `apb-catalog check toy` work as for a packaged set. A set name that a packaged set already uses raises `ValueError`, and so do two plugins naming one set.
 
 ## APB's own fields
 
@@ -49,7 +50,7 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
 
 ### Catalogue files
 
-`identification_confidence/diann.json`, trimmed to one variant:
+`confidence/diann.json`, trimmed to one variant:
 
 ```json
 {
@@ -64,7 +65,6 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
       "entry_id": "diann.peptidoform_ion.Q_Value",
       "rules": ["diann/v2/rules.json"],
       "reference": {"level": "peptidoform_ion", "location": "layers", "name": "Q_Value"},
-      "concept": "confidence",
       "qualifiers": {"kind": "q_value", "stage": "identification"},
       "evidence": {
         "basis": "DIA-NN README: 'run-specific precursor q-value'.",
@@ -75,7 +75,6 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
       "entry_id": "diann.peptidoform_ion.PEP",
       "rules": ["diann/v2/rules.json"],
       "reference": {"level": "peptidoform_ion", "location": "layers", "name": "PEP"},
-      "concept": "confidence",
       "qualifiers": {"kind": "pep", "stage": "identification"},
       "evidence": {
         "basis": "DIA-NN README: 'run-specific posterior error probability for the precursor'.",
@@ -89,10 +88,10 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
 - `variants`: one per rule and level; `software_name` and `software_version_pattern` copied from the rule
 - `rules`: the variants an entry holds for
 - `reference.name`: the APB output name, not the vendor column: `Q_Value`, not `Q.Value`
-- `qualifiers`: every qualifier the concept declares; `unknown` where the reviewer cannot establish one, which makes matching lookups raise
+- `qualifiers`: every qualifier the set's vocabulary declares; `unknown` where the reviewer cannot establish one, which makes matching lookups raise
 - `evidence`: why the meaning holds, and where it is stated
 
-`identification_confidence/quantms.json` reviews quantms and finds nothing relevant:
+`confidence/quantms.json` reviews quantms and finds nothing relevant:
 
 ```json
 {
@@ -111,16 +110,16 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
 Three synthetic results with one peptidoform-ion level each, built like `_result` in `tests/test_catalog.py`:
 
 ```python
-from apb_catalog.api import Catalog
+from apb_catalog.api import DataCatalog
 
-confidence = Catalog(diann_2, "identification_confidence")   # DIA-NN 2.x, layers Q_Value and PEP
-confidence.layer("peptidoform_ion")                                      # ('pep', 'q_value')
+confidence = DataCatalog(diann_2, "confidence")   # DIA-NN 2.x, layers Q_Value and PEP
+confidence.kinds("peptidoform_ion", "layers")                          # ('pep', 'q_value')
 confidence.layer("peptidoform_ion", kind="pep")                          # resolved: the PEP layer table
 
-quantms = Catalog(quantms_1, "identification_confidence")    # quantms 1.x
+quantms = DataCatalog(quantms_1, "confidence")    # quantms 1.x
 quantms.layer("peptidoform_ion", kind="pep")                             # missing: None
 
-unreviewed = Catalog(diann_3, "identification_confidence")   # its rule declares DIA-NN ^3\.
+unreviewed = DataCatalog(diann_3, "confidence")   # its rule declares DIA-NN ^3\.
 unreviewed.layer("peptidoform_ion", kind="pep")                          # unknown: raises UnresolvedField
 ```
 
@@ -145,13 +144,13 @@ No test catches this. Fix: give each field its own kind, as `proteobench_entrapm
 | Coverage: `test_every_packaged_rule_level_is_reviewed` | a set has no variant for a software name, version pattern and level that APB2 packages |
 | Variant: `test_variants_name_the_software_and_version_their_rules_declare` | a variant's software name or version pattern differs from its rule's |
 | Entries: `test_entries_name_fields_the_rules_retain` | an entry's `reference` names a layer or var column one of its `rules` does not retain |
-| Vocabulary: `test_packaged_catalogues_load_against_the_vocabulary` | qualifiers miss one the concept declares or use a value it does not admit; an entry id repeats; an entry names an undeclared variant; two catalogues review one software version |
+| Vocabulary: `test_packaged_catalogues_load_against_the_vocabulary` | qualifiers miss one the set's vocabulary declares or use a value it does not admit; an entry id repeats; an entry names an undeclared variant; two catalogues review one software version |
 | Descriptions: `test_every_packaged_set_states_its_purpose_and_users` | a set directory and `catalogues.json` disagree |
 | Vendor columns: `test_vendor_files_hold_no_apb2_columns` | a vendor file names an APB2 `ProForma_*` column |
 | Vendor flags: `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | a vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
 | Abundance layers: `test_abundance_entries_are_the_layers_apb2_marks_abundance` | an APB2 rule marks a layer `abundance` that the `abundance` set does not catalogue, or the set names a layer without the role |
 | APB2 columns: `test_apb2_entries_name_columns_the_rules_write` | an APB2 producer entry of any set names a column no packaged rule writes on its level |
-| Requirements: `test_requirements_must_name_vocabulary_kinds` | `requirements.json` names a kind the set's concept does not define |
+| Requirements: `test_requirements_must_name_vocabulary_kinds` | `requirements.json` names a kind or qualifier value the set's vocabulary does not define |
 | Page: `test_the_catalogue_page_matches_the_generator` | the Catalogues page differs from `make docs-tables` |
 
 Descriptions live in `tests/test_catalog.py`, requirements in `tests/test_coverage.py`, the page check in `tests/test_docs.py`, the others in `tests/test_source.py`.

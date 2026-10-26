@@ -20,7 +20,6 @@
         "location": "layers",
         "name": "Normalized_Area"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "run_setting"

@@ -8,37 +8,27 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from apb_catalog.source import Location, Reference, ReviewedRule, SourceEntry
+from apb_catalog.source import READS, Location, Reference, Requirement, ReviewedRule, SourceEntry
 from apb_catalog.vocabulary import UNKNOWN, FrozenModel
 
 type ResolutionStatus = Literal["resolved", "missing", "ambiguous", "unknown"]
 
-_READS: dict[Location, tuple[Location, ...]] = {
-    "layers": ("layers",),
-    "var": ("var", "varm"),
-    "varm": ("varm",),
-}
-"""The locations a request reads: ``var`` and ``varm`` both hold one value per feature."""
 
-
-class ConceptRequest(FrozenModel):
-    """A consumer's question: one concept on one level, constrained by accepted qualifier values.
+class FieldRequest(FrozenModel):
+    """A consumer's question: one level, constrained by accepted qualifier values.
 
     Qualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer
     could not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``
     tables.
     """
 
-    concept: str
     level: str
     location: Location | None = None
     qualifiers: dict[str, tuple[str, ...]] = Field(default_factory=dict)
 
     def selects(self, entry: SourceEntry, /) -> bool:
-        """Whether an entry answers this concept at this level and location."""
-        return entry.concept == self.concept and (
-            self.location is None or entry.reference.location in _READS[self.location]
-        )
+        """Whether an entry answers at this level's location."""
+        return self.location is None or entry.reference.location in READS[self.location]
 
     def admits(self, entry: SourceEntry) -> bool:
         """Whether an entry answers this request apart from qualifiers it leaves unknown."""
@@ -71,13 +61,17 @@ class Candidate(FrozenModel):
 
 
 class Resolution(FrozenModel):
-    """The answer to one request; only ``resolved`` carries a reference."""
+    """The answer to one request; only ``resolved`` carries a reference.
 
-    request: ConceptRequest
+    ``requirement`` records the requirement a missing field had when the lookup enforced it.
+    """
+
+    request: FieldRequest
     status: ResolutionStatus
     reference: Reference | None = None
     candidates: tuple[Candidate, ...] = ()
     reasons: tuple[str, ...] = ()
+    requirement: Requirement | None = None
 
     @model_validator(mode="after")
     def _reference_iff_resolved(self) -> Resolution:
@@ -106,9 +100,9 @@ class UnresolvedField(LookupError):
         wanted = ", ".join(
             f"{name}={'|'.join(values)}" for name, values in request.qualifiers.items()
         )
-        names = ", ".join(candidate.reference.name for candidate in resolution.candidates)
+        names = ", ".join(str(candidate.reference.name) for candidate in resolution.candidates)
         super().__init__(
-            f"{request.concept} on {request.level} ({wanted}) is {resolution.status}: "
+            f"{wanted} on {request.level} is {resolution.status}: "
             f"{'; '.join(resolution.reasons)}" + (f"; candidates: {names}" if names else "")
         )
         self.resolution = resolution
@@ -126,6 +120,15 @@ class ReviewedBinding(FrozenModel):
     rule: str
 
 
+class ProducedBinding(FrozenModel):
+    """A level of a set without vendor catalogues: only APB's own fields answer."""
+
+    status: Literal["produced"] = "produced"
+    level: str
+    software_name: str | None
+    software_version_pattern: str | None
+
+
 class UnreviewedBinding(FrozenModel):
     """A level no catalogue describes, and why."""
 
@@ -136,7 +139,9 @@ class UnreviewedBinding(FrozenModel):
     reason: str
 
 
-type LevelBinding = Annotated[ReviewedBinding | UnreviewedBinding, Field(discriminator="status")]
+type LevelBinding = Annotated[
+    ReviewedBinding | ProducedBinding | UnreviewedBinding, Field(discriminator="status")
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -147,9 +152,75 @@ class PendingEntry:
     reason: str
 
 
+def _resolve(
+    entries: tuple[SourceEntry, ...],
+    pending: tuple[PendingEntry, ...],
+    request: FieldRequest,
+    missing: str,
+) -> Resolution:
+    """Resolve only when exactly one entry matches, none is undecided and none is pending."""
+    compatible = [
+        Candidate(
+            entry_id=entry.entry_id,
+            reference=entry.reference,
+            qualifiers=entry.qualifiers,
+            undecided=request.undecided(entry.qualifiers),
+        )
+        for entry in entries
+        if request.admits(entry)
+    ]
+    waiting = [found for found in pending if request.admits(found.entry)]
+    matches = [candidate for candidate in compatible if not candidate.undecided]
+    undecided = [candidate for candidate in compatible if candidate.undecided]
+    candidates = (
+        *compatible,
+        *(
+            Candidate(
+                entry_id=found.entry.entry_id,
+                reference=found.entry.reference,
+                qualifiers=found.entry.qualifiers,
+            )
+            for found in waiting
+        ),
+    )
+    if len(matches) > 1:
+        names = ", ".join(str(candidate.reference.name) for candidate in matches)
+        return Resolution(
+            request=request,
+            status="ambiguous",
+            candidates=candidates,
+            reasons=(f"{len(matches)} entries match: {names}",),
+        )
+    if waiting:
+        return Resolution(
+            request=request,
+            status="unknown",
+            candidates=candidates,
+            reasons=tuple(dict.fromkeys(found.reason for found in waiting)),
+        )
+    if undecided:
+        return Resolution(
+            request=request,
+            status="unknown",
+            candidates=candidates,
+            reasons=tuple(
+                f"{candidate.reference.name} leaves {', '.join(candidate.undecided)} unknown"
+                for candidate in undecided
+            ),
+        )
+    if matches:
+        return Resolution(
+            request=request,
+            status="resolved",
+            reference=matches[0].reference,
+            candidates=candidates,
+        )
+    return Resolution(request=request, status="missing", reasons=(missing,))
+
+
 @dataclass(frozen=True, slots=True)
 class ReviewedLevel:
-    """A level with a reviewed rule; ``entries`` are those whose fields the result retains.
+    """A level with a reviewed rule; ``entries`` are those whose fields the level holds.
 
     ``pending`` entries belong to producers that have not run; a request they would answer is
     ``unknown`` until the producer runs.
@@ -172,69 +243,33 @@ class ReviewedLevel:
             rule=self.rule.variant.rule,
         )
 
-    def resolve(self, request: ConceptRequest, /) -> Resolution:
+    def resolve(self, request: FieldRequest, /) -> Resolution:
         """Resolve only when exactly one entry matches, none is undecided and none is pending."""
-        compatible = [
-            Candidate(
-                entry_id=entry.entry_id,
-                reference=entry.reference,
-                qualifiers=entry.qualifiers,
-                undecided=request.undecided(entry.qualifiers),
-            )
-            for entry in self.entries
-            if request.admits(entry)
-        ]
-        waiting = [pending for pending in self.pending if request.admits(pending.entry)]
-        matches = [candidate for candidate in compatible if not candidate.undecided]
-        undecided = [candidate for candidate in compatible if candidate.undecided]
-        candidates = (
-            *compatible,
-            *(
-                Candidate(
-                    entry_id=pending.entry.entry_id,
-                    reference=pending.entry.reference,
-                    qualifiers=pending.entry.qualifiers,
-                )
-                for pending in waiting
-            ),
+        missing = f"no reviewed {self.rule.variant.rule} entry on {self.level} matches"
+        return _resolve(self.entries, self.pending, request, missing)
+
+
+@dataclass(frozen=True, slots=True)
+class ProducedLevel:
+    """A level of a set without vendor catalogues, answered by APB's own fields alone."""
+
+    level: str
+    software_name: str | None
+    software_version_pattern: str | None
+    entries: tuple[SourceEntry, ...]
+    pending: tuple[PendingEntry, ...] = ()
+
+    def binding(self) -> ProducedBinding:
+        """Describe the level's software and version; no review is involved."""
+        return ProducedBinding(
+            level=self.level,
+            software_name=self.software_name,
+            software_version_pattern=self.software_version_pattern,
         )
-        if len(matches) > 1:
-            names = ", ".join(candidate.reference.name for candidate in matches)
-            return Resolution(
-                request=request,
-                status="ambiguous",
-                candidates=candidates,
-                reasons=(f"{len(matches)} entries match: {names}",),
-            )
-        if waiting:
-            return Resolution(
-                request=request,
-                status="unknown",
-                candidates=candidates,
-                reasons=tuple(dict.fromkeys(pending.reason for pending in waiting)),
-            )
-        if undecided:
-            return Resolution(
-                request=request,
-                status="unknown",
-                candidates=candidates,
-                reasons=tuple(
-                    f"{candidate.reference.name} leaves {', '.join(candidate.undecided)} unknown"
-                    for candidate in undecided
-                ),
-            )
-        if matches:
-            return Resolution(
-                request=request,
-                status="resolved",
-                reference=matches[0].reference,
-                candidates=candidates,
-            )
-        return Resolution(
-            request=request,
-            status="missing",
-            reasons=(f"no reviewed {self.rule.variant.rule} entry on {self.level} matches",),
-        )
+
+    def resolve(self, request: FieldRequest, /) -> Resolution:
+        """Resolve only when exactly one entry matches, none is undecided and none is pending."""
+        return _resolve(self.entries, self.pending, request, f"no entry on {self.level} matches")
 
 
 @dataclass(frozen=True, slots=True)
@@ -260,9 +295,12 @@ class UnreviewedLevel:
             reason=self.reason,
         )
 
-    def resolve(self, request: ConceptRequest, /) -> Resolution:
+    def resolve(self, request: FieldRequest, /) -> Resolution:
         """Report that no reviewed catalogue describes this level."""
         return Resolution(request=request, status="unknown", reasons=(self.reason,))
+
+
+type LevelView = ReviewedLevel | ProducedLevel | UnreviewedLevel
 
 
 @dataclass(frozen=True, slots=True)
@@ -271,7 +309,7 @@ class AbsentLevel:
 
     level: str
 
-    def resolve(self, request: ConceptRequest, /) -> Resolution:
+    def resolve(self, request: FieldRequest, /) -> Resolution:
         """Report that the level itself is missing."""
         return Resolution(
             request=request,

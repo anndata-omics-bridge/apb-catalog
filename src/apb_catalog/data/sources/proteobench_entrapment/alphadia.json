@@ -35,7 +35,6 @@
         "location": "layers",
         "name": "QValue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "identification"
@@ -55,7 +54,6 @@
         "location": "layers",
         "name": "QValue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "identification"

@@ -23,7 +23,7 @@ def test_without_arguments_every_catalogue_is_listed(
     assert _run() == 0
     output = capsys.readouterr().out
     assert f"{toy_set}: 8 entries, requirements" in output
-    assert "identification_confidence: 20 entries, coverage only" in output
+    assert "confidence: 22 entries, coverage only" in output
 
 
 def test_check_fails_when_a_level_misses_a_must_field(
@@ -38,7 +38,7 @@ def test_check_fails_when_a_level_misses_a_must_field(
 
 def test_a_set_without_requirements_never_fails(capsys: pytest.CaptureFixture[str]) -> None:
     """Coverage-only sets list their levels without a verdict."""
-    assert _run("check", "identification_confidence") == 0
+    assert _run("check", "confidence") == 0
     assert "----  DIA-NN 2.x peptidoform_ion" in capsys.readouterr().out
 
 
@@ -77,7 +77,7 @@ def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str])
 
 def test_a_level_without_an_entry_names_none(capsys: pytest.CaptureFixture[str]) -> None:
     """A rule level the set has no entry for still gets a row, its column ``none``."""
-    _run("meaning", "identification_confidence", "--format", "csv")
+    _run("meaning", "confidence", "--format", "csv")
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
     assert not table.filter(pl.col("column") == "none").is_empty()
 
@@ -94,9 +94,9 @@ def test_meaning_names_who_writes_a_column(
 
 @pytest.mark.parametrize(
     "argv",
-    [("check", "nope"), ("check", "identification_confidence", "nope"), ("meaning", "nope")],
+    [("check", "nope"), ("check", "confidence", "nope"), ("meaning", "nope")],
 )
 def test_unknown_names_exit_2(argv: tuple[str, ...], capsys: pytest.CaptureFixture[str]) -> None:
     """An unknown set or software names what exists."""
     assert _run(*argv) == 2
-    assert "identification_confidence" in capsys.readouterr().err
+    assert "confidence" in capsys.readouterr().err

@@ -20,7 +20,6 @@
         "location": "var",
         "name": "Charge"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "charge",
         "origin": "vendor"
@@ -39,7 +38,6 @@
         "location": "var",
         "name": "apb_Decoy"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "decoy",
         "origin": "vendor"
@@ -58,7 +56,6 @@
         "location": "var",
         "name": "apb_Contaminant"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "contaminant",
         "origin": "vendor"

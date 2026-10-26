@@ -5,12 +5,13 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
 from typing import Literal, cast
 
 import polars as pl
 from cyclopts import App
 
-from apb_catalog.api import catalogues, rule_coverage
+from apb_catalog.api import Catalog, catalogue_table, catalogues, rule_coverage
 
 app = App(
     name="apb-catalog",
@@ -65,22 +66,58 @@ def check(catalogue: str, software: str | None = None, /) -> int:
 
 
 @app.command
-def meaning(catalogue: str, /, *, format: Literal["text", "csv"] = "text") -> int:
+def meaning(
+    catalogue: str,
+    /,
+    *,
+    software: str | None = None,
+    version: str | None = None,
+    format: Literal["text", "csv"] = "text",
+) -> int:
     """Print CATALOGUE as one table: the column holding each catalogued meaning per rule level.
 
     One row per packaged rule level and field, with its kind and the catalogue's qualifiers;
-    ``none`` where the level has no column for it. With ``--format csv``, the same rows as CSV.
+    ``none`` where the level has no column for it. With ``--software`` and ``--version``, only
+    the fields that software version's packaged rule declares. With ``--format csv``, the same
+    rows as CSV.
     """
+    if (software is None) != (version is None):
+        print("--software and --version go together", file=sys.stderr)
+        return 2
     try:
-        coverage = rule_coverage(catalogue)
+        if software is not None and version is not None:
+            fields = Catalog(software, version, catalogue).fields()
+            qualifiers = [name for name in fields.columns if name.startswith("qualifier.")]
+            table = fields.select("level", "location", "table", "name", *qualifiers)
+        else:
+            table = _meanings(rule_coverage(catalogue))
     except ValueError as error:
         print(error, file=sys.stderr)
         return 2
-    table = _meanings(coverage)
     if format == "csv":
         sys.stdout.write(table.write_csv())
     else:
         print(_aligned(table))
+    return 0
+
+
+@app.command
+def table(catalogue: str | None = None, /, *, output: Path | None = None) -> int:
+    """Write every catalogue set, or CATALOGUE alone, as one long CSV table.
+
+    One row per entry and rule it applies to: set, source, version pattern, rule, level,
+    location, table, name, one ``qualifier.<name>`` column per qualifier, requirement and entry
+    id. Written to standard output, or to ``--output``.
+    """
+    try:
+        rows = catalogue_table(catalogue)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 2
+    if output is None:
+        sys.stdout.write(rows.write_csv())
+    else:
+        rows.write_csv(output)
     return 0
 
 

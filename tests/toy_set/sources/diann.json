@@ -32,7 +32,6 @@
         "location": "var",
         "name": "Precursor_Charge"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "charge",
         "origin": "vendor"
@@ -53,7 +52,6 @@
         "location": "var",
         "name": "Protein_Group"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "group",
         "origin": "vendor"
@@ -74,7 +72,6 @@
         "location": "var",
         "name": "apb_Decoy"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "decoy",
         "origin": "vendor"

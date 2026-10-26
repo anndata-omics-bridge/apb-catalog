@@ -36,7 +36,6 @@
         "location": "layers",
         "name": "Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "directlfq",
         "normalization": "run_setting"
@@ -56,7 +55,6 @@
         "location": "layers",
         "name": "Precursor_Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "directlfq",
         "normalization": "run_setting"
@@ -76,7 +74,6 @@
         "location": "layers",
         "name": "PG_Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "directlfq",
         "normalization": "run_setting"

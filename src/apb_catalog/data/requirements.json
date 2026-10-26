@@ -1,1 +1,195 @@
-{}
+{
+  "abundance": [
+    {
+      "level": "peptidoform_ion",
+      "location": "layers",
+      "kind": "intensity",
+      "qualifiers": {
+        "normalization": "none"
+      },
+      "requirement": "SHOULD"
+    }
+  ],
+  "apb": [
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "peptide",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "peptide",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptide",
+      "location": "var",
+      "kind": "peptide",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "peptide",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "peptidoform",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "peptidoform",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "peptidoform",
+      "requirement": "SHOULD"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "peptidoform_unlocalized",
+      "requirement": "MAY"
+    },
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "peptidoform_ion",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "peptidoform_ion",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "peptidoform_fragment",
+      "requirement": "SHOULD"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "decoy",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "decoy",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "decoy",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptide",
+      "location": "var",
+      "kind": "decoy",
+      "requirement": "MUST"
+    },
+    {
+      "level": "protein",
+      "location": "var",
+      "kind": "decoy",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "contaminant",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "contaminant",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "contaminant",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptide",
+      "location": "var",
+      "kind": "contaminant",
+      "requirement": "MUST"
+    },
+    {
+      "level": "protein",
+      "location": "var",
+      "kind": "contaminant",
+      "requirement": "MUST"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "protein_assignment",
+      "requirement": "SHOULD"
+    },
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "protein_assignment",
+      "requirement": "SHOULD"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "protein_assignment",
+      "requirement": "SHOULD"
+    },
+    {
+      "level": "peptide",
+      "location": "var",
+      "kind": "protein_assignment",
+      "requirement": "SHOULD"
+    },
+    {
+      "level": "peptidoform_fragment",
+      "location": "var",
+      "kind": "fasta_accessions",
+      "requirement": "MAY"
+    },
+    {
+      "level": "peptidoform_ion",
+      "location": "var",
+      "kind": "fasta_accessions",
+      "requirement": "MAY"
+    },
+    {
+      "level": "peptidoform",
+      "location": "var",
+      "kind": "fasta_accessions",
+      "requirement": "MAY"
+    },
+    {
+      "level": "peptide",
+      "location": "var",
+      "kind": "fasta_accessions",
+      "requirement": "MAY"
+    },
+    {
+      "level": "protein",
+      "location": "var",
+      "kind": "fasta_accessions",
+      "requirement": "MAY"
+    }
+  ]
+}

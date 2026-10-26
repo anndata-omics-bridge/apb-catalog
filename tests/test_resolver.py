@@ -6,7 +6,7 @@ import pytest
 
 from apb_catalog.resolver import (
     AbsentLevel,
-    ConceptRequest,
+    FieldRequest,
     PendingEntry,
     Resolution,
     ReviewedLevel,
@@ -20,7 +20,7 @@ from apb_catalog.source import (
     SourceCatalogue,
     SourceEntry,
 )
-from apb_catalog.vocabulary import Qualifier, packaged_vocabulary
+from apb_catalog.vocabulary import Qualifier, SetVocabulary, packaged_vocabulary
 
 VARIANT = RuleVariant(
     rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^1\\."
@@ -34,7 +34,6 @@ def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntr
             "entry_id": f"vendor.peptidoform_ion.{name}",
             "rules": ("vendor/rules.json",),
             "reference": {"level": "peptidoform_ion", "location": location, "name": name},
-            "concept": "confidence",
             "qualifiers": described,
             "evidence": Evidence(basis="test"),
         }
@@ -52,10 +51,9 @@ def _level(*entries: SourceEntry) -> ReviewedLevel:
     return ReviewedLevel("peptidoform_ion", ReviewedRule(catalogue, VARIANT), entries)
 
 
-def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> ConceptRequest:
-    return ConceptRequest.model_validate(
+def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> FieldRequest:
+    return FieldRequest.model_validate(
         {
-            "concept": "confidence",
             "level": "peptidoform_ion",
             "location": location,
             "qualifiers": qualifiers,
@@ -158,16 +156,20 @@ def test_a_resolution_carries_a_reference_exactly_when_resolved() -> None:
 
 def test_request_predicates_are_checked_against_the_vocabulary() -> None:
     """A request may name only declared qualifiers and admitted values."""
-    concept = packaged_vocabulary().concept("confidence")
-    concept.check_predicate({"kind": ("pep", "unknown")})
+    vocabulary = packaged_vocabulary().sets["confidence"]
+    vocabulary.check_predicate({"kind": ("pep", "unknown")})
     with pytest.raises(ValueError, match="unknown qualifier"):
-        concept.check_predicate({"flavour": ("pep",)})
+        vocabulary.check_predicate({"flavour": ("pep",)})
     with pytest.raises(ValueError, match="does not admit"):
-        concept.check_predicate({"kind": ("fdr",)})
+        vocabulary.check_predicate({"kind": ("fdr",)})
     with pytest.raises(ValueError, match="accepts no value"):
-        concept.check_predicate({"kind": ()})
-    with pytest.raises(ValueError, match="unknown concept"):
-        packaged_vocabulary().concept("retention")
+        vocabulary.check_predicate({"kind": ()})
+
+
+def test_every_set_vocabulary_has_a_kind() -> None:
+    """A vocabulary without the qualifier ``kind`` is refused."""
+    with pytest.raises(ValueError, match="'kind'"):
+        SetVocabulary(definition="test", qualifiers={})
 
 
 def test_unknown_is_a_reserved_qualifier_value() -> None:
@@ -207,7 +209,6 @@ def test_a_var_request_reads_varm_tables_too() -> None:
                 "name": "flag",
                 "table": "checks",
             },
-            "concept": "confidence",
             "qualifiers": {"kind": "pep", "stage": "identification"},
             "evidence": Evidence(basis="test"),
         }

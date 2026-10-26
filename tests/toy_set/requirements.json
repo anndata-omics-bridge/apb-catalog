@@ -1,7 +1,20 @@
-{
-  "peptidoform_ion": {
-    "group": "MUST",
-    "charge": "MUST",
-    "decoy": "MAY"
+[
+  {
+    "level": "peptidoform_ion",
+    "location": "var",
+    "kind": "group",
+    "requirement": "MUST"
+  },
+  {
+    "level": "peptidoform_ion",
+    "location": "var",
+    "kind": "charge",
+    "requirement": "MUST"
+  },
+  {
+    "level": "peptidoform_ion",
+    "location": "var",
+    "kind": "decoy",
+    "requirement": "MAY"
   }
-}
+]

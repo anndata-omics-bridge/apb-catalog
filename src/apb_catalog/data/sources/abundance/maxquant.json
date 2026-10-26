@@ -35,7 +35,6 @@
         "location": "layers",
         "name": "Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -54,7 +53,6 @@
         "location": "layers",
         "name": "Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -73,7 +71,6 @@
         "location": "layers",
         "name": "Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -92,7 +89,6 @@
         "location": "layers",
         "name": "LFQ_Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "maxlfq",
         "normalization": "run_setting"
@@ -112,7 +108,6 @@
         "location": "layers",
         "name": "Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -131,7 +126,6 @@
         "location": "layers",
         "name": "LFQ_Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "maxlfq",
         "normalization": "run_setting"
@@ -151,7 +145,6 @@
         "location": "layers",
         "name": "iBAQ"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "ibaq",
         "normalization": "none"

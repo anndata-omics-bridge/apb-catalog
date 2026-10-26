@@ -25,7 +25,6 @@
         "location": "layers",
         "name": "Abundance"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "run_setting"
@@ -44,7 +43,6 @@
         "location": "layers",
         "name": "Raw_Abundance"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "none"
@@ -63,7 +61,6 @@
         "location": "layers",
         "name": "Abundance"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "unknown",
         "normalization": "run_setting"
@@ -82,7 +79,6 @@
         "location": "layers",
         "name": "Raw_Abundance"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "unknown",
         "normalization": "none"

@@ -1,6 +1,6 @@
 {
-  "vocabulary_version": "0.8",
-  "concepts": {
+  "vocabulary_version": "0.9",
+  "sets": {
     "abundance": {
       "definition": "A quantity an APB2 rule marks with the layer role abundance: what it measures, and whether the producing software normalizes it across runs.",
       "qualifiers": {
@@ -40,6 +40,48 @@
           "values": {
             "identification": "Whether the level's entity is correctly identified.",
             "quantification": "Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+          }
+        }
+      }
+    },
+    "proteobench_entrapment": {
+      "definition": "How likely an identification, or the signal quantified for it, is correct, as the producing software reports it.",
+      "qualifiers": {
+        "kind": {
+          "definition": "What the value measures.",
+          "values": {
+            "pep": "Posterior error probability: the probability that this single identification is wrong; lower is better.",
+            "q_value": "The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better.",
+            "library_q_value": "The q-value of the identification's spectral-library entry, built across all runs; lower is better.",
+            "global_q_value": "The q-value of the identification across the whole experiment; lower is better."
+          }
+        },
+        "stage": {
+          "definition": "Which decision the value qualifies.",
+          "values": {
+            "identification": "Whether the level's entity is correctly identified.",
+            "quantification": "Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+          }
+        }
+      }
+    },
+    "apb": {
+      "definition": "The fields APB itself writes under the same name or role for every vendor: the ProForma identifiers, the decoy and contaminant flags, the columns a rule's roles name, and the sample annotation's condition and biological replicate.",
+      "qualifiers": {
+        "kind": {
+          "definition": "Which field APB writes.",
+          "values": {
+            "peptide": "The plain amino-acid sequence: ProForma_peptide (PSI-MS MS:1000888, stripped peptide sequence).",
+            "peptidoform": "The sequence with its modifications in ProForma notation: ProForma_peptidoform (PSI-MS MS:1003169, proforma peptidoform sequence).",
+            "peptidoform_unlocalized": "The sequence with modifications whose positions the vendor does not report, as ProForma unknown-position groups: ProForma_peptidoform_unlocalized, which MaxQuant's peptidoform level writes instead of ProForma_peptidoform.",
+            "peptidoform_ion": "The peptidoform with its charge: ProForma_ion (PSI-MS MS:1003270, proforma peptidoform ion notation).",
+            "peptidoform_fragment": "A fragment of a peptidoform ion: ProForma_ion with the fragment label, ProForma_fragment.",
+            "decoy": "Whether the vendor marks the feature as a decoy: apb_Decoy.",
+            "contaminant": "Whether the vendor marks the feature as a contaminant it flags or adds itself: apb_Contaminant.",
+            "protein_assignment": "The protein or protein group the vendor assigns the feature to: the var column the level's rule marks with the role protein_assignment.",
+            "fasta_accessions": "The FASTA accessions the vendor lists for the feature: the var column the level's rule marks with the role fasta_accessions.",
+            "condition": "The experimental group a sample belongs to, as MSstats' Condition.",
+            "bioreplicate": "The biological replicate a sample comes from; one value across conditions marks a repeated subject, as MSstats' BioReplicate."
           }
         }
       }

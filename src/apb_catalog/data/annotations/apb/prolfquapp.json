@@ -1,0 +1,382 @@
+{
+  "catalogue_id": "prolfquapp",
+  "catalogue_version": "0.1",
+  "convention": "prolfquapp",
+  "entries": [
+    {
+      "entry_id": "prolfquapp.peptidoform_fragment.condition.group",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "group"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with group."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_fragment.condition.bait",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "bait"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with bait."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_fragment.condition.Experiment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "Experiment"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with Experiment."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_fragment.bioreplicate.subject",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "subject"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with subject."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_fragment.bioreplicate.BioReplicate",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "BioReplicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with BioReplicate."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_ion.condition.group",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "group"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with group."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_ion.condition.bait",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "bait"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with bait."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_ion.condition.Experiment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "Experiment"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with Experiment."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_ion.bioreplicate.subject",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "subject"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with subject."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform_ion.bioreplicate.BioReplicate",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "BioReplicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with BioReplicate."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform.condition.group",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "group"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with group."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform.condition.bait",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "bait"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with bait."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform.condition.Experiment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "Experiment"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with Experiment."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform.bioreplicate.subject",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "subject"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with subject."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptidoform.bioreplicate.BioReplicate",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "BioReplicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with BioReplicate."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptide.condition.group",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "group"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with group."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptide.condition.bait",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "bait"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with bait."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptide.condition.Experiment",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "Experiment"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with Experiment."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptide.bioreplicate.subject",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "subject"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with subject."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.peptide.bioreplicate.BioReplicate",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "BioReplicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with BioReplicate."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.protein.condition.group",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "group"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with group."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.protein.condition.bait",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "bait"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with bait."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.protein.condition.Experiment",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "Experiment"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the main group from the column starting with Experiment."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.protein.bioreplicate.subject",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "subject"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with subject."
+      }
+    },
+    {
+      "entry_id": "prolfquapp.protein.bioreplicate.BioReplicate",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "BioReplicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "prolfquapp reads the pairing or blocking factor from the column starting with BioReplicate."
+      }
+    }
+  ]
+}

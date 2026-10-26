@@ -27,10 +27,10 @@ Any APB2 result works: h5ad, h5mu, Parquet or DuckDB. The outputs below come fro
 from pathlib import Path
 
 from apb2.api import read_parsed_levels
-from apb_catalog.api import Catalog
+from apb_catalog.api import DataCatalog
 
 parsed = read_parsed_levels(Path("converted.h5mu"))
-confidence = Catalog(parsed, "identification_confidence")
+confidence = DataCatalog(parsed, "confidence")
 ```
 
 ## See what the result holds
@@ -55,8 +55,8 @@ confidence.fields().select("level", "location", "name", "kind", "stage")
 Or ask one level which kinds it offers, per run (`layer`) or per feature (`var`):
 
 ```python
-confidence.layer("peptidoform_ion")   # ('pep', 'q_value')
-confidence.var("peptidoform_ion")     # ('global_q_value',)
+confidence.kinds("peptidoform_ion", "layers")   # ('pep', 'q_value')
+confidence.kinds("peptidoform_ion", "var")     # ('global_q_value',)
 ```
 
 ## Get the data
@@ -122,8 +122,8 @@ from apb2.api import write_parsed_levels
 from apb_catalog.api import attach_snapshot, stored_snapshot
 
 write_parsed_levels(attach_snapshot(parsed, confidence.snapshot()), Path("annotated.h5mu"))
-stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_confidence").resolutions
+stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "confidence").resolutions
 # two resolved lookups: layer 'PEP' and var column 'Global_Q_Value'
 ```
 
-The snapshot sits at `metadata["catalog"]["identification_confidence"]["result"]` and can be read as plain JSON without APB Catalog installed.
+The snapshot sits at `metadata["catalog"]["confidence"]["result"]` and can be read as plain JSON without APB Catalog installed.

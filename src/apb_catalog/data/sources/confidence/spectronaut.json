@@ -62,7 +62,6 @@
         "location": "layers",
         "name": "EG_PEP"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "pep",
         "stage": "identification"
@@ -83,7 +82,6 @@
         "location": "layers",
         "name": "EG_Qvalue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "identification"
@@ -103,7 +101,6 @@
         "location": "layers",
         "name": "PG_QValue_Run_Wise"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "identification"
@@ -123,7 +120,6 @@
         "location": "var",
         "name": "PG_Qvalue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "global_q_value",
         "stage": "identification"
@@ -142,13 +138,31 @@
         "location": "var",
         "name": "PG_LibraryQvalue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "library_q_value",
         "stage": "identification"
       },
       "evidence": {
         "basis": "Protein-group q-value of the spectral library; reported from Spectronaut 21. PG.QValue (Run-Wise) differs across runs for every multi-run protein group, while PG.Qvalue never does: fixture 2eb6ecaa (Spectronaut 19/20, 9,360 groups) and 790d6197 (Spectronaut 21, 11,434; PG.LibraryQvalue never differs either)."
+      }
+    },
+    {
+      "entry_id": "spectronaut.v21.peptidoform_ion.EG_LibraryQvalue",
+      "rules": [
+        "spectronaut/v21/rules.json"
+      ],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "EG_LibraryQvalue"
+      },
+      "qualifiers": {
+        "kind": "library_q_value",
+        "stage": "identification"
+      },
+      "evidence": {
+        "basis": "Spectronaut report column EG.LibraryQvalue: library-level precursor q-value; ProteoBench's entrapment module ranks Spectronaut uploads by it.",
+        "source": "https://github.com/Proteobench/ProteoBench/blob/main/proteobench/io/parsing/io_parse_settings/entrapment/DIA/ion/Astral/parse_settings_spectronaut.toml"
       }
     }
   ]

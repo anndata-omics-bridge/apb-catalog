@@ -1,0 +1,472 @@
+{
+  "catalogue_id": "apb2",
+  "catalogue_version": "0.1",
+  "producer": "APB2",
+  "entries": [
+    {
+      "entry_id": "apb2.peptidoform_fragment.peptide",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "qualifiers": {
+        "kind": "peptide"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptide for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.peptide",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "qualifiers": {
+        "kind": "peptide"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptide for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.peptide",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "qualifiers": {
+        "kind": "peptide"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptide for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptide.peptide",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "ProForma_peptide"
+      },
+      "qualifiers": {
+        "kind": "peptide"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptide for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.peptidoform",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "name": "ProForma_peptidoform"
+      },
+      "qualifiers": {
+        "kind": "peptidoform"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptidoform for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.peptidoform",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "ProForma_peptidoform"
+      },
+      "qualifiers": {
+        "kind": "peptidoform"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptidoform for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.peptidoform",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptidoform"
+      },
+      "qualifiers": {
+        "kind": "peptidoform"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptidoform for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.peptidoform_unlocalized",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "ProForma_peptidoform_unlocalized"
+      },
+      "qualifiers": {
+        "kind": "peptidoform_unlocalized"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_peptidoform_unlocalized for a peptidoform level whose vendor reports modifications without positions (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.peptidoform_ion",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "name": "ProForma_ion"
+      },
+      "qualifiers": {
+        "kind": "peptidoform_ion"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_ion for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.peptidoform_ion",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "ProForma_ion"
+      },
+      "qualifiers": {
+        "kind": "peptidoform_ion"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_ion for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.peptidoform_fragment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "name": "ProForma_fragment"
+      },
+      "qualifiers": {
+        "kind": "peptidoform_fragment"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name ProForma_fragment for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.decoy",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "qualifiers": {
+        "kind": "decoy"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Decoy for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.decoy",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "qualifiers": {
+        "kind": "decoy"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Decoy for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.decoy",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "qualifiers": {
+        "kind": "decoy"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Decoy for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptide.decoy",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "qualifiers": {
+        "kind": "decoy"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Decoy for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.protein.decoy",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "apb_Decoy"
+      },
+      "qualifiers": {
+        "kind": "decoy"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Decoy for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.contaminant",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "name": "apb_Contaminant"
+      },
+      "qualifiers": {
+        "kind": "contaminant"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Contaminant for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.contaminant",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "name": "apb_Contaminant"
+      },
+      "qualifiers": {
+        "kind": "contaminant"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Contaminant for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.contaminant",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "name": "apb_Contaminant"
+      },
+      "qualifiers": {
+        "kind": "contaminant"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Contaminant for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptide.contaminant",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "name": "apb_Contaminant"
+      },
+      "qualifiers": {
+        "kind": "contaminant"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Contaminant for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.protein.contaminant",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "name": "apb_Contaminant"
+      },
+      "qualifiers": {
+        "kind": "contaminant"
+      },
+      "evidence": {
+        "basis": "APB2 fixes the name apb_Contaminant for every vendor (apb2.api FIXED_COLUMNS); the level's rule decides whether it holds the column."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.protein_assignment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "role": "protein_assignment"
+      },
+      "qualifiers": {
+        "kind": "protein_assignment"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role protein_assignment (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.protein_assignment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "role": "protein_assignment"
+      },
+      "qualifiers": {
+        "kind": "protein_assignment"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role protein_assignment (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.protein_assignment",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "role": "protein_assignment"
+      },
+      "qualifiers": {
+        "kind": "protein_assignment"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role protein_assignment (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptide.protein_assignment",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "role": "protein_assignment"
+      },
+      "qualifiers": {
+        "kind": "protein_assignment"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role protein_assignment (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.protein.protein_assignment",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "role": "protein_assignment"
+      },
+      "qualifiers": {
+        "kind": "protein_assignment"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role protein_assignment (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_fragment.fasta_accessions",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "var",
+        "role": "fasta_accessions"
+      },
+      "qualifiers": {
+        "kind": "fasta_accessions"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role fasta_accessions (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform_ion.fasta_accessions",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "var",
+        "role": "fasta_accessions"
+      },
+      "qualifiers": {
+        "kind": "fasta_accessions"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role fasta_accessions (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptidoform.fasta_accessions",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "var",
+        "role": "fasta_accessions"
+      },
+      "qualifiers": {
+        "kind": "fasta_accessions"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role fasta_accessions (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.peptide.fasta_accessions",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "var",
+        "role": "fasta_accessions"
+      },
+      "qualifiers": {
+        "kind": "fasta_accessions"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role fasta_accessions (apb2.api VAR_ROLES)."
+      }
+    },
+    {
+      "entry_id": "apb2.protein.fasta_accessions",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "var",
+        "role": "fasta_accessions"
+      },
+      "qualifiers": {
+        "kind": "fasta_accessions"
+      },
+      "evidence": {
+        "basis": "The var column the level's rule marks with the role fasta_accessions (apb2.api VAR_ROLES)."
+      }
+    }
+  ]
+}

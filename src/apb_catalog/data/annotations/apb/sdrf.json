@@ -1,0 +1,157 @@
+{
+  "catalogue_id": "sdrf",
+  "catalogue_version": "0.1",
+  "convention": "sdrf",
+  "entries": [
+    {
+      "entry_id": "sdrf.peptidoform_fragment.condition.factor_value_",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "factor_value_"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics factor value columns, factor value[…], hold the experimental condition; APB2 sanitizes the header to factor_value_…."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptidoform_fragment.bioreplicate.characteristics_biological_replicate",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_fragment",
+        "location": "obs",
+        "prefix": "characteristics_biological_replicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics characteristics[biological replicate]; APB2 sanitizes the header to characteristics_biological_replicate."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptidoform_ion.condition.factor_value_",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "factor_value_"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics factor value columns, factor value[…], hold the experimental condition; APB2 sanitizes the header to factor_value_…."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptidoform_ion.bioreplicate.characteristics_biological_replicate",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform_ion",
+        "location": "obs",
+        "prefix": "characteristics_biological_replicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics characteristics[biological replicate]; APB2 sanitizes the header to characteristics_biological_replicate."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptidoform.condition.factor_value_",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "factor_value_"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics factor value columns, factor value[…], hold the experimental condition; APB2 sanitizes the header to factor_value_…."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptidoform.bioreplicate.characteristics_biological_replicate",
+      "rules": [],
+      "reference": {
+        "level": "peptidoform",
+        "location": "obs",
+        "prefix": "characteristics_biological_replicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics characteristics[biological replicate]; APB2 sanitizes the header to characteristics_biological_replicate."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptide.condition.factor_value_",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "factor_value_"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics factor value columns, factor value[…], hold the experimental condition; APB2 sanitizes the header to factor_value_…."
+      }
+    },
+    {
+      "entry_id": "sdrf.peptide.bioreplicate.characteristics_biological_replicate",
+      "rules": [],
+      "reference": {
+        "level": "peptide",
+        "location": "obs",
+        "prefix": "characteristics_biological_replicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics characteristics[biological replicate]; APB2 sanitizes the header to characteristics_biological_replicate."
+      }
+    },
+    {
+      "entry_id": "sdrf.protein.condition.factor_value_",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "factor_value_"
+      },
+      "qualifiers": {
+        "kind": "condition"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics factor value columns, factor value[…], hold the experimental condition; APB2 sanitizes the header to factor_value_…."
+      }
+    },
+    {
+      "entry_id": "sdrf.protein.bioreplicate.characteristics_biological_replicate",
+      "rules": [],
+      "reference": {
+        "level": "protein",
+        "location": "obs",
+        "prefix": "characteristics_biological_replicate"
+      },
+      "qualifiers": {
+        "kind": "bioreplicate"
+      },
+      "evidence": {
+        "basis": "SDRF-Proteomics characteristics[biological replicate]; APB2 sanitizes the header to characteristics_biological_replicate."
+      }
+    }
+  ]
+}

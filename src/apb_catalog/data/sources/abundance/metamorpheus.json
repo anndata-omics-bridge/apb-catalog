@@ -20,7 +20,6 @@
         "location": "layers",
         "name": "Intensity"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "unknown"

@@ -5,6 +5,7 @@ from __future__ import annotations
 from importlib import resources
 
 import pytest
+from apb2.api import FIXED_COLUMNS, VAR_ROLES
 
 from apb_catalog.source import (
     CatalogueDescription,
@@ -29,6 +30,7 @@ from tests.packaged_rules import (
     retained_sources,
 )
 
+CONFIDENCE = packaged_vocabulary().sets["confidence"]
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
 ION = RuleVariant(
@@ -38,6 +40,8 @@ ION = RuleVariant(
 
 def _catalogues(name: str) -> list[SourceCatalogue]:
     directory = resources.files("apb_catalog").joinpath("data", "sources", name)
+    if not directory.is_dir():
+        return []
     return [
         SourceCatalogue.model_validate_json(path.read_text("utf-8"))
         for path in sorted(directory.iterdir(), key=lambda path: path.name)
@@ -49,7 +53,6 @@ def _entry(name: str, **qualifiers: str) -> SourceEntry:
         entry_id=f"vendor.peptidoform_ion.{name}",
         rules=("vendor/rules.json",),
         reference=Reference(level="peptidoform_ion", location="layers", name=name),
-        concept="confidence",
         qualifiers={"kind": "pep", "stage": "identification"} | qualifiers,
         evidence=Evidence(basis="test"),
     )
@@ -68,7 +71,7 @@ def _catalogue(*entries: SourceEntry, **overrides: object) -> SourceCatalogue:
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_packaged_catalogues_load_against_the_vocabulary(name: str) -> None:
-    """Every packaged entry names a declared concept with fully described qualifiers."""
+    """Every packaged entry is fully described in its set's vocabulary."""
     assert packaged_catalogues(name).reviewed("Vendor", "^0\\.", "peptidoform_ion") is None
 
 
@@ -114,6 +117,8 @@ def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
     Levels bind by software name and version, so two rules declaring both, such as MaxQuant's
     ``maxquant`` and ``maxquant_wide``, share one variant.
     """
+    if not _catalogues(name):
+        pytest.skip("a set without vendor catalogues needs no review")
     reviewed = {
         (c.software_name, variant.software_version_pattern, variant.level)
         for c in _catalogues(name)
@@ -165,18 +170,14 @@ def test_entry_qualifiers_must_describe_every_vocabulary_qualifier() -> None:
     """Leaving a qualifier out is rejected; ``unknown`` must be recorded explicitly."""
     partial = _entry("PEP").model_copy(update={"qualifiers": {"kind": "pep"}})
     with pytest.raises(ValueError, match="qualifiers must be exactly"):
-        SourceCatalogues(packaged_vocabulary(), (_catalogue(partial),), DESCRIPTION)
+        SourceCatalogues(CONFIDENCE, "test", (_catalogue(partial),), DESCRIPTION)
 
 
 def test_entry_qualifier_values_must_be_admitted() -> None:
     """A value outside the vocabulary is rejected, while ``unknown`` is accepted."""
-    SourceCatalogues(
-        packaged_vocabulary(), (_catalogue(_entry("PEP", stage="unknown")),), DESCRIPTION
-    )
+    SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP", stage="unknown")),), DESCRIPTION)
     with pytest.raises(ValueError, match="does not admit"):
-        SourceCatalogues(
-            packaged_vocabulary(), (_catalogue(_entry("PEP", kind="fdr")),), DESCRIPTION
-        )
+        SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP", kind="fdr")),), DESCRIPTION)
 
 
 def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
@@ -184,7 +185,7 @@ def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
     first = _catalogue(_entry("PEP"))
     second = _catalogue(catalogue_id="other")
     with pytest.raises(ValueError, match="reviewed more than once"):
-        SourceCatalogues(packaged_vocabulary(), (first, second), DESCRIPTION)
+        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
 
 
 def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
@@ -195,7 +196,7 @@ def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
     first = _catalogue(_entry("PEP"))
     second = _catalogue(_entry("PEP"), catalogue_id="other", variants=(later,))
     with pytest.raises(ValueError, match="repeats"):
-        SourceCatalogues(packaged_vocabulary(), (first, second), DESCRIPTION)
+        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
 
 
 def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:
@@ -251,7 +252,7 @@ def test_vendor_files_hold_no_apb2_columns(name: str) -> None:
         entry.entry_id
         for catalogue in _catalogues(name)
         for entry in catalogue.entries
-        if entry.reference.name.startswith("ProForma_")
+        if (entry.reference.name or "").startswith("ProForma_")
     ]
     assert canonical == []
 
@@ -270,19 +271,32 @@ def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> 
     assert constant == []
 
 
-def test_apb2_entries_name_columns_the_rules_write(toy_set: str) -> None:
-    """Every APB2 entry, packaged or plugin, names a canonical column a packaged rule writes."""
-    unwritten = [
-        entry.entry_id
-        for name in catalogue_descriptions()
-        for producer in catalogue_set(name).producers
-        if producer.catalogue_id == "apb2"
-        for entry in producer.entries
-        if not entry.reference.name.startswith("ProForma_")
-        or not any(
-            ("var", entry.reference.name) in retained_sources(rule, level)
-            for rule, level in effective_rules()
-            if level == entry.reference.level
-        )
-    ]
+def test_apb2_entries_name_fixed_columns_or_var_roles(toy_set: str) -> None:
+    """Every APB2 entry, packaged or plugin, names a fixed column a packaged rule writes on its
+    level, or a var role."""
+    unwritten: list[str] = []
+    for name in catalogue_descriptions():
+        for producer in catalogue_set(name).producers:
+            if producer.catalogue_id != "apb2":
+                continue
+            for entry in producer.entries:
+                reference = entry.reference
+                if reference.role is not None:
+                    if reference.role not in VAR_ROLES:
+                        unwritten.append(entry.entry_id)
+                elif reference.name not in FIXED_COLUMNS or not any(
+                    ("var", reference.name) in retained_sources(rule, level)
+                    for rule, level in effective_rules()
+                    if level == reference.level
+                ):
+                    unwritten.append(entry.entry_id)
     assert unwritten == []
+
+
+def test_every_fixed_column_and_var_role_has_an_apb_kind() -> None:
+    """The apb set drifts from apb2 the moment apb2 fixes a new name or adds a var role."""
+    entries = [
+        entry for producer in packaged_catalogues("apb").producers for entry in producer.entries
+    ]
+    assert {entry.reference.name for entry in entries if entry.reference.name} == set(FIXED_COLUMNS)
+    assert {entry.reference.role for entry in entries if entry.reference.role} == set(VAR_ROLES)

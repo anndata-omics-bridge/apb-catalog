@@ -18,7 +18,6 @@
         "name": "fasta_matches_contaminant",
         "table": "fasta_validation"
       },
-      "concept": "toy",
       "qualifiers": {
         "kind": "contaminant",
         "origin": "apb_fasta"

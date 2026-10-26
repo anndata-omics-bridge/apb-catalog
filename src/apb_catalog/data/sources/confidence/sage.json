@@ -25,7 +25,6 @@
         "location": "var",
         "name": "Q_Value"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "quantification"
@@ -45,7 +44,6 @@
         "location": "var",
         "name": "Q_Value"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "quantification"

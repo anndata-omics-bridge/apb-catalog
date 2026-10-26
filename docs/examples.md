@@ -8,22 +8,22 @@ Every call of the [Python API](api.md), run on APB2 results of four ProteoBench 
 from pathlib import Path
 
 from apb2.api import read_parsed_levels
-from apb_catalog.api import Catalog
+from apb_catalog.api import DataCatalog
 
 result = read_parsed_levels(Path("converted.h5mu"))   # DIA-NN 2.6.0
-abundance = Catalog(result, "abundance")
+abundance = DataCatalog(result, "abundance")
 ```
 
-The second argument names the catalogue set: `abundance`, `identification_confidence` or `proteobench_entrapment`. Each set has one concept, so calls need not name it.
+The second argument names the catalogue set: `abundance`, `confidence`, `proteobench_entrapment` or `apb`.
 
 ## Ask which kinds a level offers
 
-Without `kind`, a call returns the kinds on offer instead of a field:
+`kinds` lists the kinds a level offers at one location, given the other qualifiers:
 
 ```python
-abundance.layer("peptidoform_ion")                         # ('intensity', 'ms1_intensity')
-abundance.layer("peptidoform_ion", normalization="none")   # ('intensity', 'ms1_intensity'): both have an unnormalized layer
-abundance.layer("protein")                     # ('unknown',): PG_MaxLFQ's kind is not settled
+abundance.kinds("peptidoform_ion", "layers")                         # ('intensity', 'ms1_intensity')
+abundance.kinds("peptidoform_ion", "layers", normalization="none")   # ('intensity', 'ms1_intensity'): both have an unnormalized layer
+abundance.kinds("protein", "layers")                     # ('unknown',): PG_MaxLFQ's kind is not settled
 ```
 
 ## Get one layer
@@ -54,7 +54,7 @@ abundance.layer("peptidoform_ion", kind="intensity", normalization="run_setting"
 The same call answers for every quantification tool:
 
 ```python
-Catalog(maxquant, "abundance").layer("peptidoform_ion", kind="intensity", normalization="none").layer_name
+DataCatalog(maxquant, "abundance").layer("peptidoform_ion", kind="intensity", normalization="none").layer_name
 # 'Intensity'
 ```
 
@@ -63,9 +63,9 @@ Catalog(maxquant, "abundance").layer("peptidoform_ion", kind="intensity", normal
 A layer holds one value per run and feature; a `var` column one value per feature.
 
 ```python
-confidence = Catalog(result, "identification_confidence")    # DIA-NN 2.6.0
-confidence.layer("peptidoform_ion")                                      # ('pep', 'q_value')
-confidence.var("peptidoform_ion")                                        # ('global_q_value',)
+confidence = DataCatalog(result, "confidence")    # DIA-NN 2.6.0
+confidence.kinds("peptidoform_ion", "layers")                                      # ('pep', 'q_value')
+confidence.kinds("peptidoform_ion", "var")                                        # ('global_q_value',)
 confidence.layer("peptidoform_ion", kind="q_value").layer_name           # 'Q_Value', one per run
 confidence.var("peptidoform_ion", kind="global_q_value").name            # 'Global_Q_Value', one per precursor
 confidence.layer("protein", kind="q_value").layer_name       # 'PG_Q_Value'
@@ -75,9 +75,9 @@ confidence.var("protein", kind="global_q_value").name        # 'Global_PG_Q_Valu
 `Spectronaut` 20 also reports the global protein q-value once per protein group:
 
 ```python
-confidence = Catalog(spectronaut, "identification_confidence")
-confidence.layer("protein")                                  # ('q_value',)
-confidence.var("protein")                                    # ('global_q_value',)
+confidence = DataCatalog(spectronaut, "confidence")
+confidence.kinds("protein", "layers")                                  # ('q_value',)
+confidence.kinds("protein", "var")                                    # ('global_q_value',)
 confidence.layer("protein", kind="q_value").layer_name       # 'PG_QValue_Run_Wise'
 confidence.var("protein", kind="global_q_value").head(3)
 ```
@@ -95,9 +95,9 @@ Series: 'PG_Qvalue' [f64]
 `MaxQuant` 2.8.1.0 has per-feature fields on several levels:
 
 ```python
-confidence = Catalog(maxquant, "identification_confidence")
-confidence.var("protein")    # ('global_q_value',)
-confidence.var("peptide")    # ('pep',)
+confidence = DataCatalog(maxquant, "confidence")
+confidence.kinds("protein", "var")    # ('global_q_value',)
+confidence.kinds("peptide", "var")    # ('pep',)
 ```
 
 ## A qualifier with a default: `stage`
@@ -105,49 +105,57 @@ confidence.var("peptide")    # ('pep',)
 Confidence lookups mean identification unless `stage` says otherwise. `Sage` 0.15 reports only a quantification q-value, the q-value of its MS1 peak:
 
 ```python
-confidence = Catalog(sage, "identification_confidence")
-confidence.var("peptidoform_ion")                                                      # None
-confidence.var("peptidoform_ion", stage="quantification")                              # ('q_value',)
+confidence = DataCatalog(sage, "confidence")
+confidence.kinds("peptidoform_ion", "var")                                                      # ()
+confidence.kinds("peptidoform_ion", "var", stage="quantification")                    # ('q_value',)
 confidence.var("peptidoform_ion", kind="q_value", stage="quantification").name         # 'Q_Value'
 ```
 
-## Name the concept explicitly
+## Names without data: `Catalog`
 
-`concept=` is needed only for a plugin set whose entries name several concepts; there, omitting it raises `ValueError`. For the packaged sets it changes nothing:
+The software and version stand in for the result; the packaged rule whose version pattern admits the version decides:
 
 ```python
-Catalog(result, "identification_confidence").layer("peptidoform_ion", kind="q_value", concept="confidence").layer_name
-# 'Q_Value'
+from apb_catalog.api import Catalog
+
+Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity", normalization="none").name
+# 'Precursor_Quantity'
+Catalog("DIA-NN", "2.6.0", "apb").var("peptidoform_ion", kind="protein_assignment").name
+# 'Protein_Group'
 ```
 
 ## Everything a result holds: `fields()`
 
 ```python
-Catalog(result, "identification_confidence").fields()    # DIA-NN 2.6.0
+fields = Catalog("DIA-NN", "2.6.0", "confidence").fields()
+fields.select("level", "location", "name", "qualifier.kind", "qualifier.stage", "present")
 ```
 
 ```text
-┌─────────┬──────────┬───────┬───────────────────┬────────────┬─────────────────┬────────────────┐
-│ level   ┆ location ┆ table ┆ name              ┆ concept    ┆ kind            ┆ stage          │
-╞═════════╪══════════╪═══════╪═══════════════════╪════════════╪═════════════════╪════════════════╡
-│ ion     ┆ layers   ┆ null  ┆ Q_Value           ┆ confidence ┆ q_value         ┆ identification │
-│ ion     ┆ layers   ┆ null  ┆ PEP               ┆ confidence ┆ pep             ┆ identification │
-│ ion     ┆ var      ┆ null  ┆ Global_Q_Value    ┆ confidence ┆ global_q_value  ┆ identification │
-│ protein ┆ layers   ┆ null  ┆ PG_Q_Value        ┆ confidence ┆ q_value         ┆ identification │
-│ protein ┆ var      ┆ null  ┆ Lib_PG_Q_Value    ┆ confidence ┆ library_q_value ┆ identification │
-│ protein ┆ var      ┆ null  ┆ Global_PG_Q_Value ┆ confidence ┆ global_q_value  ┆ identification │
-└─────────┴──────────┴───────┴───────────────────┴────────────┴─────────────────┴────────────────┘
+┌─────────────────┬──────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
+│ level           ┆ location ┆ name              ┆ qualifier.kind  ┆ qualifier.stage ┆ present │
+╞═════════════════╪══════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
+│ peptidoform_ion ┆ layers   ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ layers   ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var      ┆ Global_Q_Value    ┆ global_q_value  ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var      ┆ Lib_Q_Value       ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ layers   ┆ PG_Q_Value        ┆ q_value         ┆ identification  ┆ true    │
+│ protein         ┆ var      ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ var      ┆ Global_PG_Q_Value ┆ global_q_value  ┆ identification  ┆ true    │
+└─────────────────┴──────────┴───────────────────┴─────────────────┴─────────────────┴─────────┘
 ```
+
+On a result, `DataCatalog(result, "confidence").fields()` has the same columns; a field APB2 left out because it held one value has `present` false and that value as `constant`.
 
 ## The entrapment set
 
 `apb-proteobench` asks this set for every precursor q-value it can score:
 
 ```python
-Catalog(result, "proteobench_entrapment").layer("peptidoform_ion")         # ('q_value',)
-Catalog(result, "proteobench_entrapment").var("peptidoform_ion")           # ('global_q_value', 'library_q_value')
-Catalog(spectronaut, "proteobench_entrapment").layer("peptidoform_ion")    # ('q_value',)
-Catalog(maxquant, "proteobench_entrapment").layer("peptidoform_ion")       # None: no entry for MaxQuant
+DataCatalog(result, "proteobench_entrapment").kinds("peptidoform_ion", "layers")         # ('q_value',)
+DataCatalog(result, "proteobench_entrapment").kinds("peptidoform_ion", "var")           # ('global_q_value', 'library_q_value')
+DataCatalog(spectronaut, "proteobench_entrapment").kinds("peptidoform_ion", "layers")    # ('q_value',)
+DataCatalog(maxquant, "proteobench_entrapment").kinds("peptidoform_ion", "layers")       # (): no entry for MaxQuant
 ```
 
 ## When there is no single answer
@@ -175,17 +183,17 @@ except UnresolvedField as error:
 from apb2.api import write_parsed_levels
 from apb_catalog.api import attach_snapshot, stale_levels, stored_snapshot
 
-confidence = Catalog(result, "identification_confidence")
+confidence = DataCatalog(result, "confidence")
 q_value = confidence.layer("peptidoform_ion", kind="q_value")
 annotated = attach_snapshot(result, confidence.snapshot())
 write_parsed_levels(annotated, Path("annotated.h5mu"))
 
-stored = stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "identification_confidence")
+stored = stored_snapshot(read_parsed_levels(Path("annotated.h5mu")), "confidence")
 [(r.request.level, r.status, r.reference.name) for r in stored.resolutions]
 # [('peptidoform_ion', 'resolved', 'Q_Value')]
 
 stale_levels(annotated, confidence.snapshot())    # (): software name and version unchanged
-stale_levels(annotated, Catalog(maxquant, "identification_confidence").snapshot())
+stale_levels(annotated, DataCatalog(maxquant, "confidence").snapshot())
 # ('peptidoform_ion', 'peptidoform', 'peptide', 'protein'): levels whose software name or version differ
 ```
 
@@ -194,7 +202,7 @@ stale_levels(annotated, Catalog(maxquant, "identification_confidence").snapshot(
 ```python
 from apb_catalog.api import catalogues, rule_coverage
 
-catalogues()                   # 3 rows: abundance (48 entries), identification_confidence (20), proteobench_entrapment (7)
+catalogues()                   # 3 rows: abundance (48 entries), confidence (20), proteobench_entrapment (7)
 rule_coverage("abundance")     # 71 rows × 15 columns, one per field of every packaged rule level
 ```
 

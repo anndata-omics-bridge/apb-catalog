@@ -5,7 +5,7 @@
       "apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma"
     ]
   },
-  "identification_confidence": {
+  "confidence": {
     "purpose": "How likely each identification, or the signal quantified for it, is correct: per-run PEP and q-value layers, per-feature PEP, Sage's MS1-peak q-value, DIA-NN's and Spectronaut's protein-group q-values per run, per library and across the experiment, and MaxQuant's across the experiment. Scores, vendor summaries and other vendors' protein-level confidence are left out.",
     "used_by": [
       "apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision",
@@ -17,6 +17,12 @@
     "used_by": [
       "apb-proteobench: EntrapmentAnalyzer and run entrapment",
       "apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback"
+    ]
+  },
+  "apb": {
+    "purpose": "The fields APB writes for every vendor, by kind instead of by name: ProForma_peptide, ProForma_peptidoform, ProForma_ion and ProForma_fragment, apb_Decoy and apb_Contaminant, the var columns a rule marks with the roles protein_assignment and fasta_accessions, and a sample annotation's condition and biological replicate. Its requirements say which levels carry each.",
+    "used_by": [
+      "apb-export: export rules ask for APB's own columns by kind"
     ]
   }
 }

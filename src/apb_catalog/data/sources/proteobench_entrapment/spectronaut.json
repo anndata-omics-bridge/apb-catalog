@@ -62,7 +62,6 @@
         "location": "layers",
         "name": "EG_Qvalue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "q_value",
         "stage": "identification"
@@ -82,7 +81,6 @@
         "location": "var",
         "name": "EG_LibraryQvalue"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "library_q_value",
         "stage": "identification"

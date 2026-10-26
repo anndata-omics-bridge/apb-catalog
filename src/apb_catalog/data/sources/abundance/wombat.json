@@ -25,7 +25,6 @@
         "location": "layers",
         "name": "Abundance"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "run_setting"
@@ -44,7 +43,6 @@
         "location": "layers",
         "name": "Abundance"
       },
-      "concept": "abundance",
       "qualifiers": {
         "kind": "intensity",
         "normalization": "run_setting"

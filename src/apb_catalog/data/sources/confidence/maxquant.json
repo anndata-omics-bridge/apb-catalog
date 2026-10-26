@@ -35,7 +35,6 @@
         "location": "layers",
         "name": "PEP"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "pep",
         "stage": "identification"
@@ -54,7 +53,6 @@
         "location": "var",
         "name": "PEP"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "pep",
         "stage": "identification"
@@ -73,7 +71,6 @@
         "location": "var",
         "name": "PEP"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "pep",
         "stage": "identification"
@@ -92,7 +89,6 @@
         "location": "var",
         "name": "Q_Value"
       },
-      "concept": "confidence",
       "qualifiers": {
         "kind": "global_q_value",
         "stage": "identification"

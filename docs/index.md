@@ -3,10 +3,10 @@
 APB Catalog tells a consumer which field of an [APB2](https://github.com/anndata-omics-bridge/apb2) result carries the meaning it needs, so the consumer never names vendor columns such as MaxQuant's `PEP`, Spectronaut's `EG_PEP` or DIA-NN's `Q_Value`.
 
 ```python
-from apb_catalog.api import Catalog
+from apb_catalog.api import DataCatalog
 
-catalog = Catalog(parsed, "identification_confidence")
-catalog.layer("peptidoform_ion")                   # ('pep', 'q_value')
+catalog = DataCatalog(parsed, "confidence")
+catalog.kinds("peptidoform_ion", "layers")                   # ('pep', 'q_value')
 pep = catalog.layer("peptidoform_ion", kind="pep")
 ```
 
@@ -19,8 +19,9 @@ A catalogue annotates what its consumers need, never every vendor column; `abund
 | Set | Used by | Annotates |
 | --- | --- | --- |
 | `abundance` | apb-proteobench modules that ask for an un-normalized layer | Every layer APB2 marks `abundance`: what it measures and whether the software normalizes it |
-| `identification_confidence` | apb-aggregate | Per-run and per-feature PEP and q-value, how likely each identification is correct |
+| `confidence` | apb-aggregate; apb-export's prolfqua target | Per-run and per-feature PEP and q-value, at the identification or quantification stage |
 | `proteobench_entrapment` | apb-proteobench entrapment scoring; apb-export's msmu `q_value` and prolfqua `qValue` fallback | Run, library and experiment-wide precursor q-values, each its own kind |
+| `apb` | apb-export's export rules | The fields APB writes for every vendor, by kind: ProForma identifiers, decoy and contaminant flags, role columns, sample condition and biological replicate |
 
 Every set lists every rule APB2 packages, so a vendor without a relevant field answers `None`, as does a field APB2 left out of a result because it held one value or none, while a software version nobody reviewed raises. See [Catalogues](catalogues.md) for every entry. An installed package can add a set as a plugin; see [Maintaining](maintaining.md#plugin-sets).
 

@@ -1,4 +1,4 @@
-"""Concept definitions and the qualifier values each concept admits."""
+"""Each catalogue set's vocabulary: the qualifiers its entries are described by."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ class FrozenModel(BaseModel):
 
 
 class Qualifier(FrozenModel):
-    """One dimension of a concept and the meanings of its admitted values."""
+    """One dimension of a set's meanings and the meanings of its admitted values."""
 
     definition: str
     values: dict[str, str]
@@ -30,11 +30,20 @@ class Qualifier(FrozenModel):
         return self
 
 
-class Concept(FrozenModel):
-    """One meaning a consumer can ask for, with every qualifier it must be described by."""
+class SetVocabulary(FrozenModel):
+    """What one set's entries mean, with every qualifier they must be described by.
+
+    Every set has a ``kind`` qualifier.
+    """
 
     definition: str
     qualifiers: dict[str, Qualifier]
+
+    @model_validator(mode="after")
+    def _has_kind(self) -> SetVocabulary:
+        if "kind" not in self.qualifiers:
+            raise ValueError("a set vocabulary declares the qualifier 'kind'")
+        return self
 
     def check_description(self, qualifiers: Mapping[str, str], /) -> None:
         """Require every qualifier, each with an admitted value or ``unknown``."""
@@ -64,20 +73,13 @@ class Concept(FrozenModel):
 
 
 class Vocabulary(FrozenModel):
-    """The versioned set of concepts catalogue entries and requests may name."""
+    """The versioned vocabularies of the packaged sets, by set name."""
 
     vocabulary_version: str
-    concepts: dict[str, Concept]
-
-    def concept(self, name: str, /) -> Concept:
-        """Return one concept, naming the declared ones when it is absent."""
-        concept = self.concepts.get(name)
-        if concept is None:
-            raise ValueError(f"unknown concept {name!r}; declared: {sorted(self.concepts)}")
-        return concept
+    sets: dict[str, SetVocabulary]
 
 
 def packaged_vocabulary() -> Vocabulary:
-    """Load the vocabulary shipped with this package."""
+    """Load the vocabularies shipped with this package."""
     text = resources.files("apb_catalog").joinpath("data", "vocabulary.json").read_text("utf-8")
     return Vocabulary.model_validate_json(text)

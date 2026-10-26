@@ -12,37 +12,60 @@ from importlib.metadata import EntryPoints, entry_points
 from importlib.resources.abc import Traversable
 from typing import Literal, cast
 
-from pydantic import TypeAdapter, model_validator
+from pydantic import Field, TypeAdapter, model_validator
 
-from apb_catalog.vocabulary import Concept, FrozenModel, Vocabulary, packaged_vocabulary
+from apb_catalog.vocabulary import FrozenModel, SetVocabulary, packaged_vocabulary
 
-type Location = Literal["layers", "var", "varm"]
+type Location = Literal["obs", "layers", "var", "varm"]
 type Address = tuple[Location, str | None, str]
 type Requirement = Literal["MUST", "SHOULD", "MAY"]
-type Requirements = Mapping[str, Mapping[str, Requirement]]
-"""The requirement level of each kind, per level, that a consumer's schema sets."""
+type Convention = Literal["sdrf", "prolfquapp"]
+
+READS: dict[Location, tuple[Location, ...]] = {
+    "obs": ("obs",),
+    "layers": ("layers",),
+    "var": ("var", "varm"),
+    "varm": ("varm",),
+}
+"""The locations a request reads: ``var`` and ``varm`` both hold one value per feature."""
 
 
 class Reference(FrozenModel):
-    """Where one retained field lives in an APB result, by its APB output name.
+    """Where one field lives in an APB result: by its APB output name, its role or a prefix.
 
-    A ``varm`` field also names its feature-aligned table.
+    A ``varm`` field also names its feature-aligned table. A ``var`` field may be named by the
+    role the level's rule gives it, and an ``obs`` field of a sample annotation by the prefix of
+    its column name; both are bound to the column a level holds before they answer.
     """
 
     level: str
     location: Location
-    name: str
+    name: str | None = None
     table: str | None = None
+    role: str | None = None
+    prefix: str | None = None
 
     @model_validator(mode="after")
-    def _table_iff_varm(self) -> Reference:
+    def _one_way_to_name(self) -> Reference:
         if (self.location == "varm") != (self.table is not None):
             raise ValueError("a reference names a table exactly when it lives in varm")
+        if sum(value is not None for value in (self.name, self.role, self.prefix)) != 1:
+            raise ValueError("a reference gives exactly one of name, role or prefix")
+        if self.role is not None and self.location != "var":
+            raise ValueError("a role names a var column")
+        if self.prefix is not None and self.location != "obs":
+            raise ValueError("a prefix names an obs column")
         return self
 
     def address(self) -> Address:
         """The location, varm table and name a level's retained fields are indexed by."""
+        if self.name is None:
+            raise ValueError(f"{self} is not bound to a column")
         return (self.location, self.table, self.name)
+
+    def bound(self, name: str, /) -> Reference:
+        """This reference with the column it names on one level."""
+        return Reference(level=self.level, location=self.location, name=name, table=self.table)
 
 
 class Evidence(FrozenModel):
@@ -58,9 +81,12 @@ class SourceEntry(FrozenModel):
     entry_id: str
     rules: tuple[str, ...]
     reference: Reference
-    concept: str
     qualifiers: dict[str, str]
     evidence: Evidence
+
+    def bound(self, name: str, /) -> SourceEntry:
+        """This entry with its reference bound to one level's column."""
+        return self.model_copy(update={"reference": self.reference.bound(name)})
 
 
 class RuleVariant(FrozenModel):
@@ -91,10 +117,17 @@ class SourceCatalogue(FrozenModel):
         for entry in self.entries:
             if not entry.rules:
                 raise ValueError(f"{self.catalogue_id}: {entry.reference} lists no rules")
+            if entry.reference.name is None:
+                raise ValueError(f"{self.catalogue_id}: a vendor entry names its column")
             undeclared = {(rule, entry.reference.level) for rule in entry.rules} - declared
             if undeclared:
                 raise ValueError(f"{self.catalogue_id}: {entry.reference} uses {undeclared}")
         return self
+
+    @property
+    def label(self) -> str:
+        """Who the entries come from: the vendor."""
+        return self.software_name
 
     def entries_for(self, variant: RuleVariant, /) -> tuple[SourceEntry, ...]:
         """Return the entries reviewed for one of this catalogue's rule variants."""
@@ -106,7 +139,7 @@ class SourceCatalogue(FrozenModel):
 
 
 class ProducerCatalogue(FrozenModel):
-    """Fields an APB producer, not the vendor, writes on every reviewed rule's level.
+    """Fields an APB producer, not the vendor, writes on every rule's level.
 
     ``requires`` is the metadata path that records the producer's run; conversion's own columns
     need none. Until a required run is recorded, its entries are pending and ``instruction``
@@ -127,9 +160,16 @@ class ProducerCatalogue(FrozenModel):
             raise ValueError(f"{self.catalogue_id}: duplicate entry ids")
         if any(entry.rules for entry in self.entries):
             raise ValueError(f"{self.catalogue_id}: producer entries apply to every rule")
+        if any(entry.reference.prefix is not None for entry in self.entries):
+            raise ValueError(f"{self.catalogue_id}: prefixes belong to annotation catalogues")
         if bool(self.requires) != (self.instruction is not None):
             raise ValueError(f"{self.catalogue_id}: an instruction comes with a required run")
         return self
+
+    @property
+    def label(self) -> str:
+        """Who the entries come from: ``producer:<name>``."""
+        return f"producer:{self.producer}"
 
     def entries_on(self, level: str) -> tuple[SourceEntry, ...]:
         """Return the entries this producer supplies on one level."""
@@ -154,6 +194,78 @@ class ProducerCatalogue(FrozenModel):
         return f"{self.producer} has not run on this result; {self.instruction}"
 
 
+class AnnotationCatalogue(FrozenModel):
+    """Sample-annotation fields of one annotation convention, found by column-name prefix.
+
+    APB2 keeps an annotation's columns in each level's ``obs`` under sanitized header names and
+    records the convention it read (``sdrf`` or ``prolfquapp``) in the result's metadata; the
+    entries apply to a result whose metadata records this convention.
+    """
+
+    catalogue_id: str
+    catalogue_version: str
+    convention: Convention
+    entries: tuple[SourceEntry, ...]
+
+    @model_validator(mode="after")
+    def _consistent(self) -> AnnotationCatalogue:
+        entry_ids = [entry.entry_id for entry in self.entries]
+        if len(entry_ids) != len(set(entry_ids)):
+            raise ValueError(f"{self.catalogue_id}: duplicate entry ids")
+        if any(entry.rules for entry in self.entries):
+            raise ValueError(f"{self.catalogue_id}: annotation entries apply to every rule")
+        if any(entry.reference.location != "obs" for entry in self.entries):
+            raise ValueError(f"{self.catalogue_id}: annotation entries name obs columns")
+        return self
+
+    @property
+    def label(self) -> str:
+        """Who the entries come from: ``annotation:<convention>``."""
+        return f"annotation:{self.convention}"
+
+    def applies(self, metadata: Mapping[str, object], /) -> bool:
+        """Whether a result's metadata records this catalogue's annotation convention."""
+        return self.convention in metadata
+
+    def entries_on(self, level: str) -> tuple[SourceEntry, ...]:
+        """Return the entries this convention supplies on one level."""
+        return tuple(entry for entry in self.entries if entry.reference.level == level)
+
+
+class RequirementRow(FrozenModel):
+    """How strongly a consumer needs one meaning on one level: a field location, a kind and
+    the other qualifiers the field must carry."""
+
+    level: str
+    location: Location
+    kind: str
+    qualifiers: dict[str, str] = Field(default_factory=dict)
+    requirement: Requirement
+
+    def describes(self, entry: SourceEntry, /) -> bool:
+        """Whether an entry on this row's level answers the row."""
+        return (
+            entry.reference.level == self.level
+            and entry.reference.location in READS[self.location]
+            and entry.qualifiers["kind"] == self.kind
+            and all(entry.qualifiers.get(name) == value for name, value in self.qualifiers.items())
+        )
+
+    def asked(
+        self, level: str, location: Location, qualifiers: Mapping[str, tuple[str, ...]]
+    ) -> bool:
+        """Whether a request on one level and location asks for this row's meaning."""
+        return (
+            level == self.level
+            and location == self.location
+            and qualifiers.get("kind") == (self.kind,)
+            and all(qualifiers.get(name) == (value,) for name, value in self.qualifiers.items())
+        )
+
+
+type Requirements = tuple[RequirementRow, ...]
+
+
 @dataclass(frozen=True, slots=True)
 class ReviewedRule:
     """The catalogue and rule variant one software version's level was reviewed as."""
@@ -167,54 +279,63 @@ class ReviewedRule:
 
 
 class SourceCatalogues:
-    """Source catalogues checked against one vocabulary and indexed by software and version.
+    """One set's source catalogues, checked against its vocabulary and indexed by software and
+    version.
 
-    ``producers`` hold the fields APB itself writes; they apply to every reviewed level.
-    ``requirements`` are the consumer schema's requirement levels per level and kind; a set
-    without them is checked for coverage only.
+    ``producers`` hold the fields APB itself writes and ``annotations`` the sample-annotation
+    fields; both apply to every level. A set made only of them has no vendor catalogue and needs
+    no review. ``requirements`` are the consumer's requirement rows; a set without them is
+    checked for coverage only.
     """
 
     __slots__ = (
         "_by_version",
+        "annotations",
         "catalogues",
         "description",
         "producers",
         "requirements",
         "vocabulary",
+        "vocabulary_version",
     )
 
     def __init__(
         self,
-        vocabulary: Vocabulary,
+        vocabulary: SetVocabulary,
+        vocabulary_version: str,
         catalogues: tuple[SourceCatalogue, ...],
         description: CatalogueDescription,
         producers: tuple[ProducerCatalogue, ...] = (),
-        requirements: Requirements | None = None,
+        annotations: tuple[AnnotationCatalogue, ...] = (),
+        requirements: Requirements = (),
     ) -> None:
         self.vocabulary = vocabulary
+        self.vocabulary_version = vocabulary_version
         self.description = description
         self.catalogues = catalogues
         self.producers = producers
-        self.requirements: Requirements = requirements or {}
+        self.annotations = annotations
+        self.requirements = requirements
         self._by_version: dict[tuple[str, str, str], ReviewedRule] = {}
-        entries = [entry for source in (*catalogues, *producers) for entry in source.entries]
+        entries = [entry for source in self.sources() for entry in source.entries]
         entry_ids = [entry.entry_id for entry in entries]
         if len(entry_ids) != len(set(entry_ids)):
             raise ValueError("an entry id repeats across the set's catalogues")
         for entry in entries:
             try:
-                vocabulary.concept(entry.concept).check_description(entry.qualifiers)
+                vocabulary.check_description(entry.qualifiers)
             except ValueError as error:
                 raise ValueError(f"{entry.entry_id}: {error}") from error
-        kinds = {
-            kind
-            for concept in {entry.concept for entry in entries}
-            for kind in vocabulary.concept(concept).qualifiers["kind"].values
-        }
-        for level, required in self.requirements.items():
-            unknown = sorted(set(required) - kinds)
-            if unknown:
-                raise ValueError(f"requirements on {level} name unknown kinds {unknown}")
+        for row in requirements:
+            try:
+                vocabulary.check_predicate(
+                    {
+                        name: (value,)
+                        for name, value in ({"kind": row.kind} | row.qualifiers).items()
+                    }
+                )
+            except ValueError as error:
+                raise ValueError(f"requirement on {row.level}: {error}") from error
         for catalogue in catalogues:
             for variant in catalogue.variants:
                 key = (catalogue.software_name, variant.software_version_pattern, variant.level)
@@ -222,11 +343,28 @@ class SourceCatalogues:
                     raise ValueError(f"{' '.join(key)} is reviewed more than once")
                 self._by_version[key] = ReviewedRule(catalogue, variant)
 
+    def sources(self) -> tuple[SourceCatalogue | ProducerCatalogue | AnnotationCatalogue, ...]:
+        """Every catalogue of the set: vendor, producer and annotation."""
+        return (*self.catalogues, *self.producers, *self.annotations)
+
+    @property
+    def needs_review(self) -> bool:
+        """Whether a level answers only once a vendor catalogue reviewed its rule."""
+        return bool(self.catalogues)
+
     def reviewed(
         self, software_name: str, software_version_pattern: str, level: str
     ) -> ReviewedRule | None:
         """Return the rule reviewed for one software version's level, or ``None`` if none was."""
         return self._by_version.get((software_name, software_version_pattern, level))
+
+    def requirement_for(
+        self, level: str, location: Location, qualifiers: Mapping[str, tuple[str, ...]]
+    ) -> RequirementRow | None:
+        """Return the requirement row a request asks for, if any."""
+        return next(
+            (row for row in self.requirements if row.asked(level, location, qualifiers)), None
+        )
 
 
 class CatalogueDescription(FrozenModel):
@@ -246,12 +384,13 @@ def packaged_descriptions() -> dict[str, CatalogueDescription]:
     }
 
 
-_REQUIREMENTS = TypeAdapter(dict[str, dict[str, dict[str, Requirement]]])
+_REQUIREMENTS = TypeAdapter(dict[str, tuple[RequirementRow, ...]])
+_SET_REQUIREMENTS = TypeAdapter(tuple[RequirementRow, ...])
 
 
 @cache
-def packaged_requirements() -> dict[str, dict[str, dict[str, Requirement]]]:
-    """Return the requirement levels of every packaged set that has them, by set name."""
+def packaged_requirements() -> dict[str, tuple[RequirementRow, ...]]:
+    """Return the requirement rows of every packaged set that has them, by set name."""
     text = resources.files("apb_catalog").joinpath("data", "requirements.json").read_text("utf-8")
     requirements = _REQUIREMENTS.validate_json(text)
     unknown = sorted(set(requirements) - set(packaged_descriptions()))
@@ -262,31 +401,27 @@ def packaged_requirements() -> dict[str, dict[str, dict[str, Requirement]]]:
 
 @cache
 def packaged_catalogues(name: str, /) -> SourceCatalogues:
-    """Load and cross-check one packaged catalogue set against the shared vocabulary."""
+    """Load and cross-check one packaged catalogue set against its vocabulary."""
     descriptions = packaged_descriptions()
     if name not in descriptions:
         raise ValueError(f"unknown catalogue {name!r}; packaged: {list(descriptions)}")
+    vocabularies = packaged_vocabulary()
+    if name not in vocabularies.sets:
+        raise ValueError(f"packaged catalogue {name!r} has no vocabulary")
     data = resources.files("apb_catalog").joinpath("data")
     return SourceCatalogues(
-        packaged_vocabulary(),
+        vocabularies.sets[name],
+        vocabularies.vocabulary_version,
         _read(data.joinpath("sources", name), SourceCatalogue),
         descriptions[name],
         _read(data.joinpath("producers", name), ProducerCatalogue),
-        packaged_requirements().get(name),
+        _read(data.joinpath("annotations", name), AnnotationCatalogue),
+        packaged_requirements().get(name, ()),
     )
 
 
 PLUGIN_GROUP = "apb_catalog.catalogues"
 """The entry-point group through which installed packages add catalogue sets."""
-
-
-class VocabularyExtension(FrozenModel):
-    """The concepts a plugin set adds to the packaged vocabulary."""
-
-    concepts: dict[str, Concept]
-
-
-_LEVEL_REQUIREMENTS = TypeAdapter(dict[str, dict[str, Requirement]])
 
 
 def plugin_folders(points: EntryPoints) -> dict[str, Traversable]:
@@ -340,30 +475,21 @@ def catalogue_set(name: str, /) -> SourceCatalogues:
 
 @cache
 def _plugin_set(name: str, /) -> SourceCatalogues:
-    """Load one plugin set, its concepts added to the packaged vocabulary."""
+    """Load one plugin set with its own vocabulary."""
     folder = _plugin_folders()[name]
-    packaged = packaged_vocabulary()
-    added = VocabularyExtension.model_validate_json(
-        folder.joinpath("vocabulary.json").read_text("utf-8")
-    )
-    redefined = sorted(set(added.concepts) & set(packaged.concepts))
-    if redefined:
-        raise ValueError(f"plugin catalogue set {name!r} redefines packaged concepts {redefined}")
-    vocabulary = Vocabulary(
-        vocabulary_version=packaged.vocabulary_version,
-        concepts={**packaged.concepts, **added.concepts},
-    )
     requirements = folder.joinpath("requirements.json")
     return SourceCatalogues(
-        vocabulary,
+        SetVocabulary.model_validate_json(folder.joinpath("vocabulary.json").read_text("utf-8")),
+        packaged_vocabulary().vocabulary_version,
         _read(folder.joinpath("sources"), SourceCatalogue),
         CatalogueDescription.model_validate_json(
             folder.joinpath("catalogue.json").read_text("utf-8")
         ),
         _read(folder.joinpath("producers"), ProducerCatalogue),
-        _LEVEL_REQUIREMENTS.validate_json(requirements.read_text("utf-8"))
+        _read(folder.joinpath("annotations"), AnnotationCatalogue),
+        _SET_REQUIREMENTS.validate_json(requirements.read_text("utf-8"))
         if requirements.is_file()
-        else None,
+        else (),
     )
 
 
