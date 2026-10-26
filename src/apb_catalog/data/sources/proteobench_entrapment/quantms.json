@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "quantms/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^v?1\\..*"
     }
   ],

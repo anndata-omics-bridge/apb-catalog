@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "metamorpheus/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^1\\."
     }
   ],

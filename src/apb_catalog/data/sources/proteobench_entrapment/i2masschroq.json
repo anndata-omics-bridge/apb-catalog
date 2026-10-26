@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "i2masschroq/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^1\\..*"
     }
   ],

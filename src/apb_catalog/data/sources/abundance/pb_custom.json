@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "pb_custom/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^.*$"
     }
   ],
   "entries": [
     {
-      "entry_id": "pb_custom.ion.Intensity",
+      "entry_id": "pb_custom.peptidoform_ion.Intensity",
       "rules": [
         "pb_custom/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Intensity"
       },

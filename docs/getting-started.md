@@ -55,14 +55,14 @@ confidence.fields().select("level", "location", "name", "kind", "stage")
 Or ask one level which kinds it offers, per run (`layer`) or per feature (`var`):
 
 ```python
-confidence.layer("ion")   # ('pep', 'q_value')
-confidence.var("ion")     # ('global_q_value',)
+confidence.layer("peptidoform_ion")   # ('pep', 'q_value')
+confidence.var("peptidoform_ion")     # ('global_q_value',)
 ```
 
 ## Get the data
 
 ```python
-pep = confidence.layer("ion", kind="pep")
+pep = confidence.layer("peptidoform_ion", kind="pep")
 pep.layer_name      # 'PEP'; Spectronaut gives 'EG_PEP', MaxQuant 'PEP'
 pep.wide().head(3)
 ```
@@ -80,7 +80,7 @@ pep.wide().head(3)
 `wide()` returns one column per run; its rows are the level's features in their order, `ion.var.frame`. The layer has the same ions and runs, in the same order, as the abundance layer, so it can become weights directly:
 
 ```python
-ion = parsed.levels["ion"]
+ion = parsed.levels["peptidoform_ion"]
 abundance = ion.layers[ion.primary_layer_name]
 intensities = abundance.wide().to_numpy()   # (18182, 6)
 weights = 1 - pep.wide().to_numpy()         # (18182, 6), NaN where absent
@@ -89,7 +89,7 @@ weights = 1 - pep.wide().to_numpy()         # (18182, 6), NaN where absent
 A per-feature field is a column of the feature table, one value per ion:
 
 ```python
-global_q = confidence.var("ion", kind="global_q_value")
+global_q = confidence.var("peptidoform_ion", kind="global_q_value")
 global_q.name       # 'Global_Q_Value'
 global_q.len()      # 18182
 ```
@@ -97,9 +97,9 @@ global_q.len()      # 18182
 When the vendor reports no such field, or APB2 left it out of this result because it held one value or none (the level's parse record lists it under `result.uninformative_fields`), the lookup returns `None`; DIA-NN 1.7, for example, has no `PEP`. Fall back explicitly:
 
 ```python
-pep = confidence.layer("ion", kind="pep")
+pep = confidence.layer("peptidoform_ion", kind="pep")
 if pep is None:
-    q_value = confidence.layer("ion", kind="q_value")
+    q_value = confidence.layer("peptidoform_ion", kind="q_value")
 ```
 
 ## When there is no single answer
@@ -108,7 +108,7 @@ if pep is None:
 from apb_catalog.api import UnresolvedField
 
 try:
-    pep = confidence.layer("ion", kind="pep")
+    pep = confidence.layer("peptidoform_ion", kind="pep")
 except UnresolvedField as error:
     print(error)    # names the reason and any candidate fields
 ```

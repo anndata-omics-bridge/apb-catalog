@@ -19,14 +19,14 @@ pip install apb-catalog
 from apb_catalog.api import Catalog
 
 confidence = Catalog(parsed, "identification_confidence")                     # parsed: apb2 ParsedLevels
-confidence.layer("ion")                    # ('pep', 'q_value') — kinds on offer, or None
-pep = confidence.layer("ion", kind="pep")  # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
+confidence.layer("peptidoform_ion")                    # ('pep', 'q_value') — kinds on offer, or None
+pep = confidence.layer("peptidoform_ion", kind="pep")  # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
 ```
 
 - [Every entry](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) of every packaged set
 - `layer` returns the apb2 layer table, `var` the column; `None` means the vendor has no such field, or APB2 left it out of this result because it held one value or none (the level's parse record lists it under `result.uninformative_fields`)
 - `concept` defaults to the one concept the set's entries name; a set naming several raises `ValueError` until `concept=` chooses
-- A level answers only for its own entity: ion for precursors, protein for protein groups
+- A level answers only for its own entity: peptidoform_ion for precursors, protein for protein groups
 - Confidence lookups mean identification unless `stage="quantification"` says otherwise
 - Two equally good fields, or a rule nobody reviewed, raise `UnresolvedField` naming the candidates
 - A field a later producer such as apb-fasta writes raises `UnresolvedField` until that producer has run, naming what to run; `var` reads feature-aligned `varm` tables too

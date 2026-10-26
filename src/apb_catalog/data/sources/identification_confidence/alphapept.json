@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "alphapept/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^0\\.5\\."
     }
   ],
   "entries": [
     {
-      "entry_id": "alphapept.ion.Q_Value",
+      "entry_id": "alphapept.peptidoform_ion.Q_Value",
       "rules": [
         "alphapept/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Q_Value"
       },

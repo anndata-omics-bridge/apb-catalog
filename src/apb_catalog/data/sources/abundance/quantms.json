@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "quantms/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^v?1\\..*"
     }
   ],
   "entries": [
     {
-      "entry_id": "quantms.ion.Intensity",
+      "entry_id": "quantms.peptidoform_ion.Intensity",
       "rules": [
         "quantms/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Intensity"
       },

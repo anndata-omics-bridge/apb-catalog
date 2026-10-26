@@ -4,10 +4,10 @@
   "producer": "APB2",
   "entries": [
     {
-      "entry_id": "apb2.ion.ProForma_peptidoform.peptidoform",
+      "entry_id": "apb2.peptidoform_ion.ProForma_peptidoform.peptidoform",
       "rules": [],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "var",
         "name": "ProForma_peptidoform"
       },

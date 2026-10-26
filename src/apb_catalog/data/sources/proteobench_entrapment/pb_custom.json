@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "pb_custom/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^.*$"
     }
   ],

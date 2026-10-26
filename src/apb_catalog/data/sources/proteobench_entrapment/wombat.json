@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "wombat/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^0\\.9\\.11$"
     },
     {

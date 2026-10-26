@@ -57,7 +57,7 @@ Peptidoform level:
 
 </div>
 
-Ion level:
+Peptidoform_ion level:
 
 <div class="coverage-matrix" markdown>
 
@@ -91,18 +91,18 @@ Every entry:
 
 | Software | Rules | Level | Location | APB field | Kind |
 | --- | --- | --- | --- | --- | --- |
-| AlphaDIA | alphadia/v1_12 | ion | layers | `QValue` | `q_value` |
-| AlphaDIA | alphadia/v2 | ion | layers | `QValue` | `q_value` |
-| AlphaPept | alphapept | ion | layers | `Q_Value` | `q_value` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Q_Value` | `q_value` |
-| DIA-NN | diann/v1_8, diann/v2 | ion | layers | `PEP` | `pep` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | var | `Global_Q_Value` | `global_q_value` |
+| AlphaDIA | alphadia/v1_12 | peptidoform_ion | layers | `QValue` | `q_value` |
+| AlphaDIA | alphadia/v2 | peptidoform_ion | layers | `QValue` | `q_value` |
+| AlphaPept | alphapept | peptidoform_ion | layers | `Q_Value` | `q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | layers | `Q_Value` | `q_value` |
+| DIA-NN | diann/v1_8, diann/v2 | peptidoform_ion | layers | `PEP` | `pep` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | var | `Global_Q_Value` | `global_q_value` |
 | DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | layers | `PG_Q_Value` | `q_value` |
 | DIA-NN | diann/v1_8, diann/v2 | protein | var | `Lib_PG_Q_Value` | `library_q_value` |
 | DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | protein | var | `Global_PG_Q_Value` | `global_q_value` |
 | FragPipe | all | — | — | none relevant | — |
 | i2MassChroQ | all | — | — | none relevant | — |
-| MaxQuant | maxquant_wide | ion | layers | `PEP` | `pep` |
+| MaxQuant | maxquant_wide | peptidoform_ion | layers | `PEP` | `pep` |
 | MaxQuant | maxquant_wide | peptidoform | var | `PEP` | `pep` |
 | MaxQuant | maxquant_wide | peptide | var | `PEP` | `pep` |
 | MaxQuant | maxquant_wide | protein | var | `Q_Value` | `global_q_value` |
@@ -112,10 +112,10 @@ Every entry:
 | PEAKS | all | — | — | none relevant | — |
 | ProlineStudio | all | — | — | none relevant | — |
 | quantms | all | — | — | none relevant | — |
-| Sage | sage | ion | var | `Q_Value` | `q_value` |
+| Sage | sage | peptidoform_ion | var | `Q_Value` | `q_value` |
 | Sage | sage | peptidoform | var | `Q_Value` | `q_value` |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_PEP` | `pep` |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_ion | layers | `EG_PEP` | `pep` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_ion | layers | `EG_Qvalue` | `q_value` |
 | Spectronaut | spectronaut, spectronaut/v21 | protein | layers | `PG_QValue_Run_Wise` | `q_value` |
 | Spectronaut | spectronaut, spectronaut/v21 | protein | var | `PG_Qvalue` | `global_q_value` |
 | Spectronaut | spectronaut/v21 | protein | var | `PG_LibraryQvalue` | `library_q_value` |
@@ -137,7 +137,7 @@ Concept `confidence`, kinds:
 
 Coverage by software version, for the vendors that carry entries. A cell names the APB column that answers, with the vendor columns APB2 computes it from (`apb_Decoy` ← `Decoy`); ✗ means nothing is catalogued. Per run is a layer, one value per sample; per feature is a var column, one value across the experiment.
 
-Ion level:
+Peptidoform_ion level:
 
 <div class="coverage-matrix" markdown>
 
@@ -159,12 +159,12 @@ Every entry:
 
 | Software | Rules | Level | Location | APB field | Kind |
 | --- | --- | --- | --- | --- | --- |
-| AlphaDIA | alphadia/v1_12 | ion | layers | `QValue` | `q_value` |
-| AlphaDIA | alphadia/v2 | ion | layers | `QValue` | `q_value` |
+| AlphaDIA | alphadia/v1_12 | peptidoform_ion | layers | `QValue` | `q_value` |
+| AlphaDIA | alphadia/v2 | peptidoform_ion | layers | `QValue` | `q_value` |
 | AlphaPept | all | — | — | none relevant | — |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Q_Value` | `q_value` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | var | `Lib_Q_Value` | `library_q_value` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | var | `Global_Q_Value` | `global_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | layers | `Q_Value` | `q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | var | `Lib_Q_Value` | `library_q_value` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | var | `Global_Q_Value` | `global_q_value` |
 | FragPipe | all | — | — | none relevant | — |
 | i2MassChroQ | all | — | — | none relevant | — |
 | MaxQuant | all | — | — | none relevant | — |
@@ -175,8 +175,8 @@ Every entry:
 | ProlineStudio | all | — | — | none relevant | — |
 | quantms | all | — | — | none relevant | — |
 | Sage | all | — | — | none relevant | — |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_Qvalue` | `q_value` |
-| Spectronaut | spectronaut/v21 | ion | var | `EG_LibraryQvalue` | `library_q_value` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_ion | layers | `EG_Qvalue` | `q_value` |
+| Spectronaut | spectronaut/v21 | peptidoform_ion | var | `EG_LibraryQvalue` | `library_q_value` |
 | WOMBAT-P | all | — | — | none relevant | — |
 
 <!-- end of generated block: proteobench_entrapment -->
@@ -247,7 +247,7 @@ Peptidoform level:
 
 </div>
 
-Ion level:
+Peptidoform_ion level:
 
 <div class="coverage-matrix" markdown>
 
@@ -277,7 +277,7 @@ Ion level:
 
 </div>
 
-Fragment level:
+Peptidoform_fragment level:
 
 <div class="coverage-matrix" markdown>
 
@@ -295,53 +295,53 @@ Every entry:
 
 | Software | Rules | Level | Location | APB field | Kind | Normalization |
 | --- | --- | --- | --- | --- | --- | --- |
-| AlphaDIA | alphadia/v1_10, alphadia/v1_12 | ion | layers | `Intensity` | `directlfq` | `run_setting` |
-| AlphaDIA | alphadia/v2 | ion | layers | `Precursor_Intensity` | `directlfq` | `run_setting` |
+| AlphaDIA | alphadia/v1_10, alphadia/v1_12 | peptidoform_ion | layers | `Intensity` | `directlfq` | `run_setting` |
+| AlphaDIA | alphadia/v2 | peptidoform_ion | layers | `Precursor_Intensity` | `directlfq` | `run_setting` |
 | AlphaDIA | alphadia/v2 | protein | layers | `PG_Intensity` | `directlfq` | `run_setting` |
-| AlphaPept | alphapept | ion | layers | `Intensity` | `intensity` | `run_setting` |
-| AlphaPept | alphapept | ion | layers | `MS1_Int_Sum_Apex` | `intensity` | `none` |
-| AlphaPept | alphapept | ion | layers | `MS1_Int_Sum_Area` | `intensity` | `none` |
-| AlphaPept | alphapept | ion | layers | `MS1_Int_Max_Apex` | `intensity` | `none` |
-| AlphaPept | alphapept | ion | layers | `MS1_Int_Max_Area` | `intensity` | `none` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Precursor_Quantity` | `intensity` | `none` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Precursor_Normalised` | `intensity` | `run_setting` |
-| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | ion | layers | `Ms1_Area` | `ms1_intensity` | `none` |
-| DIA-NN | diann/v1_8, diann/v2 | ion | layers | `Ms1_Normalised` | `ms1_intensity` | `run_setting` |
-| DIA-NN | diann/v1_7, diann/v1_8 | fragment | layers | `Fragment_Quant_Raw` | `intensity` | `none` |
+| AlphaPept | alphapept | peptidoform_ion | layers | `Intensity` | `intensity` | `run_setting` |
+| AlphaPept | alphapept | peptidoform_ion | layers | `MS1_Int_Sum_Apex` | `intensity` | `none` |
+| AlphaPept | alphapept | peptidoform_ion | layers | `MS1_Int_Sum_Area` | `intensity` | `none` |
+| AlphaPept | alphapept | peptidoform_ion | layers | `MS1_Int_Max_Apex` | `intensity` | `none` |
+| AlphaPept | alphapept | peptidoform_ion | layers | `MS1_Int_Max_Area` | `intensity` | `none` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | layers | `Precursor_Quantity` | `intensity` | `none` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | layers | `Precursor_Normalised` | `intensity` | `run_setting` |
+| DIA-NN | diann/v1_7, diann/v1_8, diann/v2 | peptidoform_ion | layers | `Ms1_Area` | `ms1_intensity` | `none` |
+| DIA-NN | diann/v1_8, diann/v2 | peptidoform_ion | layers | `Ms1_Normalised` | `ms1_intensity` | `run_setting` |
+| DIA-NN | diann/v1_7, diann/v1_8 | peptidoform_fragment | layers | `Fragment_Quant_Raw` | `intensity` | `none` |
 | DIA-NN | diann/v1_7, diann/v1_8 | protein | layers | `PG_Quantity` | `intensity` | `none` |
 | DIA-NN | diann/v1_7, diann/v1_8 | protein | layers | `PG_Normalised` | `intensity` | `run_setting` |
 | DIA-NN | diann/v1_7 | protein | layers | `PG_MaxLFQ` | `maxlfq` | `run_setting` |
 | DIA-NN | diann/v1_8, diann/v2 | protein | layers | `PG_MaxLFQ` | `unknown` | `run_setting` |
-| FragPipe | fragpipe | ion | layers | `Intensity` | `intensity` | `unknown` |
-| i2MassChroQ | i2masschroq | ion | layers | `Intensity` | `intensity` | `unknown` |
-| MaxQuant | maxquant_wide | ion | layers | `Intensity` | `intensity` | `none` |
+| FragPipe | fragpipe | peptidoform_ion | layers | `Intensity` | `intensity` | `unknown` |
+| i2MassChroQ | i2masschroq | peptidoform_ion | layers | `Intensity` | `intensity` | `unknown` |
+| MaxQuant | maxquant_wide | peptidoform_ion | layers | `Intensity` | `intensity` | `none` |
 | MaxQuant | maxquant_wide | peptidoform | layers | `Intensity` | `intensity` | `none` |
 | MaxQuant | maxquant_wide | peptide | layers | `Intensity` | `intensity` | `none` |
 | MaxQuant | maxquant_wide | peptide | layers | `LFQ_Intensity` | `maxlfq` | `run_setting` |
 | MaxQuant | maxquant_wide | protein | layers | `Intensity` | `intensity` | `none` |
 | MaxQuant | maxquant_wide | protein | layers | `LFQ_Intensity` | `maxlfq` | `run_setting` |
 | MaxQuant | maxquant_wide | protein | layers | `iBAQ` | `ibaq` | `none` |
-| MetaMorpheus | metamorpheus | ion | layers | `Intensity` | `intensity` | `unknown` |
-| MSAngel | msangel | ion | layers | `Abundance` | `intensity` | `run_setting` |
-| MSAngel | msangel | ion | layers | `Raw_Abundance` | `intensity` | `none` |
+| MetaMorpheus | metamorpheus | peptidoform_ion | layers | `Intensity` | `intensity` | `unknown` |
+| MSAngel | msangel | peptidoform_ion | layers | `Abundance` | `intensity` | `run_setting` |
+| MSAngel | msangel | peptidoform_ion | layers | `Raw_Abundance` | `intensity` | `none` |
 | MSAngel | msangel | protein | layers | `Abundance` | `unknown` | `run_setting` |
 | MSAngel | msangel | protein | layers | `Raw_Abundance` | `unknown` | `none` |
-| pb_custom | pb_custom | ion | layers | `Intensity` | `intensity` | `unknown` |
-| PEAKS | peaks | ion | layers | `Normalized_Area` | `intensity` | `run_setting` |
-| ProlineStudio | prolinestudio | ion | layers | `Abundance` | `intensity` | `run_setting` |
-| quantms | quantms | ion | layers | `Intensity` | `intensity` | `unknown` |
-| Sage | sage | ion | layers | `Intensity` | `intensity` | `unknown` |
+| pb_custom | pb_custom | peptidoform_ion | layers | `Intensity` | `intensity` | `unknown` |
+| PEAKS | peaks | peptidoform_ion | layers | `Normalized_Area` | `intensity` | `run_setting` |
+| ProlineStudio | prolinestudio | peptidoform_ion | layers | `Abundance` | `intensity` | `run_setting` |
+| quantms | quantms | peptidoform_ion | layers | `Intensity` | `intensity` | `unknown` |
+| Sage | sage | peptidoform_ion | layers | `Intensity` | `intensity` | `unknown` |
 | Sage | sage | peptidoform | layers | `Intensity` | `intensity` | `unknown` |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `FG_Quantity` | `intensity` | `run_setting` |
-| Spectronaut | spectronaut/v15 | ion | layers | `FG_MS2RawQuantity` | `intensity` | `none` |
-| Spectronaut | spectronaut/v15 | ion | layers | `FG_MS1RawQuantity` | `ms1_intensity` | `none` |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_TotalQuantity_Settings` | `intensity` | `unknown` |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | ion | layers | `EG_TargetQuantity_Settings` | `intensity` | `unknown` |
-| Spectronaut | spectronaut, spectronaut/v21 | ion | layers | `EG_ReferenceQuantity_Settings` | `intensity` | `unknown` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_ion | layers | `FG_Quantity` | `intensity` | `run_setting` |
+| Spectronaut | spectronaut/v15 | peptidoform_ion | layers | `FG_MS2RawQuantity` | `intensity` | `none` |
+| Spectronaut | spectronaut/v15 | peptidoform_ion | layers | `FG_MS1RawQuantity` | `ms1_intensity` | `none` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_ion | layers | `EG_TotalQuantity_Settings` | `intensity` | `unknown` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_ion | layers | `EG_TargetQuantity_Settings` | `intensity` | `unknown` |
+| Spectronaut | spectronaut, spectronaut/v21 | peptidoform_ion | layers | `EG_ReferenceQuantity_Settings` | `intensity` | `unknown` |
 | Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | protein | layers | `PG_Quantity` | `unknown` | `run_setting` |
-| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | fragment | layers | `F_PeakArea` | `intensity` | `none` |
-| Spectronaut | spectronaut/v15 | fragment | layers | `F_PeakHeight` | `intensity` | `none` |
-| WOMBAT-P | wombat | ion | layers | `Abundance` | `intensity` | `run_setting` |
+| Spectronaut | spectronaut/v15, spectronaut, spectronaut/v21 | peptidoform_fragment | layers | `F_PeakArea` | `intensity` | `none` |
+| Spectronaut | spectronaut/v15 | peptidoform_fragment | layers | `F_PeakHeight` | `intensity` | `none` |
+| WOMBAT-P | wombat | peptidoform_ion | layers | `Abundance` | `intensity` | `run_setting` |
 | WOMBAT-P | wombat | peptidoform | layers | `Abundance` | `intensity` | `run_setting` |
 
 <!-- end of generated block: abundance -->
@@ -349,4 +349,4 @@ Every entry:
 ## Reporting standards
 
 - The released reporting guideline for quantitative proteomics results is [MIAPE-Quant 1.0](https://github.com/HUPO-PSI/MIAPE/blob/main/MIAPE_Quant_v1.0_Final_0.pdf) (HUPO-PSI, 2012)
-- It asks, among other items, for quantification values per feature, identified by peptide sequence or by sequence plus charge state; APB's ion level holds that feature
+- It asks, among other items, for quantification values per feature, identified by peptide sequence or by sequence plus charge state; APB's peptidoform-ion level holds that feature

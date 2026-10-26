@@ -5,17 +5,17 @@
   "variants": [
     {
       "rule": "alphadia/v1_10/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^1\\.10(?:\\.|-|$)"
     },
     {
       "rule": "alphadia/v1_12/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^1\\.12(?:\\.|-|$)"
     },
     {
       "rule": "alphadia/v2/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^2\\."
     },
     {
@@ -26,13 +26,13 @@
   ],
   "entries": [
     {
-      "entry_id": "alphadia.ion.Intensity",
+      "entry_id": "alphadia.peptidoform_ion.Intensity",
       "rules": [
         "alphadia/v1_10/rules.json",
         "alphadia/v1_12/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Intensity"
       },
@@ -47,12 +47,12 @@
       }
     },
     {
-      "entry_id": "alphadia.ion.Precursor_Intensity",
+      "entry_id": "alphadia.peptidoform_ion.Precursor_Intensity",
       "rules": [
         "alphadia/v2/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Precursor_Intensity"
       },

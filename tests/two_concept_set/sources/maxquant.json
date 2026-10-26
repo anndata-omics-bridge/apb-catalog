@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "maxquant_wide/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^(1\\.5|1\\.6|2\\.)"
     }
   ],
   "entries": [
     {
-      "entry_id": "maxquant.ion.PEP.pep",
+      "entry_id": "maxquant.peptidoform_ion.PEP.pep",
       "rules": [
         "maxquant_wide/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "PEP"
       },
@@ -30,12 +30,12 @@
       }
     },
     {
-      "entry_id": "maxquant.ion.Intensity.intensity",
+      "entry_id": "maxquant.peptidoform_ion.Intensity.intensity",
       "rules": [
         "maxquant_wide/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Intensity"
       },

@@ -32,14 +32,14 @@ def test_check_fails_when_a_level_misses_a_must_field(
     """FragPipe names no protein group, so the check exits 1."""
     assert _run("check", toy_set) == 1
     output = capsys.readouterr().out
-    assert "FAIL  FragPipe 22\u201323 ion: missing group MUST" in output
-    assert "PASS  DIA-NN 2.x ion" in output
+    assert "FAIL  FragPipe 22\u201323 peptidoform_ion: missing group MUST" in output
+    assert "PASS  DIA-NN 2.x peptidoform_ion" in output
 
 
 def test_a_set_without_requirements_never_fails(capsys: pytest.CaptureFixture[str]) -> None:
     """Coverage-only sets list their levels without a verdict."""
     assert _run("check", "identification_confidence") == 0
-    assert "----  DIA-NN 2.x ion" in capsys.readouterr().out
+    assert "----  DIA-NN 2.x peptidoform_ion" in capsys.readouterr().out
 
 
 def test_software_shows_every_field_and_its_column(
@@ -62,7 +62,7 @@ def test_meaning_prints_the_column_of_every_meaning_per_rule_level(
     assert _run("meaning", "abundance") == 0
     lines = capsys.readouterr().out.splitlines()
     assert lines[0].split() == ["software", "version", "level", "column", "kind", "normalization"]
-    assert ["DIA-NN", "2.x", "ion", "Precursor_Quantity", "intensity", "none"] in [
+    assert ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Quantity", "intensity", "none"] in [
         line.split() for line in lines
     ]
 

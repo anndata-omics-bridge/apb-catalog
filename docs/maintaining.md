@@ -57,13 +57,13 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
   "catalogue_version": "0.1",
   "software_name": "DIA-NN",
   "variants": [
-    {"rule": "diann/v2/rules.json", "level": "ion", "software_version_pattern": "^2\\..*"}
+    {"rule": "diann/v2/rules.json", "level": "peptidoform_ion", "software_version_pattern": "^2\\..*"}
   ],
   "entries": [
     {
-      "entry_id": "diann.ion.Q_Value",
+      "entry_id": "diann.peptidoform_ion.Q_Value",
       "rules": ["diann/v2/rules.json"],
-      "reference": {"level": "ion", "location": "layers", "name": "Q_Value"},
+      "reference": {"level": "peptidoform_ion", "location": "layers", "name": "Q_Value"},
       "concept": "confidence",
       "qualifiers": {"kind": "q_value", "stage": "identification"},
       "evidence": {
@@ -72,9 +72,9 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
       }
     },
     {
-      "entry_id": "diann.ion.PEP",
+      "entry_id": "diann.peptidoform_ion.PEP",
       "rules": ["diann/v2/rules.json"],
-      "reference": {"level": "ion", "location": "layers", "name": "PEP"},
+      "reference": {"level": "peptidoform_ion", "location": "layers", "name": "PEP"},
       "concept": "confidence",
       "qualifiers": {"kind": "pep", "stage": "identification"},
       "evidence": {
@@ -100,7 +100,7 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
   "catalogue_version": "0.1",
   "software_name": "quantms",
   "variants": [
-    {"rule": "quantms/rules.json", "level": "ion", "software_version_pattern": "^v?1\\..*"}
+    {"rule": "quantms/rules.json", "level": "peptidoform_ion", "software_version_pattern": "^v?1\\..*"}
   ],
   "entries": []
 }
@@ -108,20 +108,20 @@ Fields APB writes itself, whatever the vendor, live in `src/apb_catalog/data/pro
 
 ### Lookups
 
-Three synthetic results with one ion level each, built like `_result` in `tests/test_catalog.py`:
+Three synthetic results with one peptidoform-ion level each, built like `_result` in `tests/test_catalog.py`:
 
 ```python
 from apb_catalog.api import Catalog
 
 confidence = Catalog(diann_2, "identification_confidence")   # DIA-NN 2.x, layers Q_Value and PEP
-confidence.layer("ion")                                      # ('pep', 'q_value')
-confidence.layer("ion", kind="pep")                          # resolved: the PEP layer table
+confidence.layer("peptidoform_ion")                                      # ('pep', 'q_value')
+confidence.layer("peptidoform_ion", kind="pep")                          # resolved: the PEP layer table
 
 quantms = Catalog(quantms_1, "identification_confidence")    # quantms 1.x
-quantms.layer("ion", kind="pep")                             # missing: None
+quantms.layer("peptidoform_ion", kind="pep")                             # missing: None
 
 unreviewed = Catalog(diann_3, "identification_confidence")   # its rule declares DIA-NN ^3\.
-unreviewed.layer("ion", kind="pep")                          # unknown: raises UnresolvedField
+unreviewed.layer("peptidoform_ion", kind="pep")                          # unknown: raises UnresolvedField
 ```
 
 ```text

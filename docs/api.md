@@ -20,10 +20,10 @@ catalog = Catalog(parsed, "identification_confidence")
 | `catalog.var(level)` | The kinds the level offers as var columns, or `None` |
 | `catalog.fields()` | A Polars `DataFrame` of every catalogued field the result retains |
 
-- `kind` may also come second without its keyword: `catalog.layer("ion", "pep")`
+- `kind` may also come second without its keyword: `catalog.layer("peptidoform_ion", "pep")`
 - `concept=` defaults to the one concept the set's entries name; a set naming several raises `ValueError` until `concept=` chooses
-- Other qualifiers are keywords too: `Catalog(parsed, "abundance").layer("ion", kind="intensity", normalization="none")` returns the layer the software never normalizes
-- A level answers only for its own entity: ion for precursors, protein for protein groups
+- Other qualifiers are keywords too: `Catalog(parsed, "abundance").layer("peptidoform_ion", kind="intensity", normalization="none")` returns the layer the software never normalizes
+- A level answers only for its own entity: peptidoform_ion for precursors, protein for protein groups
 - Per run versus per feature is the choice between `layer` and `var`
 - Confidence lookups mean identification; pass `stage="quantification"` for Sage's MS1-peak q-value
 - `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`

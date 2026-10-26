@@ -34,7 +34,7 @@ from tests.packaged_rules import declared_rule_json
 
 type VarColumns = Mapping[str, Sequence[float] | Sequence[str] | Sequence[bool]]
 
-KEYS: dict[str, str] = {"ion": "ProForma_ion", "protein": "Protein_Group"}
+KEYS: dict[str, str] = {"peptidoform_ion": "ProForma_ion", "protein": "Protein_Group"}
 FASTA_RAN: dict[str, JsonValue] = {"fasta": {"provenance": {"peptide_verification": {}}}}
 FASTA_CONTAMINANTS = {
     "fasta_validation": pl.DataFrame({"fasta_matches_contaminant": [True, False]})
@@ -79,7 +79,7 @@ def _result(
     rule: str | None,
     layers: Sequence[str],
     var: VarColumns | None = None,
-    level: str = "ion",
+    level: str = "peptidoform_ion",
     varm: Mapping[str, pl.DataFrame] | None = None,
     metadata: dict[str, JsonValue] | None = None,
 ) -> ParsedLevels:
@@ -92,10 +92,15 @@ def _result(
 
 
 def _edited_maxquant(**changes: object) -> ParsedLevels:
-    edited = json.loads(declared_rule_json("maxquant_wide/rules.json", "ion"))
+    edited = json.loads(declared_rule_json("maxquant_wide/rules.json", "peptidoform_ion"))
     edited.update(changes)
     return ParsedLevels(
-        levels={"ion": _level("ion", json.dumps(edited), ["Intensity", "PEP"], {})}, uns={}
+        levels={
+            "peptidoform_ion": _level(
+                "peptidoform_ion", json.dumps(edited), ["Intensity", "PEP"], {}
+            )
+        },
+        uns={},
     )
 
 
@@ -109,30 +114,30 @@ def test_the_same_call_returns_each_vendors_layer() -> None:
     spectronaut = _result(*SPECTRONAUT)
     pep = {"concept": "confidence", "kind": "pep"}
     assert (
-        Catalog(maxquant, "identification_confidence").layer("ion", **pep)
-        is maxquant.levels["ion"].layers["PEP"]
+        Catalog(maxquant, "identification_confidence").layer("peptidoform_ion", **pep)
+        is maxquant.levels["peptidoform_ion"].layers["PEP"]
     )
-    found = Catalog(spectronaut, "identification_confidence").layer("ion", **pep)
-    assert found is spectronaut.levels["ion"].layers["EG_PEP"]
+    found = Catalog(spectronaut, "identification_confidence").layer("peptidoform_ion", **pep)
+    assert found is spectronaut.levels["peptidoform_ion"].layers["EG_PEP"]
 
 
 def test_only_the_fields_the_consumer_needs_are_catalogued() -> None:
     """Spectronaut's EG and FG q-values agree; aggregation is given the EG one only."""
     parsed = _result(*SPECTRONAUT)
     found = Catalog(parsed, "identification_confidence").layer(
-        "ion", concept="confidence", kind="q_value"
+        "peptidoform_ion", concept="confidence", kind="q_value"
     )
-    assert found is parsed.levels["ion"].layers["EG_Qvalue"]
+    assert found is parsed.levels["peptidoform_ion"].layers["EG_Qvalue"]
 
 
 def test_a_vendor_without_the_field_returns_none() -> None:
     """DIA-NN without its PEP layer is a reviewed absence, not an error."""
     parsed = _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"])
     catalog = Catalog(parsed, "identification_confidence")
-    assert catalog.layer("ion", concept="confidence", kind="pep") is None
+    assert catalog.layer("peptidoform_ion", concept="confidence", kind="pep") is None
     assert (
-        catalog.layer("ion", concept="confidence", kind="q_value")
-        is parsed.levels["ion"].layers["Q_Value"]
+        catalog.layer("peptidoform_ion", concept="confidence", kind="q_value")
+        is parsed.levels["peptidoform_ion"].layers["Q_Value"]
     )
 
 
@@ -140,8 +145,10 @@ def test_quantification_confidence_is_found_only_when_asked_for() -> None:
     """Sage's q-value rates the MS1 peak, one value per feature."""
     parsed = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
     catalog = Catalog(parsed, "identification_confidence")
-    assert catalog.var("ion", concept="confidence", kind="q_value") is None
-    column = catalog.var("ion", concept="confidence", kind="q_value", stage="quantification")
+    assert catalog.var("peptidoform_ion", concept="confidence", kind="q_value") is None
+    column = catalog.var(
+        "peptidoform_ion", concept="confidence", kind="q_value", stage="quantification"
+    )
     assert column is not None
     assert column.to_list() == [0.001, 0.002]
 
@@ -158,9 +165,13 @@ def test_a_plugin_set_answers_like_a_packaged_one(toy_set: str) -> None:
     """An installed set's vendor and APB2 fields are found by their kinds."""
     parsed = _result("diann/v2/rules.json", ["Ms1_Normalised", "Q_Value"], DIANN_ION)
     catalog = Catalog(parsed, toy_set)
-    assert catalog.var("ion", concept="toy", origin="vendor") == ("charge", "decoy", "group")
-    assert catalog.var("ion", concept="toy", origin="apb2") == ("peptidoform",)
-    group = catalog.var("ion", concept="toy", kind="group")
+    assert catalog.var("peptidoform_ion", concept="toy", origin="vendor") == (
+        "charge",
+        "decoy",
+        "group",
+    )
+    assert catalog.var("peptidoform_ion", concept="toy", origin="apb2") == ("peptidoform",)
+    group = catalog.var("peptidoform_ion", concept="toy", kind="group")
     assert group is not None
     assert group.to_list() == ["P1", "P1;P2"]
     assert catalog.description.used_by == ("apb-catalog tests",)
@@ -170,7 +181,7 @@ def test_a_later_producers_field_is_unknown_until_it_runs(toy_set: str) -> None:
     """A FASTA-based field never reads as absent before apb-fasta had a chance to write it."""
     catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), toy_set)
     with pytest.raises(UnresolvedField, match=r"apb-fasta has not run.*apb-fasta verify-peptides"):
-        catalog.var("ion", concept="toy", kind="contaminant")
+        catalog.var("peptidoform_ion", concept="toy", kind="contaminant")
 
 
 def test_a_producer_field_reads_its_varm_table(toy_set: str) -> None:
@@ -183,7 +194,7 @@ def test_a_producer_field_reads_its_varm_table(toy_set: str) -> None:
         metadata=FASTA_RAN,
     )
     catalog = Catalog(parsed, toy_set)
-    flag = catalog.var("ion", concept="toy", kind="contaminant")
+    flag = catalog.var("peptidoform_ion", concept="toy", kind="contaminant")
     assert flag is not None
     assert flag.to_list() == [True, False]
     tables = catalog.fields().filter(pl.col("kind") == "contaminant").get_column("table")
@@ -201,9 +212,9 @@ def test_origin_chooses_between_the_vendor_and_a_producer(toy_set: str) -> None:
     )
     catalog = Catalog(parsed, toy_set)
     with pytest.raises(UnresolvedField, match="ambiguous"):
-        catalog.var("ion", concept="toy", kind="contaminant")
-    vendor = catalog.var("ion", concept="toy", kind="contaminant", origin="vendor")
-    fasta = catalog.var("ion", concept="toy", kind="contaminant", origin="apb_fasta")
+        catalog.var("peptidoform_ion", concept="toy", kind="contaminant")
+    vendor = catalog.var("peptidoform_ion", concept="toy", kind="contaminant", origin="vendor")
+    fasta = catalog.var("peptidoform_ion", concept="toy", kind="contaminant", origin="apb_fasta")
     assert vendor is not None and vendor.to_list() == [False, True]
     assert fasta is not None and fasta.to_list() == [True, False]
 
@@ -211,7 +222,9 @@ def test_origin_chooses_between_the_vendor_and_a_producer(toy_set: str) -> None:
 def test_a_vendor_without_its_own_flag_offers_none(toy_set: str) -> None:
     """DIA-NN marks no contaminants itself, so only apb-fasta can answer them."""
     catalog = Catalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), toy_set)
-    assert catalog.var("ion", concept="toy", kind="contaminant", origin="vendor") is None
+    assert (
+        catalog.var("peptidoform_ion", concept="toy", kind="contaminant", origin="vendor") is None
+    )
 
 
 def test_a_varm_lookup_survives_storage(toy_set: str, tmp_path: Path) -> None:
@@ -224,7 +237,7 @@ def test_a_varm_lookup_survives_storage(toy_set: str, tmp_path: Path) -> None:
         metadata=FASTA_RAN,
     )
     catalog = Catalog(parsed, toy_set)
-    catalog.var("ion", concept="toy", kind="contaminant")
+    catalog.var("peptidoform_ion", concept="toy", kind="contaminant")
     snapshot = catalog.snapshot()
     target = tmp_path / "result.h5mu"
     write_parsed_levels(attach_snapshot(parsed, snapshot), target)
@@ -241,7 +254,7 @@ def test_an_unreviewed_level_raises() -> None:
     """Without a reviewed rule the catalogue cannot even claim absence."""
     with pytest.raises(UnresolvedField, match=r"unknown.*rule_json"):
         Catalog(_result(None, ["Intensity"]), "identification_confidence").layer(
-            "ion", concept="confidence", kind="pep"
+            "peptidoform_ion", concept="confidence", kind="pep"
         )
 
 
@@ -250,16 +263,16 @@ def test_an_unreviewed_software_version_is_unknown() -> None:
     with pytest.raises(UnresolvedField, match="no source catalogue reviewed"):
         Catalog(
             _edited_maxquant(software_version_pattern="^99\\."), "identification_confidence"
-        ).layer("ion", concept="confidence", kind="pep")
+        ).layer("peptidoform_ion", concept="confidence", kind="pep")
 
 
 def test_an_edited_rule_keeps_its_entries() -> None:
     """Levels bind by software and version, so editing a rule within a version changes nothing."""
     parsed = _edited_maxquant(file_version=-1)
     pep = Catalog(parsed, "identification_confidence").layer(
-        "ion", concept="confidence", kind="pep"
+        "peptidoform_ion", concept="confidence", kind="pep"
     )
-    assert pep is parsed.levels["ion"].layers["PEP"]
+    assert pep is parsed.levels["peptidoform_ion"].layers["PEP"]
 
 
 def test_an_absent_level_returns_none() -> None:
@@ -272,24 +285,24 @@ def test_an_unknown_kind_or_concept_is_rejected() -> None:
     """Misspellings fail loudly instead of matching nothing."""
     catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
     with pytest.raises(ValueError, match="does not admit"):
-        catalog.layer("ion", concept="confidence", kind="pepp")
+        catalog.layer("peptidoform_ion", concept="confidence", kind="pepp")
     with pytest.raises(ValueError, match="unknown concept"):
-        catalog.layer("ion", concept="retention", kind="raw")
+        catalog.layer("peptidoform_ion", concept="retention", kind="raw")
 
 
 def test_leaving_out_kind_lists_the_kinds_on_offer() -> None:
     """Without ``kind`` the catalogue says what a level holds for the concept."""
     assert Catalog(_result(*MAXQUANT), "identification_confidence").layer(
-        "ion", concept="confidence"
+        "peptidoform_ion", concept="confidence"
     ) == ("pep",)
     spectronaut = Catalog(_result(*SPECTRONAUT), "identification_confidence")
-    assert spectronaut.layer("ion", concept="confidence") == ("pep", "q_value")
+    assert spectronaut.layer("peptidoform_ion", concept="confidence") == ("pep", "q_value")
     dia_nn = Catalog(
         _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"]),
         "identification_confidence",
     )
-    assert dia_nn.layer("ion", concept="confidence") == ("q_value",)
-    assert dia_nn.var("ion", concept="confidence") is None
+    assert dia_nn.layer("peptidoform_ion", concept="confidence") == ("q_value",)
+    assert dia_nn.var("peptidoform_ion", concept="confidence") is None
 
 
 def test_listing_kinds_on_an_absent_or_unreviewed_level() -> None:
@@ -302,14 +315,14 @@ def test_listing_kinds_on_an_absent_or_unreviewed_level() -> None:
     )
     with pytest.raises(UnresolvedField, match="unknown"):
         Catalog(_result(None, ["Intensity"]), "identification_confidence").layer(
-            "ion", concept="confidence"
+            "peptidoform_ion", concept="confidence"
         )
 
 
 def test_listing_kinds_is_not_recorded_as_a_lookup() -> None:
     """Only lookups that return data enter the snapshot."""
     catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
-    catalog.layer("ion", concept="confidence")
+    catalog.layer("peptidoform_ion", concept="confidence")
     assert catalog.snapshot().resolutions == ()
 
 
@@ -322,8 +335,8 @@ def test_fields_lists_what_the_result_holds() -> None:
 def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
     """Every lookup is kept for the persisted record."""
     catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
-    catalog.layer("ion", concept="confidence", kind="pep")
-    catalog.layer("ion", concept="confidence", kind="q_value")
+    catalog.layer("peptidoform_ion", concept="confidence", kind="pep")
+    catalog.layer("peptidoform_ion", concept="confidence", kind="q_value")
     snapshot = catalog.snapshot()
     assert snapshot.catalogue == "identification_confidence"
     assert [resolution.status for resolution in snapshot.resolutions] == ["resolved", "missing"]
@@ -344,8 +357,10 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     assert stored_snapshot(parsed, "identification_confidence") is None
     assert stored_snapshot(attached, "identification_confidence") == confidence
     assert stored_snapshot(attached, "proteobench_entrapment") == entrapment
-    assert attached.levels["ion"].layers is parsed.levels["ion"].layers
-    assert METADATA_KEY not in attached.levels["ion"].metadata, "no request, no level summary"
+    assert attached.levels["peptidoform_ion"].layers is parsed.levels["peptidoform_ion"].layers
+    assert METADATA_KEY not in attached.levels["peptidoform_ion"].metadata, (
+        "no request, no level summary"
+    )
 
 
 def _with_namespace(parsed: ParsedLevels, namespace: JsonValue) -> ParsedLevels:
@@ -408,7 +423,7 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
     """Stored snapshots read back identically and leave the scientific data untouched."""
     parsed = _result(*MAXQUANT)
     catalog = Catalog(parsed, "identification_confidence")
-    catalog.layer("ion", concept="confidence", kind="pep")
+    catalog.layer("peptidoform_ion", concept="confidence", kind="pep")
     snapshot = catalog.snapshot()
     target = tmp_path / f"result{suffix}"
     write_parsed_levels(attach_snapshot(parsed, snapshot), target)
@@ -417,15 +432,15 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
 
     assert stored_snapshot(restored, "identification_confidence") == snapshot
     assert stale_levels(restored, snapshot) == ()
-    for name, table in parsed.levels["ion"].layers.items():
-        assert_frame_equal(restored.levels["ion"].layers[name].wide(), table.wide())
+    for name, table in parsed.levels["peptidoform_ion"].layers.items():
+        assert_frame_equal(restored.levels["peptidoform_ion"].layers[name].wide(), table.wide())
 
 
 def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     """Consumers can follow the contract with apb2 and the standard library alone."""
     parsed = _result(*MAXQUANT)
     catalog = Catalog(parsed, "identification_confidence")
-    catalog.layer("ion", concept="confidence", kind="pep")
+    catalog.layer("peptidoform_ion", concept="confidence", kind="pep")
     target = tmp_path / "result.h5mu"
     write_parsed_levels(attach_snapshot(parsed, catalog.snapshot()), target)
 
@@ -438,7 +453,7 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     answer = stored["resolutions"][0]
     assert answer["status"] == "resolved"
     assert answer["reference"] == {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "PEP",
         "table": None,
@@ -452,8 +467,8 @@ def test_a_changed_software_version_makes_the_snapshot_stale() -> None:
     snapshot = Catalog(_result(*MAXQUANT), "identification_confidence").snapshot()
     assert stale_levels(_edited_maxquant(file_version=-1), snapshot) == ()
     stale = _edited_maxquant(software_version_pattern="^99\\.")
-    assert stale_levels(stale, snapshot) == ("ion",)
-    assert stale_levels(ParsedLevels(levels={}, uns={}), snapshot) == ("ion",)
+    assert stale_levels(stale, snapshot) == ("peptidoform_ion",)
+    assert stale_levels(ParsedLevels(levels={}, uns={}), snapshot) == ("peptidoform_ion",)
 
 
 def test_every_packaged_set_states_its_purpose_and_users() -> None:
@@ -485,14 +500,21 @@ def test_proteobench_entrapment_offers_each_precursor_q_value_as_its_own_kind() 
         var={"Lib_Q_Value": library, "Global_Q_Value": [0.01, 0.03]},
     )
     catalog = Catalog(parsed, "proteobench_entrapment")
-    assert catalog.layer("ion", concept="confidence") == ("q_value",)
-    assert catalog.var("ion", concept="confidence") == ("global_q_value", "library_q_value")
-    found = catalog.var("ion", concept="confidence", kind="library_q_value")
+    assert catalog.layer("peptidoform_ion", concept="confidence") == ("q_value",)
+    assert catalog.var("peptidoform_ion", concept="confidence") == (
+        "global_q_value",
+        "library_q_value",
+    )
+    found = catalog.var("peptidoform_ion", concept="confidence", kind="library_q_value")
     assert found is not None
     assert (found.name, found.to_list()) == ("Lib_Q_Value", library)
-    assert catalog.layer("ion", concept="confidence", kind="pep") is None, "PEP is not ranked by"
+    assert catalog.layer("peptidoform_ion", concept="confidence", kind="pep") is None, (
+        "PEP is not ranked by"
+    )
     assert (
-        Catalog(_result(*MAXQUANT), "proteobench_entrapment").layer("ion", concept="confidence")
+        Catalog(_result(*MAXQUANT), "proteobench_entrapment").layer(
+            "peptidoform_ion", concept="confidence"
+        )
         is None
     )
 
@@ -502,22 +524,24 @@ def test_abundance_finds_the_un_normalized_layer_where_one_exists() -> None:
     layers = ["Precursor_Normalised", "Precursor_Quantity", "Ms1_Area", "Ms1_Normalised"]
     parsed = _result("diann/v1_8/rules.json", layers)
     catalog = Catalog(parsed, "abundance")
-    ion = parsed.levels["ion"].layers
-    raw = catalog.layer("ion", kind="intensity", normalization="none")
+    ion = parsed.levels["peptidoform_ion"].layers
+    raw = catalog.layer("peptidoform_ion", kind="intensity", normalization="none")
     assert raw is ion["Precursor_Quantity"]
     normalized = catalog.layer(
-        "ion", concept="abundance", kind="intensity", normalization="run_setting"
+        "peptidoform_ion", concept="abundance", kind="intensity", normalization="run_setting"
     )
     assert normalized is ion["Precursor_Normalised"]
     peaks = Catalog(_result("peaks/rules.json", ["Normalized_Area"]), "abundance")
-    assert peaks.layer("ion", kind="intensity", normalization="none") is None
+    assert peaks.layer("peptidoform_ion", kind="intensity", normalization="none") is None
 
 
 def test_an_undocumented_normalization_is_unknown_not_missing() -> None:
     """A consumer can tell a layer nobody documented from a layer that does not exist."""
     catalog = Catalog(_result("fragpipe/rules.json", ["Intensity"]), "abundance")
     with pytest.raises(UnresolvedField) as raised:
-        catalog.layer("ion", concept="abundance", kind="intensity", normalization="none")
+        catalog.layer(
+            "peptidoform_ion", concept="abundance", kind="intensity", normalization="none"
+        )
     assert raised.value.resolution.status == "unknown"
 
 
@@ -525,7 +549,7 @@ def test_the_british_spelling_of_the_qualifier_is_rejected() -> None:
     """``normalisation`` has no alias; the error names the qualifiers the concept declares."""
     catalog = Catalog(_result("diann/v1_8/rules.json", ["Precursor_Quantity"]), "abundance")
     with pytest.raises(ValueError, match=r"'normalisation'; declared: \['kind', 'normalization'\]"):
-        catalog.layer("ion", kind="intensity", normalisation="none")
+        catalog.layer("peptidoform_ion", kind="intensity", normalisation="none")
 
 
 def test_the_concept_defaults_to_the_one_the_set_names() -> None:
@@ -533,30 +557,33 @@ def test_the_concept_defaults_to_the_one_the_set_names() -> None:
     still records the concept."""
     parsed = _result(*MAXQUANT)
     catalog = Catalog(parsed, "identification_confidence")
-    assert catalog.layer("ion", kind="pep") is parsed.levels["ion"].layers["PEP"]
+    assert (
+        catalog.layer("peptidoform_ion", kind="pep")
+        is parsed.levels["peptidoform_ion"].layers["PEP"]
+    )
     assert catalog.snapshot().resolutions[0].request.concept == "confidence"
 
 
 def test_leaving_out_kind_and_concept_lists_the_kinds() -> None:
     """Without either, a level lists the kinds of the set's one concept."""
     spectronaut = Catalog(_result(*SPECTRONAUT), "identification_confidence")
-    assert spectronaut.layer("ion") == ("pep", "q_value")
+    assert spectronaut.layer("peptidoform_ion") == ("pep", "q_value")
     sage = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
-    assert Catalog(sage, "identification_confidence").var("ion", stage="quantification") == (
-        "q_value",
-    )
+    assert Catalog(sage, "identification_confidence").var(
+        "peptidoform_ion", stage="quantification"
+    ) == ("q_value",)
 
 
 def test_kind_may_come_second_without_its_keyword() -> None:
-    """``layer("ion", "pep")`` reads the second argument as the kind, for layers and var."""
+    """``layer("peptidoform_ion", "pep")`` reads the second argument as the kind, for layers and var."""
     parsed = _result(*MAXQUANT)
     assert (
-        Catalog(parsed, "identification_confidence").layer("ion", "pep")
-        is parsed.levels["ion"].layers["PEP"]
+        Catalog(parsed, "identification_confidence").layer("peptidoform_ion", "pep")
+        is parsed.levels["peptidoform_ion"].layers["PEP"]
     )
     sage = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
     column = Catalog(sage, "identification_confidence").var(
-        "ion", "q_value", stage="quantification"
+        "peptidoform_ion", "q_value", stage="quantification"
     )
     assert column is not None
     assert column.to_list() == [0.001, 0.002]
@@ -567,24 +594,24 @@ def test_a_set_naming_two_concepts_needs_concept(two_concept_set: str) -> None:
     parsed = _result(*MAXQUANT)
     catalog = Catalog(parsed, two_concept_set)
     with pytest.raises(ValueError, match=r"\['confidence', 'toy_signal'\]; pass concept="):
-        catalog.layer("ion", kind="pep")
+        catalog.layer("peptidoform_ion", kind="pep")
     with pytest.raises(ValueError, match="pass concept="):
-        catalog.var("ion")
-    ion = parsed.levels["ion"].layers
-    assert catalog.layer("ion", kind="pep", concept="confidence") is ion["PEP"]
-    assert catalog.layer("ion", "intensity", "toy_signal") is ion["Intensity"]
-    assert catalog.layer("ion", concept="toy_signal") == ("intensity",)
+        catalog.var("peptidoform_ion")
+    ion = parsed.levels["peptidoform_ion"].layers
+    assert catalog.layer("peptidoform_ion", kind="pep", concept="confidence") is ion["PEP"]
+    assert catalog.layer("peptidoform_ion", "intensity", "toy_signal") is ion["Intensity"]
+    assert catalog.layer("peptidoform_ion", concept="toy_signal") == ("intensity",)
 
 
 def test_each_level_counts_the_requests_its_snapshot_answered() -> None:
     """A level record says how many lookups resolved, were missing, or stayed unresolved."""
     catalog = Catalog(_result(*MAXQUANT), "identification_confidence")
-    catalog.layer("ion", concept="confidence", kind="pep")
-    catalog.layer("ion", concept="confidence", kind="q_value")
+    catalog.layer("peptidoform_ion", concept="confidence", kind="pep")
+    catalog.layer("peptidoform_ion", concept="confidence", kind="q_value")
 
     attached = attach_snapshot(_result(*MAXQUANT), catalog.snapshot())
 
-    records = cast(dict[str, Any], attached.levels["ion"].metadata[METADATA_KEY])
+    records = cast(dict[str, Any], attached.levels["peptidoform_ion"].metadata[METADATA_KEY])
     assert [
         (entry["name"], entry["value"], entry["status"])
         for entry in records["identification_confidence"]["summary"]

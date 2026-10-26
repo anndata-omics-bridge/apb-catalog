@@ -13,7 +13,7 @@
     ]
   },
   "proteobench_entrapment": {
-    "purpose": "The precursor q-values ProteoBench's entrapment scoring ranks by: run, library and experiment-wide q-values on the ion level, each its own kind. Only the vendors ProteoBench's entrapment module accepts carry entries.",
+    "purpose": "The precursor q-values ProteoBench's entrapment scoring ranks by: run, library and experiment-wide q-values on the peptidoform-ion level, each its own kind. Only the vendors ProteoBench's entrapment module accepts carry entries.",
     "used_by": [
       "apb-proteobench: EntrapmentAnalyzer and run entrapment",
       "apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback"

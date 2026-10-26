@@ -6,8 +6,8 @@ APB Catalog tells a consumer which field of an [APB2](https://github.com/anndata
 from apb_catalog.api import Catalog
 
 catalog = Catalog(parsed, "identification_confidence")
-catalog.layer("ion")                   # ('pep', 'q_value')
-pep = catalog.layer("ion", kind="pep")
+catalog.layer("peptidoform_ion")                   # ('pep', 'q_value')
+pep = catalog.layer("peptidoform_ion", kind="pep")
 ```
 
 `pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP or APB2 left it out of this result because it held one value or none.

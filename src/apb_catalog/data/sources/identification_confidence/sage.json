@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "sage/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^0\\."
     },
     {
@@ -16,12 +16,12 @@
   ],
   "entries": [
     {
-      "entry_id": "sage.ion.Q_Value",
+      "entry_id": "sage.peptidoform_ion.Q_Value",
       "rules": [
         "sage/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "var",
         "name": "Q_Value"
       },

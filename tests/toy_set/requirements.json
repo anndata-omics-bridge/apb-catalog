@@ -1,5 +1,5 @@
 {
-  "ion": {
+  "peptidoform_ion": {
     "group": "MUST",
     "charge": "MUST",
     "decoy": "MAY"

@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "alphapept/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^0\\.5\\."
     }
   ],
   "entries": [
     {
-      "entry_id": "alphapept.ion.Intensity",
+      "entry_id": "alphapept.peptidoform_ion.Intensity",
       "rules": [
         "alphapept/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Intensity"
       },
@@ -30,12 +30,12 @@
       }
     },
     {
-      "entry_id": "alphapept.ion.MS1_Int_Sum_Apex",
+      "entry_id": "alphapept.peptidoform_ion.MS1_Int_Sum_Apex",
       "rules": [
         "alphapept/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "MS1_Int_Sum_Apex"
       },
@@ -49,12 +49,12 @@
       }
     },
     {
-      "entry_id": "alphapept.ion.MS1_Int_Sum_Area",
+      "entry_id": "alphapept.peptidoform_ion.MS1_Int_Sum_Area",
       "rules": [
         "alphapept/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "MS1_Int_Sum_Area"
       },
@@ -68,12 +68,12 @@
       }
     },
     {
-      "entry_id": "alphapept.ion.MS1_Int_Max_Apex",
+      "entry_id": "alphapept.peptidoform_ion.MS1_Int_Max_Apex",
       "rules": [
         "alphapept/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "MS1_Int_Max_Apex"
       },
@@ -87,12 +87,12 @@
       }
     },
     {
-      "entry_id": "alphapept.ion.MS1_Int_Max_Area",
+      "entry_id": "alphapept.peptidoform_ion.MS1_Int_Max_Area",
       "rules": [
         "alphapept/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "MS1_Int_Max_Area"
       },

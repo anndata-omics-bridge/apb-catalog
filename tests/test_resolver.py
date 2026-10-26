@@ -22,16 +22,18 @@ from apb_catalog.source import (
 )
 from apb_catalog.vocabulary import Qualifier, packaged_vocabulary
 
-VARIANT = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^1\\.")
+VARIANT = RuleVariant(
+    rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^1\\."
+)
 
 
 def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntry:
     described = {"kind": "pep", "stage": "identification"} | qualifiers
     return SourceEntry.model_validate(
         {
-            "entry_id": f"vendor.ion.{name}",
+            "entry_id": f"vendor.peptidoform_ion.{name}",
             "rules": ("vendor/rules.json",),
-            "reference": {"level": "ion", "location": location, "name": name},
+            "reference": {"level": "peptidoform_ion", "location": location, "name": name},
             "concept": "confidence",
             "qualifiers": described,
             "evidence": Evidence(basis="test"),
@@ -47,12 +49,17 @@ def _level(*entries: SourceEntry) -> ReviewedLevel:
         variants=(VARIANT,),
         entries=entries,
     )
-    return ReviewedLevel("ion", ReviewedRule(catalogue, VARIANT), entries)
+    return ReviewedLevel("peptidoform_ion", ReviewedRule(catalogue, VARIANT), entries)
 
 
 def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> ConceptRequest:
     return ConceptRequest.model_validate(
-        {"concept": "confidence", "level": "ion", "location": location, "qualifiers": qualifiers}
+        {
+            "concept": "confidence",
+            "level": "peptidoform_ion",
+            "location": location,
+            "qualifiers": qualifiers,
+        }
     )
 
 
@@ -62,7 +69,7 @@ def test_one_matching_entry_resolves_to_its_reference() -> None:
         _request(kind=("pep",), stage=("identification",))
     )
     assert resolution.status == "resolved"
-    assert resolution.reference == Reference(level="ion", location="layers", name="PEP")
+    assert resolution.reference == Reference(level="peptidoform_ion", location="layers", name="PEP")
 
 
 def test_pep_and_q_value_are_never_interchangeable() -> None:
@@ -125,9 +132,11 @@ def test_location_restricts_candidates() -> None:
 
 def test_an_unreviewed_level_answers_unknown_with_its_reason() -> None:
     """Without a reviewed rule no meaning can be asserted, not even absence."""
-    answer = UnreviewedLevel("ion", "Vendor", "^1\\.", "never reviewed").resolve(_request())
+    answer = UnreviewedLevel("peptidoform_ion", "Vendor", "^1\\.", "never reviewed").resolve(
+        _request()
+    )
     assert (answer.status, answer.reasons) == ("unknown", ("never reviewed",))
-    assert UnreviewedLevel("ion", None, None, "none").entries == ()
+    assert UnreviewedLevel("peptidoform_ion", None, None, "none").entries == ()
 
 
 def test_an_absent_level_answers_missing() -> None:
@@ -143,7 +152,7 @@ def test_a_resolution_carries_a_reference_exactly_when_resolved() -> None:
         Resolution(
             request=_request(),
             status="missing",
-            reference=Reference(level="ion", location="layers", name="PEP"),
+            reference=Reference(level="peptidoform_ion", location="layers", name="PEP"),
         )
 
 
@@ -177,7 +186,9 @@ def test_a_pending_entry_makes_its_answer_unknown_with_the_reason() -> None:
         variants=(VARIANT,),
         entries=(_entry("PEP"),),
     )
-    level = ReviewedLevel("ion", ReviewedRule(catalogue, VARIANT), (_entry("PEP"),), (pending,))
+    level = ReviewedLevel(
+        "peptidoform_ion", ReviewedRule(catalogue, VARIANT), (_entry("PEP"),), (pending,)
+    )
     answer = level.resolve(_request(location="var", kind=("q_value",)))
     assert (answer.status, answer.reasons) == ("unknown", ("tool has not run; run `tool`",))
     assert answer.offered("kind") == ("q_value",)
@@ -188,9 +199,14 @@ def test_a_var_request_reads_varm_tables_too() -> None:
     """var and varm both hold one value per feature, so a var request reads either."""
     flag = SourceEntry.model_validate(
         {
-            "entry_id": "vendor.ion.flag",
+            "entry_id": "vendor.peptidoform_ion.flag",
             "rules": ("vendor/rules.json",),
-            "reference": {"level": "ion", "location": "varm", "name": "flag", "table": "checks"},
+            "reference": {
+                "level": "peptidoform_ion",
+                "location": "varm",
+                "name": "flag",
+                "table": "checks",
+            },
             "concept": "confidence",
             "qualifiers": {"kind": "pep", "stage": "identification"},
             "evidence": Evidence(basis="test"),

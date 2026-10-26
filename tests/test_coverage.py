@@ -22,9 +22,9 @@ from tests.conftest import TESTS
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 RULE = "diann/v2/rules.json"
-ION = RuleVariant(rule=RULE, level="ion", software_version_pattern="^2\\..*")
+ION = RuleVariant(rule=RULE, level="peptidoform_ion", software_version_pattern="^2\\..*")
 REQUIRED: dict[str, dict[str, Requirement]] = {
-    "ion": {"group": "MUST", "charge": "MUST", "decoy": "MAY"}
+    "peptidoform_ion": {"group": "MUST", "charge": "MUST", "decoy": "MAY"}
 }
 VOCABULARY = Vocabulary(
     vocabulary_version="test",
@@ -41,9 +41,14 @@ def _entry(name: str, kind: str, origin: str = "vendor", location: str = "var") 
     table = "fasta_validation" if location == "varm" else None
     return SourceEntry.model_validate(
         {
-            "entry_id": f"{origin}.ion.{name}",
+            "entry_id": f"{origin}.peptidoform_ion.{name}",
             "rules": [RULE] if origin == "vendor" else [],
-            "reference": {"level": "ion", "location": location, "name": name, "table": table},
+            "reference": {
+                "level": "peptidoform_ion",
+                "location": location,
+                "name": name,
+                "table": table,
+            },
             "concept": "toy",
             "qualifiers": {"kind": kind, "origin": origin},
             "evidence": Evidence(basis="test"),
@@ -137,7 +142,9 @@ def test_requirements_must_name_vocabulary_kinds() -> None:
         entries=(GROUP,),
     )
     with pytest.raises(ValueError, match="unknown kinds"):
-        SourceCatalogues(VOCABULARY, (vendor,), DESCRIPTION, (), {"ion": {"fdr": "MUST"}})
+        SourceCatalogues(
+            VOCABULARY, (vendor,), DESCRIPTION, (), {"peptidoform_ion": {"fdr": "MUST"}}
+        )
 
 
 def test_a_set_without_requirements_reports_coverage_only() -> None:

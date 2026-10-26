@@ -35,7 +35,7 @@ _DEFAULTS = {"stage": "identification"}
 class Catalog:
     """What one APB result's fields mean to one consumer, with the data handed back directly.
 
-    ``Catalog(parsed, "identification_confidence").layer("ion", kind="pep")`` returns
+    ``Catalog(parsed, "identification_confidence").layer("peptidoform_ion", kind="pep")`` returns
     MaxQuant's ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no
     PEP or APB2 left it out of this result because it held one value or none. Leaving out
     ``kind`` lists the kinds the level holds.

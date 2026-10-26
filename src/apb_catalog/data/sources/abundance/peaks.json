@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "peaks/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^13(?:\\.|\\s|$)"
     }
   ],
   "entries": [
     {
-      "entry_id": "peaks.ion.Normalized_Area",
+      "entry_id": "peaks.peptidoform_ion.Normalized_Area",
       "rules": [
         "peaks/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Normalized_Area"
       },

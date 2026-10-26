@@ -5,7 +5,7 @@
   "variants": [
     {
       "rule": "spectronaut/v15/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^15\\..*"
     },
     {
@@ -15,12 +15,12 @@
     },
     {
       "rule": "spectronaut/v15/rules.json",
-      "level": "fragment",
+      "level": "peptidoform_fragment",
       "software_version_pattern": "^15\\..*"
     },
     {
       "rule": "spectronaut/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^(19|20)\\..*"
     },
     {
@@ -30,12 +30,12 @@
     },
     {
       "rule": "spectronaut/rules.json",
-      "level": "fragment",
+      "level": "peptidoform_fragment",
       "software_version_pattern": "^(19|20)\\..*"
     },
     {
       "rule": "spectronaut/v21/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^21\\..*"
     },
     {
@@ -45,20 +45,20 @@
     },
     {
       "rule": "spectronaut/v21/rules.json",
-      "level": "fragment",
+      "level": "peptidoform_fragment",
       "software_version_pattern": "^21\\..*"
     }
   ],
   "entries": [
     {
-      "entry_id": "spectronaut.ion.FG_Quantity",
+      "entry_id": "spectronaut.peptidoform_ion.FG_Quantity",
       "rules": [
         "spectronaut/v15/rules.json",
         "spectronaut/rules.json",
         "spectronaut/v21/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "FG_Quantity"
       },
@@ -72,12 +72,12 @@
       }
     },
     {
-      "entry_id": "spectronaut.ion.FG_MS2RawQuantity",
+      "entry_id": "spectronaut.peptidoform_ion.FG_MS2RawQuantity",
       "rules": [
         "spectronaut/v15/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "FG_MS2RawQuantity"
       },
@@ -91,12 +91,12 @@
       }
     },
     {
-      "entry_id": "spectronaut.ion.FG_MS1RawQuantity",
+      "entry_id": "spectronaut.peptidoform_ion.FG_MS1RawQuantity",
       "rules": [
         "spectronaut/v15/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "FG_MS1RawQuantity"
       },
@@ -110,14 +110,14 @@
       }
     },
     {
-      "entry_id": "spectronaut.ion.EG_TotalQuantity_Settings",
+      "entry_id": "spectronaut.peptidoform_ion.EG_TotalQuantity_Settings",
       "rules": [
         "spectronaut/v15/rules.json",
         "spectronaut/rules.json",
         "spectronaut/v21/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "EG_TotalQuantity_Settings"
       },
@@ -131,14 +131,14 @@
       }
     },
     {
-      "entry_id": "spectronaut.ion.EG_TargetQuantity_Settings",
+      "entry_id": "spectronaut.peptidoform_ion.EG_TargetQuantity_Settings",
       "rules": [
         "spectronaut/v15/rules.json",
         "spectronaut/rules.json",
         "spectronaut/v21/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "EG_TargetQuantity_Settings"
       },
@@ -152,13 +152,13 @@
       }
     },
     {
-      "entry_id": "spectronaut.ion.EG_ReferenceQuantity_Settings",
+      "entry_id": "spectronaut.peptidoform_ion.EG_ReferenceQuantity_Settings",
       "rules": [
         "spectronaut/rules.json",
         "spectronaut/v21/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "EG_ReferenceQuantity_Settings"
       },
@@ -193,14 +193,14 @@
       }
     },
     {
-      "entry_id": "spectronaut.fragment.F_PeakArea",
+      "entry_id": "spectronaut.peptidoform_fragment.F_PeakArea",
       "rules": [
         "spectronaut/v15/rules.json",
         "spectronaut/rules.json",
         "spectronaut/v21/rules.json"
       ],
       "reference": {
-        "level": "fragment",
+        "level": "peptidoform_fragment",
         "location": "layers",
         "name": "F_PeakArea"
       },
@@ -214,12 +214,12 @@
       }
     },
     {
-      "entry_id": "spectronaut.fragment.F_PeakHeight",
+      "entry_id": "spectronaut.peptidoform_fragment.F_PeakHeight",
       "rules": [
         "spectronaut/v15/rules.json"
       ],
       "reference": {
-        "level": "fragment",
+        "level": "peptidoform_fragment",
         "location": "layers",
         "name": "F_PeakHeight"
       },

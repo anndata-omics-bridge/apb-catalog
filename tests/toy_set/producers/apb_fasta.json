@@ -10,10 +10,10 @@
   "instruction": "run `apb-fasta verify-peptides`",
   "entries": [
     {
-      "entry_id": "apb_fasta.ion.fasta_matches_contaminant.contaminant",
+      "entry_id": "apb_fasta.peptidoform_ion.fasta_matches_contaminant.contaminant",
       "rules": [],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "varm",
         "name": "fasta_matches_contaminant",
         "table": "fasta_validation"

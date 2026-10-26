@@ -5,18 +5,18 @@
   "variants": [
     {
       "rule": "i2masschroq/rules.json",
-      "level": "ion",
+      "level": "peptidoform_ion",
       "software_version_pattern": "^1\\..*"
     }
   ],
   "entries": [
     {
-      "entry_id": "i2masschroq.ion.Intensity",
+      "entry_id": "i2masschroq.peptidoform_ion.Intensity",
       "rules": [
         "i2masschroq/rules.json"
       ],
       "reference": {
-        "level": "ion",
+        "level": "peptidoform_ion",
         "location": "layers",
         "name": "Intensity"
       },

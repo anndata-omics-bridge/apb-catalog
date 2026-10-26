@@ -31,7 +31,9 @@ from tests.packaged_rules import (
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
-ION = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^1\\.")
+ION = RuleVariant(
+    rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^1\\."
+)
 
 
 def _catalogues(name: str) -> list[SourceCatalogue]:
@@ -44,9 +46,9 @@ def _catalogues(name: str) -> list[SourceCatalogue]:
 
 def _entry(name: str, **qualifiers: str) -> SourceEntry:
     return SourceEntry(
-        entry_id=f"vendor.ion.{name}",
+        entry_id=f"vendor.peptidoform_ion.{name}",
         rules=("vendor/rules.json",),
-        reference=Reference(level="ion", location="layers", name=name),
+        reference=Reference(level="peptidoform_ion", location="layers", name=name),
         concept="confidence",
         qualifiers={"kind": "pep", "stage": "identification"} | qualifiers,
         evidence=Evidence(basis="test"),
@@ -67,7 +69,7 @@ def _catalogue(*entries: SourceEntry, **overrides: object) -> SourceCatalogue:
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_packaged_catalogues_load_against_the_vocabulary(name: str) -> None:
     """Every packaged entry names a declared concept with fully described qualifiers."""
-    assert packaged_catalogues(name).reviewed("Vendor", "^0\\.", "ion") is None
+    assert packaged_catalogues(name).reviewed("Vendor", "^0\\.", "peptidoform_ion") is None
 
 
 def test_an_unknown_catalogue_set_is_rejected() -> None:
@@ -187,7 +189,9 @@ def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
 
 def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
     """Vendor and producer entries share one id space, so a snapshot names each unambiguously."""
-    later = RuleVariant(rule="vendor/rules.json", level="ion", software_version_pattern="^2\\.")
+    later = RuleVariant(
+        rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^2\\."
+    )
     first = _catalogue(_entry("PEP"))
     second = _catalogue(_entry("PEP"), catalogue_id="other", variants=(later,))
     with pytest.raises(ValueError, match="repeats"):
@@ -210,7 +214,7 @@ def test_producer_entries_apply_to_every_rule() -> None:
     """A producer writes its fields whatever the vendor, so its entries name no rule."""
     with pytest.raises(ValueError, match="apply to every rule"):
         _producer(_entry("PEP"))
-    assert _producer(_entry("PEP").model_copy(update={"rules": ()})).entries_on("ion")
+    assert _producer(_entry("PEP").model_copy(update={"rules": ()})).entries_on("peptidoform_ion")
 
 
 def test_a_required_run_comes_with_an_instruction() -> None:
@@ -233,11 +237,11 @@ def test_a_producer_ran_when_the_result_records_it() -> None:
 
 def test_a_varm_reference_names_its_table() -> None:
     """A varm field lives in one named table; a var or layer field in none."""
-    Reference(level="ion", location="varm", name="flag", table="fasta_validation")
+    Reference(level="peptidoform_ion", location="varm", name="flag", table="fasta_validation")
     with pytest.raises(ValueError, match="table"):
-        Reference(level="ion", location="varm", name="flag")
+        Reference(level="peptidoform_ion", location="varm", name="flag")
     with pytest.raises(ValueError, match="table"):
-        Reference(level="ion", location="var", name="flag", table="fasta_validation")
+        Reference(level="peptidoform_ion", location="var", name="flag", table="fasta_validation")
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
