@@ -1,7 +1,7 @@
 VENV_BIN := .venv/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help sync format format-check lint typecheck deps test build docs docs-tables check check-full clean schema
+.PHONY: help sync format format-check lint typecheck deps test build bundle docs docs-tables check check-full clean schema
 
 help:  ## Show developer commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -35,6 +35,9 @@ schema:  ## Regenerate the published snapshot JSON Schema
 build:  ## Build and validate source and wheel distributions
 	uv build
 	$(VENV_BIN)/twine check dist/*
+
+bundle:  ## Build the language bundle into build/ (rules, catalogues, expected answers)
+	$(VENV_BIN)/python -m scripts.build_bundle build
 
 docs-tables:  ## Regenerate the Catalogues page tables from the packaged catalogues
 	$(VENV_BIN)/python -m scripts.coverage_tables

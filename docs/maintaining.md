@@ -95,11 +95,13 @@ A producer that runs after conversion, such as apb-fasta, declares `requires`, t
 | `test_apb2_entries_name_fixed_columns_or_var_roles` | An APB2 producer entry names neither a fixed column nor a var role |
 | `test_requirements_must_name_vocabulary_kinds` | `requirements.json` names a kind or value the vocabulary does not define |
 | `test_the_catalogue_page_matches_the_generator` | `docs/catalogues.md` differs from `make docs-tables` |
+| `tests/test_bundle.py` | The bundle cannot be built, for example a new version pattern has no `SAMPLE_VERSIONS` entry in `scripts/build_bundle.py` |
 
 | Command | Runs |
 | --- | --- |
 | `.venv/bin/pytest tests/test_source.py` | The catalogue checks alone, while editing |
 | `make docs-tables` | Regenerates the tables of `docs/catalogues.md` |
 | `make schema` | Regenerates the snapshot JSON Schema after a snapshot model change |
+| `make bundle` | Builds the language bundle into `build/`; a release attaches it and opens the apbCatalogR update pull request |
 | `make check` | Format, lint, types, dependencies, tests, build and documentation |
 | `apb-catalog check SET` | Every packaged rule level against one set's requirements |
