@@ -32,10 +32,12 @@ pep = confidence.layer("peptidoform_ion", kind="pep")      # MaxQuant PEP, Spect
 
 ```bash
 apb-catalog                       # every set
-apb-catalog check SET             # FAIL, WARN or PASS per packaged rule level
+apb-catalog check SET             # FAIL, WARN or PASS per packaged rule level; ---- for a set without requirements
 ```
 
 ## Development
+
+`uv sync` installs apb2 from a sibling checkout at `../apb2` (`[tool.uv.sources]` in `pyproject.toml`); clone [apb2](https://github.com/anndata-omics-bridge/apb2) next to this repository first.
 
 ```bash
 uv sync --group dev

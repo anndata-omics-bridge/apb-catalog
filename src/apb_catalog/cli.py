@@ -37,8 +37,9 @@ def check(catalogue: str, software: str | None = None, /) -> int:
     """Check every packaged rule level against CATALOGUE; exit 1 when one misses a MUST field.
 
     Each line is FAIL, WARN or PASS with the rule level and its unsupported fields; levels the
-    catalogue sets no requirements for are left out. With SOFTWARE, only that vendor's rules,
-    each with every field and the column answering it.
+    catalogue sets no requirements for are left out, and a catalogue without any requirements
+    prints ---- for every level. With SOFTWARE, only that vendor's rules, each with every field
+    and the column answering it.
     """
     try:
         coverage = rule_coverage(catalogue)

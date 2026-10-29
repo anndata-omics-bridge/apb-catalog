@@ -19,9 +19,9 @@ A level binds to a catalogue variant by its rule's software name, version patter
 | --- | --- |
 | A catalogued field's meaning changes | Update or remove its entries |
 | A field is renamed, dropped or moved between `layers` and `var` | Fix the entries the entries test names; a move changes `location` |
-| New rule version | Add one variant per level to `<vendor>.json` in every set, and the rule to each entry that still holds; the coverage test lists what is missing |
+| New rule version | Add one variant per level to `<vendor>.json` in every set with a `sources/` folder, and the rule to each entry that still holds; the coverage test lists what is missing |
 | Software name or version pattern changes | Edit `software_name` or the variant's pattern; the variant test reports each mismatch |
-| New vendor | Add `<vendor>.json` to every set, with `"entries": []` where the set needs nothing |
+| New vendor | Add `<vendor>.json` to every set with a `sources/` folder, with `"entries": []` where the set needs nothing; `apb` has none, its fields are APB's own |
 | A new version pattern | Give it a short label in `VERSION_LABELS` in `src/apb_catalog/coverage.py` |
 
 Then run `make docs-tables`.
@@ -52,7 +52,7 @@ A meaning two fields of one level share makes lookups `ambiguous`, and no test c
 
 ## Adding a set
 
-1. Add `sources/<set>/` with one catalogue per vendor, covering every packaged rule level
+1. Add `sources/<set>/` with one catalogue per vendor, covering every packaged rule level; a set of only fields APB writes, as `apb`, has `producers/<set>/` or `annotations/<set>/` instead
 2. Add its purpose and users to `catalogues.json`
 3. Add its vocabulary, `kind` and any other qualifiers, to `vocabulary.json`
 4. Catalogue only the fields its consumer reads, or, for a set that qualifies an APB2 role, every field with that role
@@ -78,7 +78,7 @@ toy = "toy_package.catalogue"
 
 `DataCatalog`, `catalogues()`, `rule_coverage()` and `apb-catalog check` then work as for a packaged set. A name a packaged set or another plugin already uses raises `ValueError`.
 
-A producer that runs after conversion, such as apb-fasta, declares `requires`, the metadata path recording its run, and `instruction`; until the result records that run, its entries answer `unknown` with the instruction.
+A plugin set's producer that runs after conversion, such as apb-fasta, declares `requires`, the metadata path recording its run, and `instruction`; until the result records that run, its entries answer `unknown` with the instruction.
 
 ## Checks
 
@@ -99,7 +99,7 @@ A producer that runs after conversion, such as apb-fasta, declares `requires`, t
 
 | Command | Runs |
 | --- | --- |
-| `.venv/bin/pytest tests/test_source.py` | The catalogue checks alone, while editing |
+| `.venv/bin/pytest tests/test_source.py tests/test_catalog.py tests/test_coverage.py tests/test_docs.py` | The catalogue checks but the bundle's, while editing |
 | `make docs-tables` | Regenerates the tables of `docs/catalogues.md` |
 | `make schema` | Regenerates the snapshot JSON Schema after a snapshot model change |
 | `make bundle` | Builds the language bundle into `build/`; a release attaches it and opens the apbCatalogR update pull request |

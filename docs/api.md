@@ -16,12 +16,14 @@ Everything is imported from `apb_catalog.api`. [Get started](getting-started.md)
 | `obs(level, kind, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
 | `kinds(level, location, **qualifiers)` | kinds offered at `"layers"`, `"var"` or `"obs"`; `()` for none | same |
 | `fields()` | Polars `DataFrame`: the [long table](#the-long-table)'s columns plus `present`, `constant` | same |
-| `snapshot()` | `ResolutionSnapshot` of every lookup so far | same |
+| `snapshot()` | `ResolutionSnapshot` of every lookup so far | — |
+| `resolve(request)` | `Resolution` of one explicit request, recorded for the snapshot: status `resolved`, `missing`, `ambiguous` or `unknown`, with candidates and reasons; an undecided answer is a status, not an `UnresolvedField` | — |
 | `description` | the set's `purpose` and `used_by` | same |
 
 - `kind` may be passed by position: `layer("peptidoform_ion", "pep")`
 - A `Reference` has `level`, `location`, `name` and `table`
-- `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`
+- `resolve` takes a request naming a level, optionally a location, and the accepted values of each qualifier; `apb_catalog.api` exports neither its type, `FieldRequest`, nor `Resolution`
+- `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which only plugin sets catalogue
 - `fields()` lists a field APB2 left out because it held one value with `present` false and that value as `constant`
 - A level answers only for its own entity: `peptidoform_ion` for precursors, `protein` for protein groups
 
@@ -31,7 +33,7 @@ Everything is imported from `apb_catalog.api`. [Get started](getting-started.md)
 | --- | --- |
 | a field | Exactly one catalogued field matches |
 | `None` | The level is absent, or its software version was reviewed and has no such field |
-| `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or a later producer such as `apb-fasta verify-peptides` has not run; names the reason and candidates |
+| `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or a plugin set's later producer, such as `apb-fasta verify-peptides`, has not run; names the reason and candidates |
 | `StaleField` | The result's stored rule declares the answering field differently from the current packaged rule; reconvert |
 | `ValueError` | A misspelled set, kind or qualifier, or a version no packaged rule admits |
 
@@ -86,11 +88,11 @@ A set's requirement rows say how strongly a consumer needs a kind on a level. `e
 | --- | --- |
 | `software`, `version`, `rule`, `level` | The packaged rule level; `version` is a short reading of its version pattern |
 | `kind`, `qualifiers`, `origin` | The meaning; `qualifiers` as `key=value` pairs |
-| `producer` | `APB2` or `apb-fasta` for fields APB writes; null for the vendor's own |
+| `producer` | `APB2` for fields APB writes, or a plugin set's producer such as `apb-fasta`; null for the vendor's own |
 | `requirement` | `MUST`, `SHOULD` or `MAY` where the set has requirements |
 | `location`, `table`, `column` | Where the field lives; `column` is null when nothing supplies a required field |
 | `inputs` | The vendor columns APB2 computes a var column from |
-| `needs` | What to run before the field exists, such as `apb-fasta verify-peptides` |
+| `needs` | What to run before a plugin set's field exists, such as `apb-fasta verify-peptides` |
 | `verdict` | `fail` when a `MUST` field is missing, `warn` for `SHOULD` or `MAY`, `pass` otherwise; null without requirements |
 
 ## Command line
@@ -98,7 +100,7 @@ A set's requirement rows say how strongly a consumer needs a kind on a level. `e
 | Command | Prints |
 | --- | --- |
 | `apb-catalog` | Every set with its entry count and purpose |
-| `apb-catalog check SET` | `FAIL`, `WARN` or `PASS` per rule level; exits 1 on a `FAIL` |
+| `apb-catalog check SET` | `FAIL`, `WARN` or `PASS` per rule level, or `----` for every level of a set without requirements; exits 1 on a `FAIL` |
 | `apb-catalog check SET SOFTWARE` | One vendor's rule levels, with every field and its column |
 | `apb-catalog meaning SET` | One row per rule level and field; `--software`, `--version` narrow it, `--format csv` |
 | `apb-catalog table [SET]` | The long table as CSV; `--output PATH` |
