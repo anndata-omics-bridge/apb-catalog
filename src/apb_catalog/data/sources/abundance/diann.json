@@ -191,7 +191,9 @@
     {
       "entry_id": "diann.protein.PG_MaxLFQ",
       "rules": [
-        "diann/v1_7/rules.json"
+        "diann/v1_7/rules.json",
+        "diann/v1_8/rules.json",
+        "diann/v2/rules.json"
       ],
       "reference": {
         "level": "protein",
@@ -203,27 +205,7 @@
         "normalization": "run_setting"
       },
       "evidence": {
-        "basis": "PG.MaxLFQ: protein-group quantity by MaxLFQ from the normalised precursors, so it follows the run's normalisation. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",
-        "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
-      }
-    },
-    {
-      "entry_id": "diann.protein.PG_MaxLFQ.quantums",
-      "rules": [
-        "diann/v1_8/rules.json",
-        "diann/v2/rules.json"
-      ],
-      "reference": {
-        "level": "protein",
-        "location": "layers",
-        "name": "PG_MaxLFQ"
-      },
-      "qualifiers": {
-        "kind": "unknown",
-        "normalization": "run_setting"
-      },
-      "evidence": {
-        "basis": "PG.MaxLFQ: normalised protein-group quantity. DIA-NN computes MaxLFQ columns with QuantUMS or with legacy MaxLFQ, depending on the quantification strategy; QuantUMS exists since 1.9, so the kind is unknown under this rule. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",
+        "basis": "PG.MaxLFQ: protein-group quantity by MaxLFQ from the normalised precursors, so it follows the run's normalisation. QuantUMS, since 1.9, changes how the precursors are quantified, not how the protein group is: the protein quantity is still MaxLFQ. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",
         "source": "https://github.com/vdemichev/DiaNN#main-output-reference"
       }
     }

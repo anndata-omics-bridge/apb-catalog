@@ -126,7 +126,7 @@ Catalog("DIA-NN", "2.6.0", "apb").var("peptidoform_ion", kind="protein_assignmen
 | --- | --- |
 | DIA-NN `abundance.layer("peptidoform_ion", kind="intensity")` | `UnresolvedField`, ambiguous: `Precursor_Quantity`, `Precursor_Normalised` both match |
 | Spectronaut `abundance.layer("peptidoform_ion", kind="intensity", normalization="none")` | `UnresolvedField`, unknown: `EG_TotalQuantity_Settings`, `EG_TargetQuantity_Settings` and `EG_ReferenceQuantity_Settings` leave normalization unknown |
-| DIA-NN `abundance.layer("protein", kind="maxlfq")` | `UnresolvedField`, unknown: `PG_MaxLFQ` leaves kind unknown |
+| Spectronaut `abundance.layer("protein", kind="intensity")` | `UnresolvedField`, unknown: `PG_Quantity` leaves kind unknown |
 | `layer("peptidoform_ion", kind="intensity", normalisation="none")` | `ValueError`: unknown qualifier `normalisation` |
 | `layer("peptidoform_ion", kind="intensities")` | `ValueError`: `kind` does not admit `intensities`, with the admitted kinds |
 | `Catalog("DIA-NN", "3.0", "confidence")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |

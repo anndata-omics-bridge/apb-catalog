@@ -6,7 +6,7 @@ Every packaged catalogue set, generated from `src/apb_catalog/data/` by `make do
 
 | Set | Holds | Used by | Entries |
 | --- | --- | --- | --- |
-| [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 48 |
+| [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 47 |
 | [`apb`](#apb) | The fields APB writes itself for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns and sample annotations. | apb-export: export rules ask for APB's own columns by kind | 66 |
 | [`chromatography`](#chromatography) | Retention times, elution-peak bounds and peak widths, with the unit the software reports them in. | apb-export: QPX feature retention times in seconds for pMultiQC | 54 |
 | [`confidence`](#confidence) | How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature. | apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision<br>apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers | 22 |
@@ -71,8 +71,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | AlphaDIA | 2.x | · | · | · | · | ✓ | · | · |
 | DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | · | · | · | · |
-| DIA-NN | 1.8–1.9 | ✓ | ✓ | · | · | · | · | ✓ |
-| DIA-NN | 2.x | · | · | · | · | · | · | ✓ |
+| DIA-NN | 1.8–1.9 | ✓ | ✓ | ✓ | · | · | · | · |
+| DIA-NN | 2.x | · | · | ✓ | · | · | · | · |
 | MaxQuant | 1.5, 1.6, 2.x | ✓ | · | ✓ | ✓ | · | · | · |
 | MSAngel | 2.x | · | · | · | · | · | ✓ | ✓ |
 | Spectronaut | 15 | · | · | · | · | · | · | ✓ |
@@ -195,7 +195,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | DIA-NN | 1.0–1.7 | `PG_MaxLFQ` | protein |
+| layers | `run_setting` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `PG_MaxLFQ` | protein |
 |  |  | MaxQuant | 1.5, 1.6, 2.x | `LFQ_Intensity` | protein, peptide |
 
 **`ibaq`**
@@ -217,8 +217,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `none` | MSAngel | 2.x | `Raw_Abundance` | protein |
-|  | `run_setting` | DIA-NN | 1.8–1.9, 2.x | `PG_MaxLFQ` | protein |
-|  |  | MSAngel | 2.x | `Abundance` | protein |
+|  | `run_setting` | MSAngel | 2.x | `Abundance` | protein |
 |  |  | Spectronaut | 15, 19–20, 21 | `PG_Quantity` | protein |
 
 <!-- end of generated block: abundance -->
