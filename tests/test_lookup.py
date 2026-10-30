@@ -64,10 +64,15 @@ def _result(
 def test_catalog_answers_names_from_software_and_version() -> None:
     """The packaged rule whose version pattern admits the version decides the columns."""
     abundance = Catalog("DIA-NN", "2.6.0", "abundance")
-    assert abundance.layer("peptidoform_ion", kind="intensity", normalization="none") == Reference(
+    assert abundance.layer("peptidoform_ion", kind="intensity") == Reference(
         level="peptidoform_ion", location="layers", name="Precursor_Quantity"
     )
-    assert abundance.kinds("peptidoform_ion", "layers") == ("intensity", "ms1_intensity")
+    assert abundance.kinds("peptidoform_ion", "layers") == (
+        "intensity",
+        "ms1_intensity",
+        "normalized_intensity",
+        "normalized_ms1_intensity",
+    )
     older = Catalog("DIA-NN", "1.8.1", "confidence")
     assert older.var("peptidoform_ion", kind="library_q_value") == Reference(
         level="peptidoform_ion", location="var", name="Lib_Q_Value"
@@ -126,9 +131,9 @@ def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCapture
     parsed = _result("peaks/rules.json", ["Normalized_Area"])
     catalog = DataCatalog(parsed, "abundance", enforce="MUST")
     with caplog.at_level(logging.WARNING, logger="apb_catalog"):
-        found = catalog.layer("peptidoform_ion", kind="intensity", normalization="none")
+        found = catalog.layer("peptidoform_ion", kind="intensity")
     assert found is None
-    assert "SHOULD field kind=intensity, normalization=none on peptidoform_ion" in caplog.text
+    assert "SHOULD field kind=intensity on peptidoform_ion" in caplog.text
     attached = attach_snapshot(parsed, catalog.snapshot())
     records = cast(dict[str, Any], attached.levels["peptidoform_ion"].metadata[METADATA_KEY])
     summary = {entry["name"]: entry for entry in records["abundance"]["summary"]}
@@ -147,7 +152,7 @@ def test_enforce_should_raises_for_a_missing_should_field() -> None:
         _result("peaks/rules.json", ["Normalized_Area"]), "abundance", enforce="SHOULD"
     )
     with pytest.raises(MissingRequiredField, match="SHOULD field"):
-        catalog.layer("peptidoform_ion", kind="intensity", normalization="none")
+        catalog.layer("peptidoform_ion", kind="intensity")
 
 
 def test_enforce_raises_for_a_missing_must_field() -> None:

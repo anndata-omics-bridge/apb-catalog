@@ -507,27 +507,28 @@ def test_abundance_finds_the_un_normalized_layer_where_one_exists() -> None:
     parsed = _result("diann/v1_8/rules.json", layers)
     catalog = DataCatalog(parsed, "abundance")
     ion = parsed.levels["peptidoform_ion"].layers
-    raw = catalog.layer("peptidoform_ion", kind="intensity", normalization="none")
-    assert raw is ion["Precursor_Quantity"]
-    normalized = catalog.layer("peptidoform_ion", kind="intensity", normalization="run_setting")
+    assert catalog.layer("peptidoform_ion", kind="intensity") is ion["Precursor_Quantity"]
+    normalized = catalog.layer("peptidoform_ion", kind="normalized_intensity")
     assert normalized is ion["Precursor_Normalised"]
     peaks = DataCatalog(_result("peaks/rules.json", ["Normalized_Area"]), "abundance")
-    assert peaks.layer("peptidoform_ion", kind="intensity", normalization="none") is None
+    assert peaks.layer("peptidoform_ion", kind="intensity") is None
 
 
-def test_an_undocumented_normalization_is_unknown_not_missing() -> None:
-    """A consumer can tell a layer nobody documented from a layer that does not exist."""
+def test_an_undocumented_normalization_has_its_own_kind() -> None:
+    """A layer nobody documented the normalization of is not offered as an un-normalized one."""
     catalog = DataCatalog(_result("fragpipe/rules.json", ["Intensity"]), "abundance")
-    with pytest.raises(UnresolvedField) as raised:
-        catalog.layer("peptidoform_ion", kind="intensity", normalization="none")
-    assert raised.value.resolution.status == "unknown"
+    assert catalog.kinds("peptidoform_ion", "layers") == ("intensity_unknown_normalization",)
+    assert catalog.layer("peptidoform_ion", kind="intensity") is None
+    found = catalog.layer("peptidoform_ion", kind="intensity_unknown_normalization")
+    assert found is not None
+    assert found.layer_name == "Intensity"
 
 
-def test_the_british_spelling_of_the_qualifier_is_rejected() -> None:
-    """``normalisation`` has no alias; the error names the qualifiers the set declares."""
+def test_normalization_is_no_longer_a_qualifier() -> None:
+    """The kind names the normalization; the error names the qualifiers the set declares."""
     catalog = DataCatalog(_result("diann/v1_8/rules.json", ["Precursor_Quantity"]), "abundance")
-    with pytest.raises(ValueError, match=r"'normalisation'; declared: \['kind', 'normalization'\]"):
-        catalog.layer("peptidoform_ion", kind="intensity", normalisation="none")
+    with pytest.raises(ValueError, match=r"'normalization'; declared: \['kind'\]"):
+        catalog.layer("peptidoform_ion", kind="intensity", normalization="none")
 
 
 def test_kind_may_come_second_without_its_keyword() -> None:

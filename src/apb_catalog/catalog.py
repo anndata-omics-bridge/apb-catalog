@@ -271,8 +271,8 @@ def _view_rule(view: LevelView) -> str | None:
 class Catalog:
     """Which column one software version reports for each meaning, without any data.
 
-    ``Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity",
-    normalization="none").name`` is ``'Precursor_Quantity'``. The software's packaged APB2 rule
+    ``Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity").name``
+    is ``'Precursor_Quantity'``. The software's packaged APB2 rule
     whose version pattern admits ``version`` decides which fields each level has.
 
     Raises:

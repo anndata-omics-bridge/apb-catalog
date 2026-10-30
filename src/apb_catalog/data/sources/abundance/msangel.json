@@ -26,8 +26,7 @@
         "name": "Abundance"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "abundance_<sample>: Proline's precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."
@@ -44,8 +43,7 @@
         "name": "Raw_Abundance"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
+        "kind": "intensity"
       },
       "evidence": {
         "basis": "raw_abundance_<sample>: Proline's raw precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."
@@ -62,8 +60,7 @@
         "name": "Abundance"
       },
       "qualifiers": {
-        "kind": "unknown",
-        "normalization": "run_setting"
+        "kind": "unknown"
       },
       "evidence": {
         "basis": "abundance_<sample> of the Protein sets sheet: Proline's protein-set abundance after its post-processing, which normalises when the run's quantitation settings ask for it. Proline sums or fits a protein set's peptide abundances as the run's quantitation settings choose, which the workbook does not state, so the kind is unknown."
@@ -80,8 +77,7 @@
         "name": "Raw_Abundance"
       },
       "qualifiers": {
-        "kind": "unknown",
-        "normalization": "none"
+        "kind": "unknown"
       },
       "evidence": {
         "basis": "raw_abundance_<sample> of the Protein sets sheet: Proline's raw protein-set abundance. Proline sums or fits a protein set's peptide abundances as the run's quantitation settings choose, which the workbook does not state, so the kind is unknown."

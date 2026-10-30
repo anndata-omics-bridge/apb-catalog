@@ -58,8 +58,7 @@
         "name": "Precursor_Quantity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
+        "kind": "intensity"
       },
       "evidence": {
         "basis": "Precursor.Quantity: the precursor quantity. DIA-NN's output reference: 'Quantity means non-normalised quantity', 'Normalised means normalised quantity'.",
@@ -79,8 +78,7 @@
         "name": "Precursor_Normalised"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "Precursor.Normalised: Precursor.Quantity after cross-run normalisation. DIA-NN's output reference: 'Quantity means non-normalised quantity', 'Normalised means normalised quantity'. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",
@@ -100,8 +98,7 @@
         "name": "Ms1_Area"
       },
       "qualifiers": {
-        "kind": "ms1_intensity",
-        "normalization": "none"
+        "kind": "ms1_intensity"
       },
       "evidence": {
         "basis": "Ms1.Area: the precursor's MS1 peak area, beside its fragment-based quantity; not a Normalised column. DIA-NN's output reference: 'Quantity means non-normalised quantity', 'Normalised means normalised quantity'.",
@@ -120,8 +117,7 @@
         "name": "Ms1_Normalised"
       },
       "qualifiers": {
-        "kind": "ms1_intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_ms1_intensity"
       },
       "evidence": {
         "basis": "Ms1.Normalised: Ms1.Area after cross-run normalisation; the primary layer of DDA runs. DIA-NN's output reference: 'Quantity means non-normalised quantity', 'Normalised means normalised quantity'. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",
@@ -140,8 +136,7 @@
         "name": "Fragment_Quant_Raw"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
+        "kind": "intensity"
       },
       "evidence": {
         "basis": "Fragment.Quant.Raw: DIA-NN's raw fragment quantities at the elution apex, written with --export-quant.",
@@ -160,8 +155,7 @@
         "name": "PG_Quantity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
+        "kind": "intensity"
       },
       "evidence": {
         "basis": "PG.Quantity: the protein-group quantity. DIA-NN's output reference: 'Quantity means non-normalised quantity', 'Normalised means normalised quantity'.",
@@ -180,8 +174,7 @@
         "name": "PG_Normalised"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "PG.Normalised: PG.Quantity after cross-run normalisation. DIA-NN's output reference: 'Quantity means non-normalised quantity', 'Normalised means normalised quantity'. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",
@@ -201,8 +194,7 @@
         "name": "PG_MaxLFQ"
       },
       "qualifiers": {
-        "kind": "maxlfq",
-        "normalization": "run_setting"
+        "kind": "maxlfq"
       },
       "evidence": {
         "basis": "PG.MaxLFQ: protein-group quantity by MaxLFQ from the normalised precursors, so it follows the run's normalisation. QuantUMS, since 1.9, changes how the precursors are quantified, not how the protein group is: the protein quantity is still MaxLFQ. Cross-run normalisation is RT-dependent by default, global with --global-norm, and off with --no-norm.",

@@ -37,8 +37,7 @@
         "name": "Intensity"
       },
       "qualifiers": {
-        "kind": "directlfq",
-        "normalization": "run_setting"
+        "kind": "directlfq"
       },
       "evidence": {
         "basis": "AlphaDIA's precursor-level directLFQ intensity matrix; normalised when the run sets search_output.normalize_lfq, on by default.",
@@ -56,8 +55,7 @@
         "name": "Precursor_Intensity"
       },
       "qualifiers": {
-        "kind": "directlfq",
-        "normalization": "run_setting"
+        "kind": "directlfq"
       },
       "evidence": {
         "basis": "precursor.intensity: AlphaDIA's precursor-level directLFQ intensity; normalised when the run sets search_output.normalize_directlfq, on by default.",
@@ -75,8 +73,7 @@
         "name": "PG_Intensity"
       },
       "qualifiers": {
-        "kind": "directlfq",
-        "normalization": "run_setting"
+        "kind": "directlfq"
       },
       "evidence": {
         "basis": "pg.intensity: AlphaDIA's protein-group directLFQ intensity; normalised when the run sets search_output.normalize_directlfq, on by default.",

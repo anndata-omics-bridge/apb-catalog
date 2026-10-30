@@ -6,7 +6,7 @@ Every packaged catalogue set, generated from `src/apb_catalog/data/` by `make do
 
 | Set | Holds | Used by | Entries |
 | --- | --- | --- | --- |
-| [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 47 |
+| [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 40 |
 | [`apb`](#apb) | The fields APB writes itself for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns and sample annotations. | apb-export: export rules ask for APB's own columns by kind | 66 |
 | [`chromatography`](#chromatography) | Retention times, elution-peak bounds and peak widths, with the unit the software reports them in. | apb-export: QPX feature retention times in seconds for pMultiQC | 54 |
 | [`confidence`](#confidence) | How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature. | apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision<br>apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers | 22 |
@@ -45,21 +45,21 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Qualifier | Value | Meaning |
 | --- | --- | --- |
-| `kind` | `intensity` | A measured signal of the level's feature, summed, integrated or at apex, at the MS level the software quantifies on. |
-| `kind` | `ms1_intensity` | A measured MS1 signal, reported beside the software's fragment-based quantity. |
-| `kind` | `maxlfq` | A MaxLFQ estimate: delayed normalization and maximal peptide-ratio extraction (Cox et al. 2014). |
+| `kind` | `intensity` | A measured signal of the level's feature, summed, integrated or at apex, at the MS level the software quantifies on, which the software never normalizes across runs. PSI-MS: MS:1001840 LC-MS feature intensity. |
+| `kind` | `normalized_intensity` | An intensity that carries whatever cross-run normalization the run's settings chose, possibly none, as DIA-NN's Normalised columns do. PSI-MS: MS:1001850 normalized peptide value, MS:1001852 normalized protein value. |
+| `kind` | `intensity_unknown_normalization` | An intensity for which it is not established whether the software normalizes it across runs. |
+| `kind` | `ms1_intensity` | A measured MS1 signal, reported beside the software's fragment-based quantity, which the software never normalizes across runs. PSI-MS: MS:1001844 MS1 feature area. |
+| `kind` | `normalized_ms1_intensity` | An MS1 intensity that carries whatever cross-run normalization the run's settings chose, possibly none. |
+| `kind` | `maxlfq` | A MaxLFQ estimate: delayed normalization and maximal peptide-ratio extraction (Cox et al. 2014). PSI-MS: MS:1001902 MaxQuant:LFQ intensity for MaxQuant's. |
 | `kind` | `ibaq` | Intensity-based absolute quantification: summed intensity divided by the number of theoretically observable peptides. |
 | `kind` | `directlfq` | A directLFQ estimate (Ammar et al. 2023). |
 | `kind` | `unknown` | The evidence does not establish it. |
-| `normalization` | `none` | The software never normalizes this column. |
-| `normalization` | `run_setting` | The column carries whatever cross-run normalization the run's settings chose, possibly none. |
-| `normalization` | `unknown` | The evidence does not establish it. |
 
 ### Requirements
 
-| Kind | Location | Qualifiers | peptidoform_ion |
-| --- | --- | --- | :-: |
-| `intensity` | layers | `normalization=none` | SHOULD |
+| Kind | Location | peptidoform_ion |
+| --- | --- | :-: |
+| `intensity` | layers | SHOULD |
 
 ### Coverage
 
@@ -67,17 +67,17 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity`, none | `intensity`, run_setting | `maxlfq`, run_setting | `ibaq`, none | `directlfq`, run_setting | `unknown`, none | `unknown`, run_setting |
-| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| AlphaDIA | 2.x | · | · | · | · | ✓ | · | · |
-| DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | · | · | · | · |
-| DIA-NN | 1.8–1.9 | ✓ | ✓ | ✓ | · | · | · | · |
-| DIA-NN | 2.x | · | · | ✓ | · | · | · | · |
-| MaxQuant | 1.5, 1.6, 2.x | ✓ | · | ✓ | ✓ | · | · | · |
-| MSAngel | 2.x | · | · | · | · | · | ✓ | ✓ |
-| Spectronaut | 15 | · | · | · | · | · | · | ✓ |
-| Spectronaut | 19–20 | · | · | · | · | · | · | ✓ |
-| Spectronaut | 21 | · | · | · | · | · | · | ✓ |
+| Software | Version | `intensity` | `normalized_intensity` | `maxlfq` | `ibaq` | `directlfq` | `unknown` |
+| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: |
+| AlphaDIA | 2.x | · | · | · | · | ✓ | · |
+| DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | · | · | · |
+| DIA-NN | 1.8–1.9 | ✓ | ✓ | ✓ | · | · | · |
+| DIA-NN | 2.x | · | · | ✓ | · | · | · |
+| MaxQuant | 1.5, 1.6, 2.x | ✓ | · | ✓ | ✓ | · | · |
+| MSAngel | 2.x | · | · | · | · | · | ✓ |
+| Spectronaut | 15 | · | · | · | · | · | ✓ |
+| Spectronaut | 19–20 | · | · | · | · | · | ✓ |
+| Spectronaut | 21 | · | · | · | · | · | ✓ |
 
 </div>
 
@@ -85,7 +85,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity`, none | `maxlfq`, run_setting |
+| Software | Version | `intensity` | `maxlfq` |
 | --- | --- | :-: | :-: |
 | MaxQuant | 1.5, 1.6, 2.x | ✓ | ✓ |
 
@@ -95,7 +95,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity`, none | `intensity`, run_setting | `intensity`, unknown |
+| Software | Version | `intensity` | `normalized_intensity` | `intensity_unknown_normalization` |
 | --- | --- | :-: | :-: | :-: |
 | MaxQuant | 1.5, 1.6, 2.x | ✓ | · | · |
 | Sage | 0.x | · | · | ✓ |
@@ -107,7 +107,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity`, none | `intensity`, run_setting | `intensity`, unknown | `ms1_intensity`, none | `ms1_intensity`, run_setting | `directlfq`, run_setting | Check |
+| Software | Version | `intensity` | `normalized_intensity` | `intensity_unknown_normalization` | `ms1_intensity` | `normalized_ms1_intensity` | `directlfq` | Check |
 | --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | AlphaDIA | 1.10 | · | · | · | · | · | ✓ | warn |
 | AlphaDIA | 1.12 | · | · | · | · | · | ✓ | warn |
@@ -126,9 +126,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | ProlineStudio | 2.x | · | ✓ | · | · | · | · | warn |
 | quantms | 1.x | · | · | ✓ | · | · | · | warn |
 | Sage | 0.x | · | · | ✓ | · | · | · | warn |
-| Spectronaut | 15 | ✓ | ✓ | ✓ | ✓ | · | · | pass |
-| Spectronaut | 19–20 | · | ✓ | ✓ | · | · | · | warn |
-| Spectronaut | 21 | · | ✓ | ✓ | · | · | · | warn |
+| Spectronaut | 15 | ✓ | ✓ | · | ✓ | · | · | pass |
+| Spectronaut | 19–20 | · | ✓ | · | · | · | · | warn |
+| Spectronaut | 21 | · | ✓ | · | · | · | · | warn |
 | WOMBAT-P | 0.9.11 | · | ✓ | · | · | · | · | warn |
 
 </div>
@@ -137,7 +137,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity`, none |
+| Software | Version | `intensity` |
 | --- | --- | :-: |
 | DIA-NN | 1.0–1.7 | ✓ |
 | DIA-NN | 1.8–1.9 | ✓ |
@@ -151,74 +151,82 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 **`intensity`**
 
-| Location | Normalization | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| layers | `none` | AlphaPept | 0.5 | `MS1_Int_Max_Apex` | peptidoform_ion |
-|  |  | AlphaPept | 0.5 | `MS1_Int_Max_Area` | peptidoform_ion |
-|  |  | AlphaPept | 0.5 | `MS1_Int_Sum_Apex` | peptidoform_ion |
-|  |  | AlphaPept | 0.5 | `MS1_Int_Sum_Area` | peptidoform_ion |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Fragment_Quant_Raw` | peptidoform_fragment |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9 | `PG_Quantity` | protein |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Quantity` | peptidoform_ion |
-|  |  | MaxQuant | 1.5, 1.6, 2.x | `Intensity` | protein, peptide, peptidoform, peptidoform_ion |
-|  |  | MSAngel | 2.x | `Raw_Abundance` | peptidoform_ion |
-|  |  | Spectronaut | 15 | `FG_MS2RawQuantity` | peptidoform_ion |
-|  |  | Spectronaut | 15, 19–20, 21 | `F_PeakArea` | peptidoform_fragment |
-|  |  | Spectronaut | 15 | `F_PeakHeight` | peptidoform_fragment |
-|  | `run_setting` | AlphaPept | 0.5 | `Intensity` | peptidoform_ion |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9 | `PG_Normalised` | protein |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Normalised` | peptidoform_ion |
-|  |  | MSAngel | 2.x | `Abundance` | peptidoform_ion |
-|  |  | PEAKS | 13 | `Normalized_Area` | peptidoform_ion |
-|  |  | ProlineStudio | 2.x | `Abundance` | peptidoform_ion |
-|  |  | Spectronaut | 15, 19–20, 21 | `FG_Quantity` | peptidoform_ion |
-|  |  | WOMBAT-P | 0.9.11 | `Abundance` | peptidoform, peptidoform_ion |
-|  | `unknown` | FragPipe | 22–23 | `Intensity` | peptidoform_ion |
-|  |  | i2MassChroQ | 1.x | `Intensity` | peptidoform_ion |
-|  |  | MetaMorpheus | 1.x | `Intensity` | peptidoform_ion |
-|  |  | pb_custom | any | `Intensity` | peptidoform_ion |
-|  |  | quantms | 1.x | `Intensity` | peptidoform_ion |
-|  |  | Sage | 0.x | `Intensity` | peptidoform, peptidoform_ion |
-|  |  | Spectronaut | 15, 19–20, 21 | `EG_TargetQuantity_Settings` | peptidoform_ion |
-|  |  | Spectronaut | 15, 19–20, 21 | `EG_TotalQuantity_Settings` | peptidoform_ion |
-|  |  | Spectronaut | 19–20, 21 | `EG_ReferenceQuantity_Settings` | peptidoform_ion |
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | AlphaPept | 0.5 | `MS1_Int_Sum_Area` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Fragment_Quant_Raw` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `PG_Quantity` | protein |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Quantity` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Intensity` | protein, peptide, peptidoform, peptidoform_ion |
+|  | MSAngel | 2.x | `Raw_Abundance` | peptidoform_ion |
+|  | Spectronaut | 15 | `FG_MS2RawQuantity` | peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `F_PeakArea` | peptidoform_fragment |
+
+**`normalized_intensity`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | AlphaPept | 0.5 | `Intensity` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `PG_Normalised` | protein |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Normalised` | peptidoform_ion |
+|  | MSAngel | 2.x | `Abundance` | peptidoform_ion |
+|  | PEAKS | 13 | `Normalized_Area` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `Abundance` | peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `FG_Quantity` | peptidoform_ion |
+|  | WOMBAT-P | 0.9.11 | `Abundance` | peptidoform, peptidoform_ion |
+
+**`intensity_unknown_normalization`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | FragPipe | 22–23 | `Intensity` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `Intensity` | peptidoform_ion |
+|  | MetaMorpheus | 1.x | `Intensity` | peptidoform_ion |
+|  | pb_custom | any | `Intensity` | peptidoform_ion |
+|  | quantms | 1.x | `Intensity` | peptidoform_ion |
+|  | Sage | 0.x | `Intensity` | peptidoform, peptidoform_ion |
 
 **`ms1_intensity`**
 
-| Location | Normalization | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| layers | `none` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Ms1_Area` | peptidoform_ion |
-|  |  | Spectronaut | 15 | `FG_MS1RawQuantity` | peptidoform_ion |
-|  | `run_setting` | DIA-NN | 1.8–1.9, 2.x | `Ms1_Normalised` | peptidoform_ion |
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Ms1_Area` | peptidoform_ion |
+|  | Spectronaut | 15 | `FG_MS1RawQuantity` | peptidoform_ion |
+
+**`normalized_ms1_intensity`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | DIA-NN | 1.8–1.9, 2.x | `Ms1_Normalised` | peptidoform_ion |
 
 **`maxlfq`**
 
-| Location | Normalization | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `PG_MaxLFQ` | protein |
-|  |  | MaxQuant | 1.5, 1.6, 2.x | `LFQ_Intensity` | protein, peptide |
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `PG_MaxLFQ` | protein |
+|  | MaxQuant | 1.5, 1.6, 2.x | `LFQ_Intensity` | protein, peptide |
 
 **`ibaq`**
 
-| Location | Normalization | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| layers | `none` | MaxQuant | 1.5, 1.6, 2.x | `iBAQ` | protein |
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | MaxQuant | 1.5, 1.6, 2.x | `iBAQ` | protein |
 
 **`directlfq`**
 
-| Location | Normalization | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | AlphaDIA | 1.10, 1.12 | `Intensity` | peptidoform_ion |
-|  |  | AlphaDIA | 2.x | `PG_Intensity` | protein |
-|  |  | AlphaDIA | 2.x | `Precursor_Intensity` | peptidoform_ion |
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | AlphaDIA | 1.10, 1.12 | `Intensity` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `PG_Intensity` | protein |
+|  | AlphaDIA | 2.x | `Precursor_Intensity` | peptidoform_ion |
 
 **`unknown`**
 
-| Location | Normalization | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| layers | `none` | MSAngel | 2.x | `Raw_Abundance` | protein |
-|  | `run_setting` | MSAngel | 2.x | `Abundance` | protein |
-|  |  | Spectronaut | 15, 19–20, 21 | `PG_Quantity` | protein |
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| layers | MSAngel | 2.x | `Abundance` | protein |
+|  | MSAngel | 2.x | `Raw_Abundance` | protein |
+|  | Spectronaut | 15, 19–20, 21 | `PG_Quantity` | protein |
 
 <!-- end of generated block: abundance -->
 

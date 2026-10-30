@@ -61,8 +61,8 @@ def test_meaning_prints_the_column_of_every_meaning_per_rule_level(
     """One row per rule level and field, with its kind and the set's qualifier as columns."""
     assert _run("meaning", "abundance") == 0
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0].split() == ["software", "version", "level", "column", "kind", "normalization"]
-    assert ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Quantity", "intensity", "none"] in [
+    assert lines[0].split() == ["software", "version", "level", "column", "kind"]
+    assert ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Quantity", "intensity"] in [
         line.split() for line in lines
     ]
 
@@ -71,7 +71,7 @@ def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str])
     """CSV has the text table's columns and one row per field of the rule check."""
     assert _run("meaning", "abundance", "--format", "csv") == 0
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
-    assert table.columns == ["software", "version", "level", "column", "kind", "normalization"]
+    assert table.columns == ["software", "version", "level", "column", "kind"]
     assert table.height == rule_coverage("abundance").height
 
 

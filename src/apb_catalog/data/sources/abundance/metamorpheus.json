@@ -21,8 +21,7 @@
         "name": "Intensity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "unknown"
+        "kind": "intensity_unknown_normalization"
       },
       "evidence": {
         "basis": "Peak intensity in AllQuantifiedPeaks.tsv: FlashLFQ's peak intensity. FlashLFQ has a Normalize setting, but whether this file carries it is not established."

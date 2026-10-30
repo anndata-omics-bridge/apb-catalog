@@ -21,8 +21,7 @@
         "name": "Normalized_Area"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "<sample> Normalized Area: the feature area after PEAKS's normalisation; the run's Normalization Method, such as TIC or No Normalization, decides."

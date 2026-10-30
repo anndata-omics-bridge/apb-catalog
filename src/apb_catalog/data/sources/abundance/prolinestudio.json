@@ -21,8 +21,7 @@
         "name": "Abundance"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "abundance_<sample>: Proline's precursor ion abundance. Proline reports raw_abundance as the extracted ion chromatogram and abundance after its post-processing, which normalises when the run's quantitation settings ask for it."

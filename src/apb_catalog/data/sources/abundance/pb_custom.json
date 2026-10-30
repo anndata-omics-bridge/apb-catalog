@@ -21,8 +21,7 @@
         "name": "Intensity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "unknown"
+        "kind": "intensity_unknown_normalization"
       },
       "evidence": {
         "basis": "ProteoBench's custom format: intensities the submitter supplies, with no parameter file to say how they were made."

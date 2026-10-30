@@ -91,14 +91,24 @@ if pep is None:
     q_value = confidence.layer("peptidoform_ion", kind="q_value")
 ```
 
+## Kinds that name their normalization
+
+In the `abundance` set the kind says whether the software normalizes the value across runs, as PSI-MS names raw and normalized values apart; the set has no other qualifier.
+
+| Call | Returns |
+| --- | --- |
+| `layer("peptidoform_ion", kind="intensity")` | DIA-NN `Precursor_Quantity`, MaxQuant `Intensity`; never normalized |
+| `layer("peptidoform_ion", kind="normalized_intensity")` | DIA-NN `Precursor_Normalised`: whatever normalization the run chose, possibly none |
+| `layer("peptidoform_ion", kind="intensity_unknown_normalization")` | FragPipe, Sage `Intensity`: nobody documented whether it is normalized |
+
+A level has at most one layer per kind. Where a tool reports several, such as AlphaPept's four MS1 sums, the catalog names one and the others stay readable by name through the result.
+
 ## Narrow with qualifiers
 
 Every qualifier besides `kind` is a keyword; [Catalogues](catalogues.md) lists each set's values.
 
 | Set | Call | Returns |
 | --- | --- | --- |
-| `abundance` | `layer("peptidoform_ion", kind="intensity", normalization="none")` | DIA-NN `Precursor_Quantity`, MaxQuant `Intensity` |
-| `abundance` | `layer("peptidoform_ion", kind="intensity", normalization="run_setting")` | DIA-NN `Precursor_Normalised` |
 | `confidence` | `var("peptidoform_ion", kind="q_value", stage="quantification")` | Sage `Q_Value`, the q-value of its MS1 peak |
 | `chromatography` | `layer("peptidoform_ion", kind="retention_time", unit="minute")` | DIA-NN `RT` |
 | `chromatography` | `layer("peptidoform_ion", kind="retention_time", unit="second")` | DIA-NN `None`: its RT is in minutes |
@@ -114,7 +124,7 @@ Every qualifier besides `kind` is a keyword; [Catalogues](catalogues.md) lists e
 ```python
 from apb_catalog.api import Catalog
 
-Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity", normalization="none").name
+Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity").name
 # 'Precursor_Quantity'
 Catalog("DIA-NN", "2.6.0", "apb").var("peptidoform_ion", kind="protein_assignment").name
 # 'Protein_Group'
@@ -124,19 +134,17 @@ Catalog("DIA-NN", "2.6.0", "apb").var("peptidoform_ion", kind="protein_assignmen
 
 | Call | Raises |
 | --- | --- |
-| DIA-NN `abundance.layer("peptidoform_ion", kind="intensity")` | `UnresolvedField`, ambiguous: `Precursor_Quantity`, `Precursor_Normalised` both match |
-| Spectronaut `abundance.layer("peptidoform_ion", kind="intensity", normalization="none")` | `UnresolvedField`, unknown: `EG_TotalQuantity_Settings`, `EG_TargetQuantity_Settings` and `EG_ReferenceQuantity_Settings` leave normalization unknown |
 | Spectronaut `abundance.layer("protein", kind="intensity")` | `UnresolvedField`, unknown: `PG_Quantity` leaves kind unknown |
-| `layer("peptidoform_ion", kind="intensity", normalisation="none")` | `ValueError`: unknown qualifier `normalisation` |
+| `abundance.layer("peptidoform_ion", kind="intensity", normalization="none")` | `ValueError`: unknown qualifier `normalization`; the kind names it |
 | `layer("peptidoform_ion", kind="intensities")` | `ValueError`: `kind` does not admit `intensities`, with the admitted kinds |
 | `Catalog("DIA-NN", "3.0", "confidence")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |
 
 ```python
 from apb_catalog.api import UnresolvedField
 
-abundance = DataCatalog(diann, "abundance")
+abundance = DataCatalog(spectronaut, "abundance")
 try:
-    layer = abundance.layer("peptidoform_ion", kind="intensity")
+    layer = abundance.layer("protein", kind="intensity")
 except UnresolvedField as error:
     print(error)   # names the reason and the candidate fields
 ```

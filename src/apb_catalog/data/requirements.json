@@ -4,9 +4,6 @@
       "level": "peptidoform_ion",
       "location": "layers",
       "kind": "intensity",
-      "qualifiers": {
-        "normalization": "none"
-      },
       "requirement": "SHOULD"
     }
   ],

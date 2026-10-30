@@ -26,8 +26,7 @@
         "name": "Abundance"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "abundance_<sample>: WOMBAT-P's precursor abundance; the run's normalization_method, such as median, decides its normalisation."
@@ -44,8 +43,7 @@
         "name": "Abundance"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "abundance_<sample>: WOMBAT-P's peptidoform abundance; the run's normalization_method, such as median, decides its normalisation."

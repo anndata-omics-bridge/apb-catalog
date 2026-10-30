@@ -63,8 +63,7 @@
         "name": "FG_Quantity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "run_setting"
+        "kind": "normalized_intensity"
       },
       "evidence": {
         "basis": "FG.Quantity: the precursor quantity at the run's quantity MS level, after cross-run normalisation when the run enables it. The Cross-Run Normalization setting decides; its parameter file states it."
@@ -81,8 +80,7 @@
         "name": "FG_MS2RawQuantity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
+        "kind": "intensity"
       },
       "evidence": {
         "basis": "FG.MS2RawQuantity: the precursor's MS2 quantity before normalisation; FG.Quantity's source when the run quantifies on MS2, the default."
@@ -99,70 +97,10 @@
         "name": "FG_MS1RawQuantity"
       },
       "qualifiers": {
-        "kind": "ms1_intensity",
-        "normalization": "none"
+        "kind": "ms1_intensity"
       },
       "evidence": {
         "basis": "FG.MS1RawQuantity: the precursor's MS1 quantity before normalisation."
-      }
-    },
-    {
-      "entry_id": "spectronaut.peptidoform_ion.EG_TotalQuantity_Settings",
-      "rules": [
-        "spectronaut/v15/rules.json",
-        "spectronaut/rules.json",
-        "spectronaut/v21/rules.json"
-      ],
-      "reference": {
-        "level": "peptidoform_ion",
-        "location": "layers",
-        "name": "EG_TotalQuantity_Settings"
-      },
-      "qualifiers": {
-        "kind": "intensity",
-        "normalization": "unknown"
-      },
-      "evidence": {
-        "basis": "EG.TotalQuantity (Settings): the elution group's total quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
-      }
-    },
-    {
-      "entry_id": "spectronaut.peptidoform_ion.EG_TargetQuantity_Settings",
-      "rules": [
-        "spectronaut/v15/rules.json",
-        "spectronaut/rules.json",
-        "spectronaut/v21/rules.json"
-      ],
-      "reference": {
-        "level": "peptidoform_ion",
-        "location": "layers",
-        "name": "EG_TargetQuantity_Settings"
-      },
-      "qualifiers": {
-        "kind": "intensity",
-        "normalization": "unknown"
-      },
-      "evidence": {
-        "basis": "EG.TargetQuantity (Settings): the elution group's target-channel quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
-      }
-    },
-    {
-      "entry_id": "spectronaut.peptidoform_ion.EG_ReferenceQuantity_Settings",
-      "rules": [
-        "spectronaut/rules.json",
-        "spectronaut/v21/rules.json"
-      ],
-      "reference": {
-        "level": "peptidoform_ion",
-        "location": "layers",
-        "name": "EG_ReferenceQuantity_Settings"
-      },
-      "qualifiers": {
-        "kind": "intensity",
-        "normalization": "unknown"
-      },
-      "evidence": {
-        "basis": "EG.ReferenceQuantity (Settings): the elution group's reference-channel quantity under the run's quantification settings. Whether the run's settings can normalise this column is not established."
       }
     },
     {
@@ -178,8 +116,7 @@
         "name": "PG_Quantity"
       },
       "qualifiers": {
-        "kind": "unknown",
-        "normalization": "run_setting"
+        "kind": "unknown"
       },
       "evidence": {
         "basis": "PG.Quantity: the protein-group quantity from normalised precursor quantities; the run's protein quantity method, such as a top-N mean or MaxLFQ, decides the kind. The Cross-Run Normalization setting decides; its parameter file states it."
@@ -198,29 +135,10 @@
         "name": "F_PeakArea"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
+        "kind": "intensity"
       },
       "evidence": {
         "basis": "F.PeakArea: the fragment's peak area; Spectronaut writes its normalised area as a separate column, F.NormalizedPeakArea."
-      }
-    },
-    {
-      "entry_id": "spectronaut.peptidoform_fragment.F_PeakHeight",
-      "rules": [
-        "spectronaut/v15/rules.json"
-      ],
-      "reference": {
-        "level": "peptidoform_fragment",
-        "location": "layers",
-        "name": "F_PeakHeight"
-      },
-      "qualifiers": {
-        "kind": "intensity",
-        "normalization": "none"
-      },
-      "evidence": {
-        "basis": "F.PeakHeight: the height of the fragment's extracted ion chromatogram; Spectronaut's normalised fragment value is the separate F.NormalizedPeakArea."
       }
     }
   ]

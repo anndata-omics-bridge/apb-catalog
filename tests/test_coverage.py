@@ -145,8 +145,9 @@ def test_a_requirement_row_matches_its_qualifiers() -> None:
     coverage = rule_coverage("abundance").filter(pl.col("rule") == "fragpipe/rules.json")
     missing = coverage.filter(pl.col("column").is_null())
     assert missing.select("kind", "qualifiers", "requirement").rows() == [
-        ("intensity", "normalization=none", "SHOULD")
+        ("intensity", None, "SHOULD")
     ]
+    assert "intensity_unknown_normalization" in coverage.get_column("kind").to_list()
     assert set(coverage.get_column("verdict")) == {"warn"}
 
 

@@ -1,24 +1,20 @@
 {
-  "vocabulary_version": "0.11",
+  "vocabulary_version": "0.12",
   "sets": {
     "abundance": {
-      "definition": "A quantity an APB2 rule marks with the layer role abundance: what it measures, and whether the producing software normalizes it across runs.",
+      "definition": "A quantity an APB2 rule marks with the layer role abundance: what it measures, and whether the producing software normalizes it across runs, both named by its kind.",
       "qualifiers": {
         "kind": {
-          "definition": "What the value measures.",
+          "definition": "What the value measures, and whether the software normalizes it across runs.",
           "values": {
-            "intensity": "A measured signal of the level's feature, summed, integrated or at apex, at the MS level the software quantifies on.",
-            "ms1_intensity": "A measured MS1 signal, reported beside the software's fragment-based quantity.",
-            "maxlfq": "A MaxLFQ estimate: delayed normalization and maximal peptide-ratio extraction (Cox et al. 2014).",
+            "intensity": "A measured signal of the level's feature, summed, integrated or at apex, at the MS level the software quantifies on, which the software never normalizes across runs. PSI-MS: MS:1001840 LC-MS feature intensity.",
+            "normalized_intensity": "An intensity that carries whatever cross-run normalization the run's settings chose, possibly none, as DIA-NN's Normalised columns do. PSI-MS: MS:1001850 normalized peptide value, MS:1001852 normalized protein value.",
+            "intensity_unknown_normalization": "An intensity for which it is not established whether the software normalizes it across runs.",
+            "ms1_intensity": "A measured MS1 signal, reported beside the software's fragment-based quantity, which the software never normalizes across runs. PSI-MS: MS:1001844 MS1 feature area.",
+            "normalized_ms1_intensity": "An MS1 intensity that carries whatever cross-run normalization the run's settings chose, possibly none.",
+            "maxlfq": "A MaxLFQ estimate: delayed normalization and maximal peptide-ratio extraction (Cox et al. 2014). PSI-MS: MS:1001902 MaxQuant:LFQ intensity for MaxQuant's.",
             "ibaq": "Intensity-based absolute quantification: summed intensity divided by the number of theoretically observable peptides.",
             "directlfq": "A directLFQ estimate (Ammar et al. 2023)."
-          }
-        },
-        "normalization": {
-          "definition": "Whether the producing software normalizes the value across runs; which method a run used is not catalogued.",
-          "values": {
-            "none": "The software never normalizes this column.",
-            "run_setting": "The column carries whatever cross-run normalization the run's settings chose, possibly none."
           }
         }
       }

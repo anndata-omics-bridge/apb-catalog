@@ -132,8 +132,23 @@ def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
     assert packaged - reviewed == set()
 
 
-ABUNDANCE_LEFT_OUT = {("protein", "Genes_MaxLFQ")}
-"""DIA-NN's gene-group quantity sits on the protein-group level, which answers for its own entity."""
+ABUNDANCE_LEFT_OUT = {
+    # DIA-NN's gene-group quantity sits on the protein-group level, which answers for its own entity.
+    ("protein", "Genes_MaxLFQ"),
+    # One entry per kind: AlphaPept's MS1 sum over the peak area is its intensity; the apex and
+    # maximum variants stay readable by name.
+    ("peptidoform_ion", "MS1_Int_Sum_Apex"),
+    ("peptidoform_ion", "MS1_Int_Max_Area"),
+    ("peptidoform_ion", "MS1_Int_Max_Apex"),
+    # Spectronaut's fragment peak area is its intensity; the peak height stays readable by name.
+    ("peptidoform_fragment", "F_PeakHeight"),
+    # Spectronaut's elution-group quantities under the run's settings are not the precursor's own
+    # quantity, FG_Quantity; they stay readable by name.
+    ("peptidoform_ion", "EG_TotalQuantity_Settings"),
+    ("peptidoform_ion", "EG_TargetQuantity_Settings"),
+    ("peptidoform_ion", "EG_ReferenceQuantity_Settings"),
+}
+"""Abundance-role layers the catalog leaves out; one kind has at most one entry per rule level."""
 
 
 def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
@@ -151,6 +166,23 @@ def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
         if (level, name) not in ABUNDANCE_LEFT_OUT
     }
     assert catalogued == marked
+
+
+def test_a_kind_has_at_most_one_vendor_entry_per_rule_level() -> None:
+    """The catalog picks one layer per kind; a kind it cannot name, ``unknown``, may repeat."""
+    seen: dict[tuple[str, str, str, str], str | None] = {}
+    repeated: list[tuple[str, str, str, str, str | None, str | None]] = []
+    for catalogue in _catalogues("abundance"):
+        for entry in catalogue.entries:
+            kind = entry.qualifiers["kind"]
+            if kind == "unknown":
+                continue
+            for rule in entry.rules:
+                key = (rule, entry.reference.level, entry.reference.location, kind)
+                if key in seen:
+                    repeated.append((*key, seen[key], entry.reference.name))
+                seen[key] = entry.reference.name
+    assert repeated == []
 
 
 def test_an_entry_must_use_a_declared_rule_variant() -> None:

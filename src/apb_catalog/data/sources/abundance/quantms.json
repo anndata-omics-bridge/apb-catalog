@@ -21,8 +21,7 @@
         "name": "Intensity"
       },
       "qualifiers": {
-        "kind": "intensity",
-        "normalization": "unknown"
+        "kind": "intensity_unknown_normalization"
       },
       "evidence": {
         "basis": "Intensity in msstats_in.csv: OpenMS's feature intensity, before MSstats. Whether the run's settings can normalise this column is not established."
