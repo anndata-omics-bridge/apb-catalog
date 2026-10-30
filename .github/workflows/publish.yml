@@ -58,7 +58,8 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
-  # The language bundle: attached to the release, and copied into apbCatalogR by a pull request.
+  # The language bundle and its test bundle: attached to the release, and copied into apbCatalogR by
+  # a pull request.
   # The pull request needs a GitHub App installed on apbCatalogR, with its id and private key in
   # the secrets APB_BUNDLE_APP_ID and APB_BUNDLE_APP_KEY.
   bundle:
@@ -91,19 +92,27 @@ jobs:
       - name: Synchronize environment
         run: uv sync --group dev
 
-      - name: Build the bundle
+      - name: Build the bundles
         run: make bundle
 
-      - name: Attach the bundle to the release
+      - name: Attach the bundles to the release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" build/apb-catalog-bundle.tar.gz --clobber
+        run: >-
+          gh release upload "$GITHUB_REF_NAME"
+          build/apb-catalog-bundle.tar.gz build/apb-catalog-test-bundle.tar.gz --clobber
 
       - name: Keep the bundle folder for the pull request
         uses: actions/upload-artifact@v7
         with:
           name: bundle
           path: apb-catalog/build/apb-catalog-bundle/
+
+      - name: Keep the test bundle folder for the pull request
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-bundle
+          path: apb-catalog/build/apb-catalog-test-bundle/
 
   update-apbcatalogr:
     needs: bundle
@@ -124,14 +133,20 @@ jobs:
           repository: anndata-omics-bridge/apbCatalogR
           token: ${{ steps.token.outputs.token }}
 
-      - name: Remove the shipped bundle
-        run: rm -rf inst/extdata/bundle
+      - name: Remove the shipped bundles
+        run: rm -rf inst/extdata/bundle inst/extdata/test-bundle
 
       - name: Put the new bundle in its place
         uses: actions/download-artifact@v8
         with:
           name: bundle
           path: inst/extdata/bundle
+
+      - name: Put the new test bundle in its place
+        uses: actions/download-artifact@v8
+        with:
+          name: test-bundle
+          path: inst/extdata/test-bundle
 
       - name: Open the update pull request
         uses: peter-evans/create-pull-request@v7
@@ -140,4 +155,4 @@ jobs:
           branch: bundle/${{ github.ref_name }}
           commit-message: Ship the apb-catalog ${{ github.ref_name }} bundle
           title: Ship the apb-catalog ${{ github.ref_name }} bundle
-          body: Replaces `inst/extdata/bundle/` with the bundle of apb-catalog release ${{ github.ref_name }}.
+          body: Replaces `inst/extdata/bundle/` and `inst/extdata/test-bundle/` with the bundles of apb-catalog release ${{ github.ref_name }}.

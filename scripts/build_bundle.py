@@ -1,11 +1,13 @@
-"""Build the bundle other languages implement apb-catalog on: rules, catalogues, expected answers.
+"""Build the bundles other languages implement apb-catalog on: the bundle and its test bundle.
 
-``make bundle`` writes ``build/apb-catalog-bundle/`` and ``build/apb-catalog-bundle.tar.gz``. The
-release workflow attaches the archive to the GitHub release and copies the folder into apbCatalogR.
+``make bundle`` writes ``build/apb-catalog-bundle/`` and ``build/apb-catalog-test-bundle/``, each
+with its ``.tar.gz``. The release workflow attaches both archives to the GitHub release and copies
+both folders into apbCatalogR.
 
-The bundle holds APB2's effective rule declarations, the packaged catalogue sets with their
-schemas, synthetic Parquet results built from the declarations (packed in ``results.tar.gz``), and
-the answers this package gives on them. Only packaged sets enter; an installed plugin set never does.
+The bundle is what a reader looks fields up with: APB2's effective rule declarations and the
+packaged catalogue sets with their schemas. The test bundle holds synthetic Parquet results built
+from the declarations (packed in ``results.tar.gz``) and the answers this package gives on them.
+Only packaged sets enter; an installed plugin set never does.
 """
 
 from __future__ import annotations
@@ -60,6 +62,7 @@ from apb_catalog.table import KEY_COLUMNS, schema, set_rows
 from apb_catalog.vocabulary import Vocabulary
 
 NAME = "apb-catalog-bundle"
+TEST_NAME = "apb-catalog-test-bundle"
 BUNDLE_FORMAT = 1
 """Raised when a reader of the previous format could not read the bundle."""
 
@@ -93,30 +96,43 @@ type Request = tuple[str, Location, dict[str, str]]
 
 
 def main(argv: list[str]) -> int:
-    """Build the bundle folder and its archive under ``argv[1]``, ``build`` by default."""
+    """Build both bundle folders and their archives under ``argv[1]``, ``build`` by default."""
     target = Path(argv[1]) if len(argv) > 1 else Path("build")
-    folder = build(target / NAME)
-    with tarfile.open(target / f"{NAME}.tar.gz", "w:gz") as archive:
-        archive.add(folder, arcname=NAME)
-    print(f"wrote {folder} and {target / f'{NAME}.tar.gz'}")
+    for folder in build(target):
+        archive = target / f"{folder.name}.tar.gz"
+        with tarfile.open(archive, "w:gz") as packed:
+            packed.add(folder, arcname=folder.name)
+        print(f"wrote {folder} and {archive}")
     return 0
 
 
-def build(folder: Path) -> Path:
-    """Write the bundle into ``folder``, replacing what is there."""
+def build(target: Path) -> tuple[Path, Path]:
+    """Write the bundle and the test bundle into ``target``, replacing what is there."""
+    names = list(packaged_descriptions())
+    bundle = _fresh(target / NAME)
+    _write_rules(bundle / "rules")
+    _write_catalogues(bundle / "catalogues", names)
+    _write_schemas(bundle / "schemas")
+    _write_manifest(bundle, names)
+    tests = _fresh(target / TEST_NAME)
+    results = synthetic_results()
+    _write_results(tests / "results.tar.gz", results)
+    sets = {name: packaged_catalogues(name) for name in names}
+    _write_json(tests / "cases" / "catalog.json", catalog_cases(sets))
+    _write_json(tests / "cases" / "data_catalog.json", data_catalog_cases(sets, results))
+    _write_json(tests / "cases" / "tables.json", table_cases(sets))
+    _write_manifest(tests, names)
+    return bundle, tests
+
+
+def _fresh(folder: Path) -> Path:
     if folder.exists():
         shutil.rmtree(folder)
     folder.mkdir(parents=True)
-    names = list(packaged_descriptions())
-    _write_rules(folder / "rules")
-    _write_catalogues(folder / "catalogues", names)
-    _write_schemas(folder / "schemas")
-    results = synthetic_results()
-    _write_results(folder / "results.tar.gz", results)
-    sets = {name: packaged_catalogues(name) for name in names}
-    _write_json(folder / "cases" / "catalog.json", catalog_cases(sets))
-    _write_json(folder / "cases" / "data_catalog.json", data_catalog_cases(sets, results))
-    _write_json(folder / "cases" / "tables.json", table_cases(sets))
+    return folder
+
+
+def _write_manifest(folder: Path, names: list[str]) -> None:
     files = sorted(
         path.relative_to(folder).as_posix() for path in folder.rglob("*") if path.is_file()
     )
@@ -129,7 +145,6 @@ def build(folder: Path) -> Path:
         "files": list(files),
     }
     (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", "utf-8")
-    return folder
 
 
 def _write_results(archive: Path, results: Mapping[str, ParsedLevels]) -> None:

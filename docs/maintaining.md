@@ -102,6 +102,6 @@ A plugin set's producer that runs after conversion, such as apb-fasta, declares 
 | `.venv/bin/pytest tests/test_source.py tests/test_catalog.py tests/test_coverage.py tests/test_docs.py` | The catalogue checks but the bundle's, while editing |
 | `make docs-tables` | Regenerates the tables of `docs/catalogues.md` |
 | `make schema` | Regenerates the snapshot JSON Schema after a snapshot model change |
-| `make bundle` | Builds the language bundle into `build/`; a release attaches it and opens the apbCatalogR update pull request |
+| `make bundle` | Builds the language bundle (rules, catalogues, schemas) and its test bundle (expected answers, synthetic results) into `build/`; a release attaches both and opens the apbCatalogR update pull request |
 | `make check` | Format, lint, types, dependencies, tests, build and documentation |
 | `apb-catalog check SET` | Every packaged rule level against one set's requirements |

@@ -36,7 +36,7 @@ build:  ## Build and validate source and wheel distributions
 	uv build
 	$(VENV_BIN)/twine check dist/*
 
-bundle:  ## Build the language bundle into build/ (rules, catalogues, expected answers)
+bundle:  ## Build the language bundle (rules, catalogues) and its test bundle (expected answers) into build/
 	$(VENV_BIN)/python -m scripts.build_bundle build
 
 docs-tables:  ## Regenerate the Catalogues page tables from the packaged catalogues
