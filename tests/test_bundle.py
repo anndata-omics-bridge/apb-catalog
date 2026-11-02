@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 from collections.abc import Iterator
 from pathlib import Path
@@ -11,7 +13,7 @@ import pytest
 from apb2.api import packaged_rule_declarations
 from scripts.build_bundle import build
 
-from apb_catalog.source import packaged_descriptions
+from apb_catalog.source import TABLES, packaged_descriptions
 from tests.conftest import TESTS
 
 
@@ -54,12 +56,13 @@ def test_the_manifest_lists_every_file_each_bundle_holds(bundles: tuple[Path, Pa
     for folder in bundles:
         manifest = _object(folder / "manifest.json")
         assert manifest["files"] == _held(folder)
-        assert manifest["bundle_format"] == 1
+        assert manifest["bundle_format"] == 2
 
 
 def test_the_bundle_holds_only_what_a_lookup_reads(bundle: Path, test_bundle: Path) -> None:
-    """The served bundle is JSON only; the answers and synthetic results go to the test bundle."""
-    assert {path.split("/")[0] for path in _held(bundle)} == {"rules", "catalogues", "schemas"}
+    """The served bundle holds the rules and the catalogue tables; the answers and synthetic
+    results go to the test bundle."""
+    assert {path.split("/")[0] for path in _held(bundle)} == {"rules", "catalogues"}
     assert {path.split("/")[0] for path in _held(test_bundle)} == {"cases", "results.tar.gz"}
     assert (
         _object(bundle / "manifest.json")["version"]
@@ -71,10 +74,9 @@ def test_a_plugin_set_never_enters_the_bundle(bundle: Path, test_bundle: Path) -
     """Only the packaged sets are carried, in files and in expected answers."""
     packaged = list(packaged_descriptions())
     assert _object(bundle / "manifest.json")["catalogues"] == packaged
-    assert sorted(path.name for path in (bundle / "catalogues" / "sources").iterdir()) == sorted(
-        name for name in packaged if (bundle / "catalogues" / "sources" / name).is_dir()
-    )
-    assert "toy" not in (bundle / "catalogues" / "catalogues.json").read_text("utf-8")
+    for table in TABLES:
+        text = (bundle / "catalogues" / f"{table}.csv").read_text("utf-8")
+        assert {row["set"] for row in csv.DictReader(io.StringIO(text))} <= set(packaged)
     tables = _object(test_bundle / "cases" / "tables.json")
     assert [row["catalogue"] for row in tables["catalogues"]] == packaged
     cases = _rows(test_bundle / "cases" / "data_catalog.json")

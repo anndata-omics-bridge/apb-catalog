@@ -1,0 +1,4 @@
+set,level,location,kind,requirement
+toy,peptidoform_ion,var,group,MUST
+toy,peptidoform_ion,var,charge,MUST
+toy,peptidoform_ion,var,decoy,MAY

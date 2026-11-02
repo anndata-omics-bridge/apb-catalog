@@ -1,0 +1,9 @@
+set,entry_id,source,rules,level,location,table,reference_by,reference,kind,basis,evidence_url
+toy,diann.peptidoform_ion.Precursor_Charge.charge,DIA-NN,diann/v1_7/rules.json;diann/v1_8/rules.json;diann/v2/rules.json,peptidoform_ion,var,,name,Precursor_Charge,charge,Synthetic test entry.,
+toy,diann.peptidoform_ion.Protein_Group.group,DIA-NN,diann/v1_7/rules.json;diann/v1_8/rules.json;diann/v2/rules.json,peptidoform_ion,var,,name,Protein_Group,group,Synthetic test entry.,
+toy,diann.peptidoform_ion.apb_Decoy.decoy,DIA-NN,diann/v1_7/rules.json;diann/v1_8/rules.json;diann/v2/rules.json,peptidoform_ion,var,,name,apb_Decoy,decoy,Synthetic test entry.,
+toy,fragpipe.peptidoform_ion.Charge.charge,FragPipe,fragpipe/rules.json,peptidoform_ion,var,,name,Charge,charge,Synthetic test entry.,
+toy,fragpipe.peptidoform_ion.apb_Decoy.decoy,FragPipe,fragpipe/rules.json,peptidoform_ion,var,,name,apb_Decoy,decoy,Synthetic test entry.,
+toy,fragpipe.peptidoform_ion.apb_Contaminant.contaminant,FragPipe,fragpipe/rules.json,peptidoform_ion,var,,name,apb_Contaminant,contaminant,Synthetic test entry.,
+toy,apb2.peptidoform_ion.ProForma_peptidoform.peptidoform,producer:APB2,,peptidoform_ion,var,,name,ProForma_peptidoform,peptidoform,Synthetic test entry.,
+toy,apb_fasta.peptidoform_ion.fasta_matches_contaminant.contaminant,producer:apb-fasta,,peptidoform_ion,varm,fasta_validation,name,fasta_matches_contaminant,contaminant,Synthetic test entry.,

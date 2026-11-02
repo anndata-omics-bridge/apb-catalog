@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import replace
@@ -455,17 +457,11 @@ def test_a_changed_software_version_makes_the_snapshot_stale() -> None:
 
 
 def test_every_packaged_set_states_its_purpose_and_users() -> None:
-    """Each sources directory has a description, and each description a sources directory."""
-    data = resources.files("apb_catalog").joinpath("data")
-    directories = {
-        path.name
-        for kind in ("sources", "producers", "annotations")
-        if data.joinpath(kind).is_dir()
-        for path in data.joinpath(kind).iterdir()
-        if path.is_dir()
-    }
+    """Each set with entries has a description, and each description entries."""
+    text = resources.files("apb_catalog").joinpath("data", "entries.csv").read_text("utf-8")
+    described = {row["set"] for row in csv.DictReader(io.StringIO(text))}
     descriptions = packaged_descriptions()
-    assert set(descriptions) == directories
+    assert set(descriptions) == described
     assert all(d.purpose and d.used_by for d in descriptions.values())
 
 

@@ -6,12 +6,12 @@ import json
 import re
 from dataclasses import dataclass
 from functools import cache
-from typing import cast
+from typing import Literal, cast
 
 from apb2.api import JsonValue, packaged_rule_declarations
 
-from apb_catalog.source import Address, Location
-
+type Location = Literal["obs", "layers", "var", "varm"]
+type Address = tuple[Location, str | None, str]
 type Declaration = dict[str, JsonValue]
 
 

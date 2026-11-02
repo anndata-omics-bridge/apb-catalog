@@ -5,7 +5,7 @@ with its ``.tar.gz``. The release workflow attaches both archives to the GitHub 
 both folders into apbCatalogR.
 
 The bundle is what a reader looks fields up with: APB2's effective rule declarations and the
-packaged catalogue sets with their schemas. The test bundle holds synthetic Parquet results built
+packaged catalogue tables, CSV files described by their ``datapackage.json``. The test bundle holds synthetic Parquet results built
 from the declarations (packed in ``results.tar.gz``) and the answers this package gives on them.
 Only packaged sets enter; an installed plugin set never does.
 """
@@ -34,7 +34,6 @@ from apb2.api import (
     packaged_rule_declarations,
     write_parsed_levels,
 )
-from pydantic import TypeAdapter
 
 from apb_catalog import rules
 from apb_catalog.catalog import (
@@ -47,23 +46,18 @@ from apb_catalog.catalog import (
 )
 from apb_catalog.coverage import CATALOGUES_SCHEMA, VERSION_LABELS, coverage_of
 from apb_catalog.resolver import UnresolvedField
+from apb_catalog.rules import Location
 from apb_catalog.source import (
-    AnnotationCatalogue,
-    CatalogueDescription,
-    Location,
-    ProducerCatalogue,
-    RequirementRow,
-    SourceCatalogue,
+    TABLES,
     SourceCatalogues,
     packaged_catalogues,
     packaged_descriptions,
 )
 from apb_catalog.table import KEY_COLUMNS, schema, set_rows
-from apb_catalog.vocabulary import Vocabulary
 
 NAME = "apb-catalog-bundle"
 TEST_NAME = "apb-catalog-test-bundle"
-BUNDLE_FORMAT = 1
+BUNDLE_FORMAT = 2
 """Raised when a reader of the previous format could not read the bundle."""
 
 LEVELS = ("protein", "peptide", "peptidoform", "peptidoform_ion", "peptidoform_fragment")
@@ -112,7 +106,6 @@ def build(target: Path) -> tuple[Path, Path]:
     bundle = _fresh(target / NAME)
     _write_rules(bundle / "rules")
     _write_catalogues(bundle / "catalogues", names)
-    _write_schemas(bundle / "schemas")
     _write_manifest(bundle, names)
     tests = _fresh(target / TEST_NAME)
     results = synthetic_results()
@@ -173,39 +166,18 @@ def _write_rules(folder: Path) -> None:
 
 
 def _write_catalogues(folder: Path, names: list[str]) -> None:
-    """The packaged catalogue files as shipped, after loading each set checks them."""
-    data = resources.files("apb_catalog").joinpath("data")
-    for name in ("catalogues.json", "vocabulary.json", "requirements.json"):
-        _copy(data.joinpath(name), folder / name)
+    """The packaged catalogue tables and their ``datapackage.json``, after loading each set
+    checks them."""
     for name in names:
         packaged_catalogues(name)
-        for kind in ("sources", "producers", "annotations"):
-            directory = data.joinpath(kind, name)
-            if not directory.is_dir():
-                continue
-            for path in directory.iterdir():
-                if path.name.endswith(".json"):
-                    _copy(path, folder / kind / name / path.name)
+    data = resources.files("apb_catalog").joinpath("data")
+    for name in ("datapackage.json", *(f"{table}.csv" for table in TABLES)):
+        _copy(data.joinpath(name), folder / name)
 
 
 def _copy(source: Traversable, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(source.read_text("utf-8"), "utf-8")
-
-
-def _write_schemas(folder: Path) -> None:
-    """JSON Schemas of every catalogue file the bundle carries."""
-    schemas: dict[str, dict[str, object]] = {
-        "catalogues": TypeAdapter(dict[str, CatalogueDescription]).json_schema(),
-        "vocabulary": Vocabulary.model_json_schema(),
-        "requirements": TypeAdapter(dict[str, tuple[RequirementRow, ...]]).json_schema(),
-        "source-catalogue": SourceCatalogue.model_json_schema(),
-        "producer-catalogue": ProducerCatalogue.model_json_schema(),
-        "annotation-catalogue": AnnotationCatalogue.model_json_schema(),
-    }
-    folder.mkdir(parents=True)
-    for name, found in schemas.items():
-        (folder / f"{name}.schema.json").write_text(json.dumps(found, indent=2) + "\n", "utf-8")
 
 
 # Synthetic results ---------------------------------------------------------------------------

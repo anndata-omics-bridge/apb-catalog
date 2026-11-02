@@ -1,0 +1,2 @@
+set,producer,requires,instruction
+toy,apb-fasta,fasta.provenance.peptide_verification,run `apb-fasta verify-peptides`

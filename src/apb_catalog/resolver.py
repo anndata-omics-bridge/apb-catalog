@@ -8,7 +8,8 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from apb_catalog.source import READS, Location, Reference, Requirement, ReviewedRule, SourceEntry
+from apb_catalog.rules import Location
+from apb_catalog.source import READS, Reference, Requirement, ReviewedRule, SourceEntry
 from apb_catalog.vocabulary import UNKNOWN, FrozenModel
 
 type ResolutionStatus = Literal["resolved", "missing", "ambiguous", "unknown"]
@@ -113,8 +114,6 @@ class ReviewedBinding(FrozenModel):
 
     status: Literal["reviewed"] = "reviewed"
     level: str
-    catalogue_id: str
-    catalogue_version: str
     software_name: str
     software_version_pattern: str
     rule: str
@@ -236,8 +235,6 @@ class ReviewedLevel:
         catalogue = self.rule.catalogue
         return ReviewedBinding(
             level=self.level,
-            catalogue_id=catalogue.catalogue_id,
-            catalogue_version=catalogue.catalogue_version,
             software_name=catalogue.software_name,
             software_version_pattern=self.rule.variant.software_version_pattern,
             rule=self.rule.variant.rule,

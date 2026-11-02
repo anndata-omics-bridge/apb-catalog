@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib import resources
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
 UNKNOWN = "unknown"
-"""The qualifier value recording that a reviewer could not establish the fact."""
+"""The qualifier value recording that a reviewer could not establish the fact; every qualifier
+defines it."""
 
 
 class FrozenModel(BaseModel):
@@ -18,15 +18,16 @@ class FrozenModel(BaseModel):
 
 
 class Qualifier(FrozenModel):
-    """One dimension of a set's meanings and the meanings of its admitted values."""
+    """One dimension of a set's meanings and the meanings of its admitted values, ``unknown``
+    among them."""
 
     definition: str
     values: dict[str, str]
 
     @model_validator(mode="after")
-    def _unknown_is_reserved(self) -> Qualifier:
-        if UNKNOWN in self.values:
-            raise ValueError(f"qualifier value {UNKNOWN!r} is reserved")
+    def _defines_unknown(self) -> Qualifier:
+        if UNKNOWN not in self.values:
+            raise ValueError(f"a qualifier defines the value {UNKNOWN!r}")
         return self
 
 
@@ -46,7 +47,7 @@ class SetVocabulary(FrozenModel):
         return self
 
     def check_description(self, qualifiers: Mapping[str, str], /) -> None:
-        """Require every qualifier, each with an admitted value or ``unknown``."""
+        """Require every qualifier, each with an admitted value."""
         if set(qualifiers) != set(self.qualifiers):
             raise ValueError(
                 f"qualifiers must be exactly {sorted(self.qualifiers)}, got {sorted(qualifiers)}"
@@ -55,7 +56,7 @@ class SetVocabulary(FrozenModel):
             self._check_value(name, value)
 
     def check_predicate(self, qualifiers: Mapping[str, tuple[str, ...]], /) -> None:
-        """Allow any subset of qualifiers, each accepting admitted values or ``unknown``."""
+        """Allow any subset of qualifiers, each accepting admitted values."""
         for name, accepted in qualifiers.items():
             if not accepted:
                 raise ValueError(f"qualifier {name!r} accepts no value")
@@ -66,20 +67,7 @@ class SetVocabulary(FrozenModel):
         qualifier = self.qualifiers.get(name)
         if qualifier is None:
             raise ValueError(f"unknown qualifier {name!r}; declared: {sorted(self.qualifiers)}")
-        if value != UNKNOWN and value not in qualifier.values:
+        if value not in qualifier.values:
             raise ValueError(
                 f"qualifier {name!r} does not admit {value!r}; admitted: {sorted(qualifier.values)}"
             )
-
-
-class Vocabulary(FrozenModel):
-    """The versioned vocabularies of the packaged sets, by set name."""
-
-    vocabulary_version: str
-    sets: dict[str, SetVocabulary]
-
-
-def packaged_vocabulary() -> Vocabulary:
-    """Load the vocabularies shipped with this package."""
-    text = resources.files("apb_catalog").joinpath("data", "vocabulary.json").read_text("utf-8")
-    return Vocabulary.model_validate_json(text)

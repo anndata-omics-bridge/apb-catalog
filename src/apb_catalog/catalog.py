@@ -27,12 +27,11 @@ from apb_catalog.resolver import (
     ReviewedLevel,
     UnreviewedLevel,
 )
+from apb_catalog.rules import Address, Location
 from apb_catalog.snapshot import ResolutionSnapshot, this_producer
 from apb_catalog.source import (
-    Address,
     AnnotationCatalogue,
     CatalogueDescription,
-    Location,
     ProducerCatalogue,
     RequirementRow,
     SourceCatalogues,

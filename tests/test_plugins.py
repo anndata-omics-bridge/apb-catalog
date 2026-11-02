@@ -8,8 +8,13 @@ import polars as pl
 import pytest
 
 from apb_catalog.coverage import catalogues, rule_coverage
-from apb_catalog.source import PLUGIN_GROUP, catalogue_descriptions, catalogue_set, plugin_folders
-from apb_catalog.vocabulary import packaged_vocabulary
+from apb_catalog.source import (
+    PLUGIN_GROUP,
+    catalog_version,
+    catalogue_descriptions,
+    catalogue_set,
+    plugin_folders,
+)
 from tests.conftest import TESTS
 
 
@@ -29,7 +34,8 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
 
 
 def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> None:
-    """DIA-NN supplies every MUST field; FragPipe names no protein group."""
+    """DIA-NN supplies every MUST field; FragPipe names no protein group; a set with vendor
+    entries reviews every packaged rule level, so a vendor it catalogues nothing of fails."""
     judged = (
         rule_coverage(toy_set)
         .filter(pl.col("verdict").is_not_null())
@@ -37,14 +43,16 @@ def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> No
         .group_by("software")
         .agg(pl.col("verdict").unique().sort())
     )
-    assert dict(judged.iter_rows()) == {"DIA-NN": ["pass"], "FragPipe": ["fail"]}
+    verdicts = dict(judged.iter_rows())
+    assert (verdicts.pop("DIA-NN"), verdicts.pop("FragPipe")) == (["pass"], ["fail"])
+    assert verdicts and all(found == ["fail"] for found in verdicts.values())
 
 
 def test_a_plugin_set_brings_its_own_vocabulary(toy_set: str) -> None:
     """Its qualifiers are its own, under the packaged vocabulary version."""
     sources = catalogue_set(toy_set)
     assert set(sources.vocabulary.qualifiers) == {"kind", "origin"}
-    assert sources.vocabulary_version == packaged_vocabulary().vocabulary_version
+    assert sources.vocabulary_version == catalog_version()
 
 
 def test_an_unknown_set_names_packaged_and_plugin_sets(toy_set: str) -> None:
@@ -66,7 +74,7 @@ def test_a_plugin_cannot_take_a_packaged_sets_name(monkeypatch: pytest.MonkeyPat
 def test_an_entry_point_names_the_package_holding_the_set() -> None:
     """The entry point's value is an importable package; its folder holds the set."""
     folders = plugin_folders(EntryPoints([EntryPoint("toy", "tests", PLUGIN_GROUP)]))
-    assert folders["toy"].joinpath("toy_set", "catalogue.json").is_file()
+    assert folders["toy"].joinpath("toy_set", "entries.csv").is_file()
 
 
 def test_two_plugins_cannot_name_one_set() -> None:

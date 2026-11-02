@@ -13,8 +13,8 @@ from typing import Literal, cast
 import polars as pl
 
 from apb_catalog import rules
+from apb_catalog.rules import Address
 from apb_catalog.source import (
-    Address,
     ProducerCatalogue,
     RequirementRow,
     RuleVariant,

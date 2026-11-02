@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from importlib import resources
-
 import pytest
 from apb2.api import FIXED_COLUMNS, VAR_ROLES
 
@@ -21,7 +19,6 @@ from apb_catalog.source import (
     packaged_catalogues,
     packaged_descriptions,
 )
-from apb_catalog.vocabulary import packaged_vocabulary
 from tests.packaged_rules import (
     abundance_layers,
     declared_software_versions,
@@ -30,7 +27,7 @@ from tests.packaged_rules import (
     retained_sources,
 )
 
-CONFIDENCE = packaged_vocabulary().sets["confidence"]
+CONFIDENCE = packaged_catalogues("confidence").vocabulary
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
 ION = RuleVariant(
@@ -38,14 +35,8 @@ ION = RuleVariant(
 )
 
 
-def _catalogues(name: str) -> list[SourceCatalogue]:
-    directory = resources.files("apb_catalog").joinpath("data", "sources", name)
-    if not directory.is_dir():
-        return []
-    return [
-        SourceCatalogue.model_validate_json(path.read_text("utf-8"))
-        for path in sorted(directory.iterdir(), key=lambda path: path.name)
-    ]
+def _catalogues(name: str) -> tuple[SourceCatalogue, ...]:
+    return packaged_catalogues(name).catalogues
 
 
 def _entry(name: str, **qualifiers: str) -> SourceEntry:
@@ -60,8 +51,6 @@ def _entry(name: str, **qualifiers: str) -> SourceEntry:
 
 def _catalogue(*entries: SourceEntry, **overrides: object) -> SourceCatalogue:
     fields: dict[str, object] = {
-        "catalogue_id": "vendor",
-        "catalogue_version": "0.1",
         "software_name": "Vendor",
         "variants": (ION,),
         "entries": entries,
@@ -215,7 +204,7 @@ def test_entry_qualifier_values_must_be_admitted() -> None:
 def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
     """One software version's level cannot be bound to two vendor catalogues of one set."""
     first = _catalogue(_entry("PEP"))
-    second = _catalogue(catalogue_id="other")
+    second = _catalogue()
     with pytest.raises(ValueError, match="reviewed more than once"):
         SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
 
@@ -226,15 +215,13 @@ def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
         rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^2\\."
     )
     first = _catalogue(_entry("PEP"))
-    second = _catalogue(_entry("PEP"), catalogue_id="other", variants=(later,))
+    second = _catalogue(_entry("PEP"), variants=(later,))
     with pytest.raises(ValueError, match="repeats"):
         SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
 
 
 def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:
     fields: dict[str, object] = {
-        "catalogue_id": "tool",
-        "catalogue_version": "0.1",
         "producer": "tool",
         "requires": ("tool", "provenance"),
         "instruction": "run `tool`",
@@ -309,7 +296,7 @@ def test_apb2_entries_name_fixed_columns_or_var_roles(toy_set: str) -> None:
     unwritten: list[str] = []
     for name in catalogue_descriptions():
         for producer in catalogue_set(name).producers:
-            if producer.catalogue_id != "apb2":
+            if producer.producer != "APB2":
                 continue
             for entry in producer.entries:
                 reference = entry.reference

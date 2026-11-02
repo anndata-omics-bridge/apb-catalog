@@ -16,8 +16,7 @@ from apb_catalog.source import (
     SourceCatalogues,
     SourceEntry,
 )
-from apb_catalog.vocabulary import SetVocabulary
-from tests.conftest import TESTS
+from apb_catalog.vocabulary import Qualifier, SetVocabulary
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 RULE = "diann/v2/rules.json"
@@ -27,8 +26,20 @@ REQUIRED = (
     RequirementRow(level="peptidoform_ion", location="var", kind="charge", requirement="MUST"),
     RequirementRow(level="peptidoform_ion", location="var", kind="decoy", requirement="MAY"),
 )
-VOCABULARY = SetVocabulary.model_validate_json(
-    (TESTS / "toy_set" / "vocabulary.json").read_text("utf-8")
+VOCABULARY = SetVocabulary(
+    definition="A synthetic field the tests look up.",
+    qualifiers={
+        "kind": Qualifier(
+            definition="Which synthetic field.",
+            values=dict.fromkeys(
+                ("group", "charge", "decoy", "contaminant", "peptidoform", "unknown"), "test"
+            ),
+        ),
+        "origin": Qualifier(
+            definition="Who writes the field.",
+            values=dict.fromkeys(("vendor", "apb2", "apb_fasta", "unknown"), "test"),
+        ),
+    },
 )
 
 
@@ -54,8 +65,6 @@ def _sources(
     *entries: SourceEntry, producers: tuple[ProducerCatalogue, ...] = ()
 ) -> SourceCatalogues:
     vendor = SourceCatalogue(
-        catalogue_id="diann",
-        catalogue_version="0.1",
         software_name="DIA-NN",
         variants=(ION,),
         entries=entries,
@@ -65,8 +74,6 @@ def _sources(
 
 def _producer(*entries: SourceEntry, requires: tuple[str, ...] = ()) -> ProducerCatalogue:
     return ProducerCatalogue(
-        catalogue_id="tool",
-        catalogue_version="0.1",
         producer="tool",
         requires=requires,
         instruction="run `tool`" if requires else None,
@@ -129,8 +136,6 @@ def test_a_later_producer_counts_with_what_to_run() -> None:
 def test_requirements_must_name_vocabulary_kinds() -> None:
     """A requirement for a kind the set's vocabulary does not define is refused."""
     vendor = SourceCatalogue(
-        catalogue_id="diann",
-        catalogue_version="0.1",
         software_name="DIA-NN",
         variants=(ION,),
         entries=(GROUP,),

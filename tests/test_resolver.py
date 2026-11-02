@@ -19,8 +19,9 @@ from apb_catalog.source import (
     RuleVariant,
     SourceCatalogue,
     SourceEntry,
+    packaged_catalogues,
 )
-from apb_catalog.vocabulary import Qualifier, SetVocabulary, packaged_vocabulary
+from apb_catalog.vocabulary import Qualifier, SetVocabulary
 
 VARIANT = RuleVariant(
     rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^1\\."
@@ -42,8 +43,6 @@ def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntr
 
 def _level(*entries: SourceEntry) -> ReviewedLevel:
     catalogue = SourceCatalogue(
-        catalogue_id="vendor",
-        catalogue_version="0.1",
         software_name="Vendor",
         variants=(VARIANT,),
         entries=entries,
@@ -156,7 +155,7 @@ def test_a_resolution_carries_a_reference_exactly_when_resolved() -> None:
 
 def test_request_predicates_are_checked_against_the_vocabulary() -> None:
     """A request may name only declared qualifiers and admitted values."""
-    vocabulary = packaged_vocabulary().sets["confidence"]
+    vocabulary = packaged_catalogues("confidence").vocabulary
     vocabulary.check_predicate({"kind": ("pep", "unknown")})
     with pytest.raises(ValueError, match="unknown qualifier"):
         vocabulary.check_predicate({"flavour": ("pep",)})
@@ -172,18 +171,16 @@ def test_every_set_vocabulary_has_a_kind() -> None:
         SetVocabulary(definition="test", qualifiers={})
 
 
-def test_unknown_is_a_reserved_qualifier_value() -> None:
-    """The vocabulary cannot redefine ``unknown`` as an ordinary value."""
-    with pytest.raises(ValueError, match="reserved"):
-        Qualifier(definition="test", values={"unknown": "not allowed"})
+def test_every_qualifier_defines_unknown() -> None:
+    """``unknown`` is a value of every qualifier, defined like the others."""
+    with pytest.raises(ValueError, match="defines the value 'unknown'"):
+        Qualifier(definition="test", values={"pep": "a posterior error probability"})
 
 
 def test_a_pending_entry_makes_its_answer_unknown_with_the_reason() -> None:
     """A field a producer has not written yet is not absent; the answer says what to run."""
     pending = PendingEntry(_entry("Tool_Q", "var", kind="q_value"), "tool has not run; run `tool`")
     catalogue = SourceCatalogue(
-        catalogue_id="vendor",
-        catalogue_version="0.1",
         software_name="Vendor",
         variants=(VARIANT,),
         entries=(_entry("PEP"),),

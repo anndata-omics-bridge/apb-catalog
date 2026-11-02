@@ -1,0 +1,597 @@
+{
+  "$defs": {
+    "Candidate": {
+      "additionalProperties": false,
+      "description": "One entry compatible with a request, and the requested qualifiers it leaves unknown.",
+      "properties": {
+        "entry_id": {
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/Reference"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        },
+        "undecided": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Undecided",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entry_id",
+        "reference",
+        "qualifiers"
+      ],
+      "title": "Candidate",
+      "type": "object"
+    },
+    "CatalogueDescription": {
+      "additionalProperties": false,
+      "description": "What one catalogue set holds and who uses it.",
+      "properties": {
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        },
+        "used_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Used By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "purpose",
+        "used_by"
+      ],
+      "title": "CatalogueDescription",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "Why a reviewer assigned an entry's meaning.",
+      "properties": {
+        "basis": {
+          "title": "Basis",
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        }
+      },
+      "required": [
+        "basis"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "FieldRequest": {
+      "additionalProperties": false,
+      "description": "A consumer's question: one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``\ntables.",
+      "properties": {
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Location"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "level"
+      ],
+      "title": "FieldRequest",
+      "type": "object"
+    },
+    "LevelBinding": {
+      "discriminator": {
+        "mapping": {
+          "produced": "#/$defs/ProducedBinding",
+          "reviewed": "#/$defs/ReviewedBinding",
+          "unreviewed": "#/$defs/UnreviewedBinding"
+        },
+        "propertyName": "status"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ReviewedBinding"
+        },
+        {
+          "$ref": "#/$defs/ProducedBinding"
+        },
+        {
+          "$ref": "#/$defs/UnreviewedBinding"
+        }
+      ]
+    },
+    "Location": {
+      "enum": [
+        "obs",
+        "layers",
+        "var",
+        "varm"
+      ],
+      "type": "string"
+    },
+    "ProducedBinding": {
+      "additionalProperties": false,
+      "description": "A level of a set without vendor catalogues: only APB's own fields answer.",
+      "properties": {
+        "status": {
+          "const": "produced",
+          "default": "produced",
+          "title": "Status",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "software_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Name"
+        },
+        "software_version_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Version Pattern"
+        }
+      },
+      "required": [
+        "level",
+        "software_name",
+        "software_version_pattern"
+      ],
+      "title": "ProducedBinding",
+      "type": "object"
+    },
+    "Producer": {
+      "additionalProperties": false,
+      "description": "The package and version that wrote a snapshot.",
+      "properties": {
+        "package": {
+          "title": "Package",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "package",
+        "version"
+      ],
+      "title": "Producer",
+      "type": "object"
+    },
+    "Qualifier": {
+      "additionalProperties": false,
+      "description": "One dimension of a set's meanings and the meanings of its admitted values, ``unknown``\namong them.",
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "definition",
+        "values"
+      ],
+      "title": "Qualifier",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "description": "Where one field lives in an APB result: by its APB output name, its role or a prefix.\n\nA ``varm`` field also names its feature-aligned table. A ``var`` field may be named by the\nrole the level's rule gives it, and an ``obs`` field of a sample annotation by the prefix of\nits column name; both are bound to the column a level holds before they answer.",
+      "properties": {
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/Location"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Name"
+        },
+        "table": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Table"
+        },
+        "role": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Role"
+        },
+        "prefix": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prefix"
+        }
+      },
+      "required": [
+        "level",
+        "location"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "Requirement": {
+      "enum": [
+        "MUST",
+        "SHOULD",
+        "MAY"
+      ],
+      "type": "string"
+    },
+    "Resolution": {
+      "additionalProperties": false,
+      "description": "The answer to one request; only ``resolved`` carries a reference.\n\n``requirement`` records the requirement a missing field had when the lookup enforced it.",
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/FieldRequest"
+        },
+        "status": {
+          "$ref": "#/$defs/ResolutionStatus"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Reference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "candidates": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Candidate"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "reasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "requirement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Requirement"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "request",
+        "status"
+      ],
+      "title": "Resolution",
+      "type": "object"
+    },
+    "ResolutionStatus": {
+      "enum": [
+        "resolved",
+        "missing",
+        "ambiguous",
+        "unknown"
+      ],
+      "type": "string"
+    },
+    "ReviewedBinding": {
+      "additionalProperties": false,
+      "description": "A level whose rule's software and version match a reviewed catalogue variant.",
+      "properties": {
+        "status": {
+          "const": "reviewed",
+          "default": "reviewed",
+          "title": "Status",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "software_name": {
+          "title": "Software Name",
+          "type": "string"
+        },
+        "software_version_pattern": {
+          "title": "Software Version Pattern",
+          "type": "string"
+        },
+        "rule": {
+          "title": "Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "software_name",
+        "software_version_pattern",
+        "rule"
+      ],
+      "title": "ReviewedBinding",
+      "type": "object"
+    },
+    "SetVocabulary": {
+      "additionalProperties": false,
+      "description": "What one set's entries mean, with every qualifier they must be described by.\n\nEvery set has a ``kind`` qualifier.",
+      "properties": {
+        "definition": {
+          "title": "Definition",
+          "type": "string"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Qualifier"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        }
+      },
+      "required": [
+        "definition",
+        "qualifiers"
+      ],
+      "title": "SetVocabulary",
+      "type": "object"
+    },
+    "SourceEntry": {
+      "additionalProperties": false,
+      "description": "The reviewed meaning of one retained field under the listed rule documents.",
+      "properties": {
+        "entry_id": {
+          "title": "Entry Id",
+          "type": "string"
+        },
+        "rules": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "reference": {
+          "$ref": "#/$defs/Reference"
+        },
+        "qualifiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Qualifiers",
+          "type": "object"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        }
+      },
+      "required": [
+        "entry_id",
+        "rules",
+        "reference",
+        "qualifiers",
+        "evidence"
+      ],
+      "title": "SourceEntry",
+      "type": "object"
+    },
+    "UnreviewedBinding": {
+      "additionalProperties": false,
+      "description": "A level no catalogue describes, and why.",
+      "properties": {
+        "status": {
+          "const": "unreviewed",
+          "default": "unreviewed",
+          "title": "Status",
+          "type": "string"
+        },
+        "level": {
+          "title": "Level",
+          "type": "string"
+        },
+        "software_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Name"
+        },
+        "software_version_pattern": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Software Version Pattern"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "level",
+        "software_name",
+        "software_version_pattern",
+        "reason"
+      ],
+      "title": "UnreviewedBinding",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Level bindings, the retained entries they supply, and the answers to consumer requests.",
+  "properties": {
+    "contract": {
+      "const": "apb-catalog-resolution",
+      "default": "apb-catalog-resolution",
+      "title": "Contract",
+      "type": "string"
+    },
+    "contract_version": {
+      "const": "0.6",
+      "default": "0.6",
+      "title": "Contract Version",
+      "type": "string"
+    },
+    "producer": {
+      "$ref": "#/$defs/Producer"
+    },
+    "catalogue": {
+      "title": "Catalogue",
+      "type": "string"
+    },
+    "description": {
+      "$ref": "#/$defs/CatalogueDescription"
+    },
+    "vocabulary_version": {
+      "title": "Vocabulary Version",
+      "type": "string"
+    },
+    "vocabulary": {
+      "$ref": "#/$defs/SetVocabulary"
+    },
+    "levels": {
+      "items": {
+        "$ref": "#/$defs/LevelBinding"
+      },
+      "title": "Levels",
+      "type": "array"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/SourceEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+    },
+    "resolutions": {
+      "items": {
+        "$ref": "#/$defs/Resolution"
+      },
+      "title": "Resolutions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "producer",
+    "catalogue",
+    "description",
+    "vocabulary_version",
+    "vocabulary",
+    "levels",
+    "entries",
+    "resolutions"
+  ],
+  "title": "ResolutionSnapshot",
+  "type": "object"
+}

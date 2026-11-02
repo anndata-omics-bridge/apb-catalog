@@ -1,0 +1,9 @@
+set,entry_id,qualifier,value
+toy,diann.peptidoform_ion.Precursor_Charge.charge,origin,vendor
+toy,diann.peptidoform_ion.Protein_Group.group,origin,vendor
+toy,diann.peptidoform_ion.apb_Decoy.decoy,origin,vendor
+toy,fragpipe.peptidoform_ion.Charge.charge,origin,vendor
+toy,fragpipe.peptidoform_ion.apb_Decoy.decoy,origin,vendor
+toy,fragpipe.peptidoform_ion.apb_Contaminant.contaminant,origin,vendor
+toy,apb2.peptidoform_ion.ProForma_peptidoform.peptidoform,origin,apb2
+toy,apb_fasta.peptidoform_ion.fasta_matches_contaminant.contaminant,origin,apb_fasta

@@ -1,0 +1,14 @@
+set,qualifier,value,definition,purpose,used_by
+toy,,,A synthetic field the tests look up.,"Synthetic plugin set: a few ion fields from vendors, APB2 and apb-fasta.",apb-catalog tests
+toy,kind,,Which synthetic field.,,
+toy,kind,group,The protein group the feature belongs to.,,
+toy,kind,charge,The precursor charge.,,
+toy,kind,decoy,Whether the feature is a decoy.,,
+toy,kind,contaminant,Whether the feature is a contaminant.,,
+toy,kind,peptidoform,The modified sequence without charge.,,
+toy,kind,unknown,The reviewer could not establish this.,,
+toy,origin,,Who writes the field.,,
+toy,origin,vendor,The vendor's export.,,
+toy,origin,apb2,APB2's canonical columns.,,
+toy,origin,apb_fasta,"apb-fasta, after it has run.",,
+toy,origin,unknown,The reviewer could not establish this.,,
