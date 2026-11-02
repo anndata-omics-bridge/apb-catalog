@@ -12,7 +12,6 @@ def test_api_exports_exactly_the_approved_names() -> None:
         "MissingRequiredField",
         "Reference",
         "ResolutionSnapshot",
-        "StaleField",
         "UnresolvedField",
         "attach_snapshot",
         "catalogue_table",

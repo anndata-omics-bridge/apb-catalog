@@ -106,9 +106,9 @@ def meaning(
 def table(catalogue: str | None = None, /, *, output: Path | None = None) -> int:
     """Write every catalogue set, or CATALOGUE alone, as one long CSV table.
 
-    One row per entry and rule it applies to: set, source, version pattern, rule, level,
-    location, table, name, one ``qualifier.<name>`` column per qualifier, requirement and entry
-    id. Written to standard output, or to ``--output``.
+    One row per entry and software version it applies to: set, source, software version
+    pattern, level, location, table, name, one ``qualifier.<name>`` column per qualifier,
+    requirement and entry id. Written to standard output, or to ``--output``.
     """
     try:
         rows = catalogue_table(catalogue)
@@ -188,9 +188,6 @@ def _field(row: dict[str, object]) -> str:
     if row["column"] is None:
         return f"{label}: missing"
     column = f"{row['table']}.{row['column']}" if row["table"] else str(row["column"])
-    inputs = cast(list[str] | None, row["inputs"])
-    if row["producer"] is None and inputs:
-        column += " ← " + ", ".join(inputs)
     notes = [str(note) for note in (row["origin"], row["needs"]) if note]
     return f"{label}: {column}" + (f" ({'; '.join(notes)})" if notes else "")
 

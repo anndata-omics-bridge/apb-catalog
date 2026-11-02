@@ -30,7 +30,7 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
         toy_set,
     ]
     toy = listed.filter(pl.col("catalogue") == toy_set).row(0, named=True)
-    assert (toy["has_requirements"], toy["entries"]) == (True, 8)
+    assert (toy["has_requirements"], toy["entries"]) == (True, 22)
 
 
 def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> None:
@@ -39,7 +39,7 @@ def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> No
     judged = (
         rule_coverage(toy_set)
         .filter(pl.col("verdict").is_not_null())
-        .unique(["rule", "level"])
+        .unique(["software", "software_version_pattern", "level"])
         .group_by("software")
         .agg(pl.col("verdict").unique().sort())
     )

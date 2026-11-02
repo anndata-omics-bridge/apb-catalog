@@ -23,9 +23,7 @@ from apb_catalog.source import (
 )
 from apb_catalog.vocabulary import Qualifier, SetVocabulary
 
-VARIANT = RuleVariant(
-    rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^1\\."
-)
+VARIANT = RuleVariant(level="peptidoform_ion", software_version_pattern="^1\\.")
 
 
 def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntry:
@@ -33,7 +31,7 @@ def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntr
     return SourceEntry.model_validate(
         {
             "entry_id": f"vendor.peptidoform_ion.{name}",
-            "rules": ("vendor/rules.json",),
+            "software_version_pattern": ("^1\\.",),
             "reference": {"level": "peptidoform_ion", "location": location, "name": name},
             "qualifiers": described,
             "evidence": Evidence(basis="test"),
@@ -199,7 +197,7 @@ def test_a_var_request_reads_varm_tables_too() -> None:
     flag = SourceEntry.model_validate(
         {
             "entry_id": "vendor.peptidoform_ion.flag",
-            "rules": ("vendor/rules.json",),
+            "software_version_pattern": ("^1\\.",),
             "reference": {
                 "level": "peptidoform_ion",
                 "location": "varm",

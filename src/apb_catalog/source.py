@@ -1,4 +1,4 @@
-"""Reviewed meanings of retained APB fields, per vendor and effective-rule variant."""
+"""Reviewed meanings of retained APB fields, per vendor and software version."""
 
 from __future__ import annotations
 
@@ -31,28 +31,25 @@ READS: dict[Location, tuple[Location, ...]] = {
 
 
 class Reference(FrozenModel):
-    """Where one field lives in an APB result: by its APB output name, its role or a prefix.
+    """Where one field lives in an APB result: by its APB output name or a prefix.
 
-    A ``varm`` field also names its feature-aligned table. A ``var`` field may be named by the
-    role the level's rule gives it, and an ``obs`` field of a sample annotation by the prefix of
-    its column name; both are bound to the column a level holds before they answer.
+    A ``varm`` field also names its feature-aligned table. An ``obs`` field of a sample
+    annotation is named by the prefix of its column name and bound to the column a level holds
+    before it answers.
     """
 
     level: str
     location: Location
     name: str | None = None
     table: str | None = None
-    role: str | None = None
     prefix: str | None = None
 
     @model_validator(mode="after")
     def _one_way_to_name(self) -> Reference:
         if (self.location == "varm") != (self.table is not None):
             raise ValueError("a reference names a table exactly when it lives in varm")
-        if sum(value is not None for value in (self.name, self.role, self.prefix)) != 1:
-            raise ValueError("a reference gives exactly one of name, role or prefix")
-        if self.role is not None and self.location != "var":
-            raise ValueError("a role names a var column")
+        if (self.name is None) == (self.prefix is None):
+            raise ValueError("a reference gives exactly one of name or prefix")
         if self.prefix is not None and self.location != "obs":
             raise ValueError("a prefix names an obs column")
         return self
@@ -76,10 +73,10 @@ class Evidence(FrozenModel):
 
 
 class SourceEntry(FrozenModel):
-    """The reviewed meaning of one retained field under the listed rule documents."""
+    """The reviewed meaning of one retained field for the listed software version patterns."""
 
     entry_id: str
-    rules: tuple[str, ...]
+    software_version_pattern: tuple[str, ...]
     reference: Reference
     qualifiers: dict[str, str]
     evidence: Evidence
@@ -90,9 +87,8 @@ class SourceEntry(FrozenModel):
 
 
 class RuleVariant(FrozenModel):
-    """One packaged rule level, bound by the software version pattern its rule declares."""
+    """One packaged rule level: a level APB2 converts for one software version pattern."""
 
-    rule: str
     level: str
     software_version_pattern: str
 
@@ -109,15 +105,17 @@ class SourceCatalogue(FrozenModel):
         entry_ids = [entry.entry_id for entry in self.entries]
         if len(entry_ids) != len(set(entry_ids)):
             raise ValueError(f"{self.software_name}: duplicate entry ids")
-        declared = {(variant.rule, variant.level) for variant in self.variants}
+        declared = {(variant.software_version_pattern, variant.level) for variant in self.variants}
         if len(declared) != len(self.variants):
             raise ValueError(f"{self.software_name}: duplicate rule variants")
         for entry in self.entries:
-            if not entry.rules:
-                raise ValueError(f"{self.software_name}: {entry.reference} lists no rules")
+            if not entry.software_version_pattern:
+                raise ValueError(f"{self.software_name}: {entry.reference} lists no version")
             if entry.reference.name is None:
                 raise ValueError(f"{self.software_name}: a vendor entry names its column")
-            undeclared = {(rule, entry.reference.level) for rule in entry.rules} - declared
+            undeclared = {
+                (pattern, entry.reference.level) for pattern in entry.software_version_pattern
+            } - declared
             if undeclared:
                 raise ValueError(f"{self.software_name}: {entry.reference} uses {undeclared}")
         return self
@@ -132,16 +130,16 @@ class SourceCatalogue(FrozenModel):
         return tuple(
             entry
             for entry in self.entries
-            if variant.rule in entry.rules and entry.reference.level == variant.level
+            if variant.software_version_pattern in entry.software_version_pattern
+            and entry.reference.level == variant.level
         )
 
 
 class ProducerCatalogue(FrozenModel):
-    """Fields an APB producer, not the vendor, writes on every rule's level.
+    """Fields an app such as apb-fasta writes after conversion, on every software's level.
 
-    ``requires`` is the metadata path that records the producer's run; conversion's own columns
-    need none. Until a required run is recorded, its entries are pending and ``instruction``
-    says what to run.
+    ``requires`` is the metadata path that records the app's run. Until a required run is
+    recorded, its entries are pending and ``instruction`` says what to run.
     """
 
     producer: str
@@ -154,8 +152,8 @@ class ProducerCatalogue(FrozenModel):
         entry_ids = [entry.entry_id for entry in self.entries]
         if len(entry_ids) != len(set(entry_ids)):
             raise ValueError(f"{self.label}: duplicate entry ids")
-        if any(entry.rules for entry in self.entries):
-            raise ValueError(f"{self.label}: producer entries apply to every rule")
+        if any(entry.software_version_pattern for entry in self.entries):
+            raise ValueError(f"{self.label}: app entries apply to every software version")
         if any(entry.reference.prefix is not None for entry in self.entries):
             raise ValueError(f"{self.label}: prefixes belong to annotation catalogues")
         if bool(self.requires) != (self.instruction is not None):
@@ -164,8 +162,8 @@ class ProducerCatalogue(FrozenModel):
 
     @property
     def label(self) -> str:
-        """Who the entries come from: ``producer:<name>``."""
-        return f"producer:{self.producer}"
+        """Who the entries come from: the app."""
+        return self.producer
 
     def entries_on(self, level: str) -> tuple[SourceEntry, ...]:
         """Return the entries this producer supplies on one level."""
@@ -206,8 +204,8 @@ class AnnotationCatalogue(FrozenModel):
         entry_ids = [entry.entry_id for entry in self.entries]
         if len(entry_ids) != len(set(entry_ids)):
             raise ValueError(f"{self.label}: duplicate entry ids")
-        if any(entry.rules for entry in self.entries):
-            raise ValueError(f"{self.label}: annotation entries apply to every rule")
+        if any(entry.software_version_pattern for entry in self.entries):
+            raise ValueError(f"{self.label}: annotation entries apply to every software version")
         if any(entry.reference.location != "obs" for entry in self.entries):
             raise ValueError(f"{self.label}: annotation entries name obs columns")
         return self
@@ -276,8 +274,8 @@ class SourceCatalogues:
     """One set's source catalogues, checked against its vocabulary and indexed by software and
     version.
 
-    ``producers`` hold the fields APB itself writes and ``annotations`` the sample-annotation
-    fields; both apply to every level. A set made only of them has no vendor catalogue and needs
+    ``producers`` hold the fields apps write after conversion and ``annotations`` the
+    sample-annotation fields; both apply to every software version. A set made only of them has no vendor catalogue and needs
     no review. ``requirements`` are the consumer's requirement rows; a set without them is
     checked for coverage only.
     """
@@ -454,9 +452,9 @@ def _set_names(folder: Traversable, /) -> list[str]:
 def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
     """Load one set's rows from a folder of catalogue tables and check them.
 
-    Vendor entries name their software in ``source``; such a set reviews every rule level of
-    APB2's packaged rules. ``producer:<name>`` and ``annotation:<convention>`` entries apply to
-    every rule.
+    Vendor entries name their conversion software in ``source``; such a set reviews every rule
+    level ``rule_levels.csv`` lists. A source ``producers.csv`` names is an app; its entries and
+    ``annotation:<convention>`` entries apply to every software version.
     """
 
     def rows(table: str) -> list[Row]:
@@ -478,24 +476,24 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
     annotations: list[AnnotationCatalogue] = []
     for source, entries in by_source.items():
         prefix, _, named = source.partition(":")
-        if prefix == "producer":
-            run = runs.pop(named, None)
-            producers.append(
-                ProducerCatalogue(
-                    producer=named,
-                    requires=() if run is None else tuple(run["requires"].split(".")),
-                    instruction=None if run is None else run["instruction"],
-                    entries=tuple(entries),
-                )
-            )
-        elif prefix == "annotation":
+        if prefix == "annotation":
             annotations.append(
                 AnnotationCatalogue.model_validate({"convention": named, "entries": entries})
+            )
+        elif source in runs:
+            run = runs.pop(source)
+            producers.append(
+                ProducerCatalogue(
+                    producer=source,
+                    requires=tuple(run["requires"].split(".")) if run["requires"] else (),
+                    instruction=run["instruction"] or None,
+                    entries=tuple(entries),
+                )
             )
         else:
             vendors[source] = tuple(entries)
     if runs:
-        raise ValueError(f"{name}: producers.csv names producers without entries {sorted(runs)}")
+        raise ValueError(f"{name}: producers.csv names apps without entries {sorted(runs)}")
     return SourceCatalogues(
         vocabulary,
         catalog_version(),
@@ -543,8 +541,8 @@ def _vocabulary(name: str, rows: Sequence[Row]) -> tuple[CatalogueDescription, S
 
 def _entry(row: Row, qualifiers: Mapping[str, str]) -> SourceEntry:
     """One entry from its ``entries.csv`` row and its other qualifiers."""
-    if row["reference_by"] not in ("name", "role", "prefix"):
-        raise ValueError(f"{row['entry_id']}: reference_by is name, role or prefix")
+    if row["reference_by"] not in ("name", "prefix"):
+        raise ValueError(f"{row['entry_id']}: reference_by is name or prefix")
     reference = Reference.model_validate(
         {
             "level": row["level"],
@@ -555,7 +553,11 @@ def _entry(row: Row, qualifiers: Mapping[str, str]) -> SourceEntry:
     )
     return SourceEntry(
         entry_id=row["entry_id"],
-        rules=tuple(row["rules"].split(";")) if row["rules"] else (),
+        software_version_pattern=(
+            tuple(row["software_version_pattern"].split(";"))
+            if row["software_version_pattern"]
+            else ()
+        ),
         reference=reference,
         qualifiers={"kind": row["kind"], **qualifiers},
         evidence=Evidence(basis=row["basis"], source=row["evidence_url"] or None),
@@ -565,18 +567,14 @@ def _entry(row: Row, qualifiers: Mapping[str, str]) -> SourceEntry:
 def _vendors(
     name: str, entries: Mapping[str, tuple[SourceEntry, ...]]
 ) -> tuple[SourceCatalogue, ...]:
-    """One catalogue per software of APB2's packaged rules, each reviewing every rule level of
+    """One catalogue per software of ``rule_levels.csv``, each reviewing every rule level of
     that software, when the set has vendor entries; none otherwise."""
     if not entries:
         return ()
     variants: dict[str, list[RuleVariant]] = {}
     for found in rule_levels():
         variants.setdefault(found.software_name, []).append(
-            RuleVariant(
-                rule=found.rule,
-                level=found.level,
-                software_version_pattern=found.software_version_pattern,
-            )
+            RuleVariant(level=found.level, software_version_pattern=found.software_version_pattern)
         )
     unknown = sorted(set(entries) - set(variants))
     if unknown:

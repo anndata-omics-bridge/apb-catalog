@@ -1,7 +1,7 @@
 {
   "name": "apb-catalog",
   "title": "APB catalogue sets",
-  "version": "0.12",
+  "version": "0.13",
   "resources": [
     {
       "name": "entries",
@@ -11,13 +11,13 @@
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
           {"name": "entry_id", "type": "string", "description": "The entry's identifier within its set."},
-          {"name": "source", "type": "string", "description": "Who writes the field: the vendor's software name, producer:<name> or annotation:<convention>."},
-          {"name": "rules", "type": "string", "description": "The APB2 rule documents a vendor entry applies to, separated by ';'; empty for producer and annotation entries, which apply to every rule."},
+          {"name": "source", "type": "string", "description": "Who writes the field: the conversion software (its own columns and those APB2's rule computes for it), an app named in producers, or annotation:<convention>."},
+          {"name": "software_version_pattern", "type": "string", "description": "The version patterns of APB2's rules for the source software the entry was reviewed for, separated by ';'; empty for app and annotation entries, which apply to every software version."},
           {"name": "level", "type": "string", "description": "The quantification level."},
           {"name": "location", "type": "string", "description": "obs, layers, var or varm."},
           {"name": "table", "type": "string", "description": "The feature-aligned table of a varm field; empty otherwise."},
-          {"name": "reference_by", "type": "string", "description": "How reference names the field: name, role or prefix."},
-          {"name": "reference", "type": "string", "description": "The field's APB output name, the role its rule gives it, or the prefix of its column name."},
+          {"name": "reference_by", "type": "string", "description": "How reference names the field: name or prefix."},
+          {"name": "reference", "type": "string", "description": "The field's APB output name, or the prefix of its column name."},
           {"name": "kind", "type": "string", "description": "What the field measures; a value of the set's kind qualifier."},
           {"name": "basis", "type": "string", "description": "Why the reviewer assigned this meaning."},
           {"name": "evidence_url", "type": "string", "description": "Where the basis can be checked; may be empty."}
@@ -77,15 +77,29 @@
     {
       "name": "producers",
       "path": "producers.csv",
-      "description": "Producers whose fields exist only after they have run on a result.",
+      "description": "Apps that write fields after conversion, such as apb-fasta, and the run that must record them before their fields exist.",
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "producer", "type": "string", "description": "The producer, as named in entries' source after producer:."},
-          {"name": "requires", "type": "string", "description": "The result metadata path, joined by '.', that records the producer's run."},
-          {"name": "instruction", "type": "string", "description": "What to run before the producer's fields exist."}
+          {"name": "producer", "type": "string", "description": "The app, as named in entries' source."},
+          {"name": "requires", "type": "string", "description": "The result metadata path, joined by '.', that records the app's run."},
+          {"name": "instruction", "type": "string", "description": "What to run before the app's fields exist."}
         ],
         "primaryKey": ["set", "producer"]
+      }
+    },
+    {
+      "name": "rule_levels",
+      "path": "rule_levels.csv",
+      "description": "The levels APB2 converts for each software version range, written from APB2's packaged rules when the catalog is written; the only APB2 fact the catalog keeps.",
+      "schema": {
+        "fields": [
+          {"name": "software", "type": "string", "description": "The software name APB2's rule declares."},
+          {"name": "software_version_pattern", "type": "string", "description": "The rule's software version pattern, as a converted result stores it."},
+          {"name": "version", "type": "string", "description": "The pattern's concise label."},
+          {"name": "level", "type": "string", "description": "A quantification level the rule converts."}
+        ],
+        "primaryKey": ["software", "software_version_pattern", "level"]
       }
     }
   ]

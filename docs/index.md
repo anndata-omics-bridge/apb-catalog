@@ -31,5 +31,6 @@ APB2 rules can mark a column with a [semantic role](https://anndata-omics-bridge
 
 - An entry holds for the software versions it was reviewed against: the software name and version pattern each level's stored rule declares
 - Tests fail when APB2 adds a rule version or level, until a reviewer adds it
+- APB2's parse rules are read only when the catalog is written; at runtime it reads its own tables
 - Lookups never transform values; the consumer reads the field it is handed
 - A snapshot of every lookup can be stored in the result, readable without this package

@@ -4,9 +4,10 @@
 with its ``.tar.gz``. The release workflow attaches both archives to the GitHub release and copies
 both folders into apbCatalogR.
 
-The bundle is what a reader looks fields up with: APB2's effective rule declarations and the
-packaged catalogue tables, CSV files described by their ``datapackage.json``. The test bundle holds synthetic Parquet results built
-from the declarations (packed in ``results.tar.gz``) and the answers this package gives on them.
+The bundle is what a reader looks fields up with: the packaged catalogue tables, CSV files
+described by their ``datapackage.json``, ``rule_levels.csv`` among them. The test bundle holds
+synthetic Parquet results built from APB2's effective rule declarations (packed in
+``results.tar.gz``) and the answers this package gives on them.
 Only packaged sets enter; an installed plugin set never does.
 """
 
@@ -27,7 +28,6 @@ from typing import cast, override
 
 import polars as pl
 from apb2.api import (
-    FIXED_COLUMNS,
     JsonValue,
     ParsedLevel,
     ParsedLevels,
@@ -42,9 +42,8 @@ from apb_catalog.catalog import (
     Enforce,
     MissingRequiredField,
     Reference,
-    StaleField,
 )
-from apb_catalog.coverage import CATALOGUES_SCHEMA, VERSION_LABELS, coverage_of
+from apb_catalog.coverage import CATALOGUES_SCHEMA, coverage_of
 from apb_catalog.resolver import UnresolvedField
 from apb_catalog.rules import Location
 from apb_catalog.source import (
@@ -104,7 +103,6 @@ def build(target: Path) -> tuple[Path, Path]:
     """Write the bundle and the test bundle into ``target``, replacing what is there."""
     names = list(packaged_descriptions())
     bundle = _fresh(target / NAME)
-    _write_rules(bundle / "rules")
     _write_catalogues(bundle / "catalogues", names)
     _write_manifest(bundle, names)
     tests = _fresh(target / TEST_NAME)
@@ -155,23 +153,13 @@ def _write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, separators=(",", ":")) + "\n", "utf-8")
 
 
-def _write_rules(folder: Path) -> None:
-    """The effective declarations in APB2's order, and the version labels coverage prints."""
-    declarations = [
-        {"rule": rule, "level": level, "declarations": list(texts)}
-        for (rule, level), texts in packaged_rule_declarations().items()
-    ]
-    _write_json(folder / "declarations.json", declarations)
-    _write_json(folder / "version_labels.json", VERSION_LABELS)
-
-
 def _write_catalogues(folder: Path, names: list[str]) -> None:
     """The packaged catalogue tables and their ``datapackage.json``, after loading each set
     checks them."""
     for name in names:
         packaged_catalogues(name)
     data = resources.files("apb_catalog").joinpath("data")
-    for name in ("datapackage.json", *(f"{table}.csv" for table in TABLES)):
+    for name in ("datapackage.json", "rule_levels.csv", *(f"{table}.csv" for table in TABLES)):
         _copy(data.joinpath(name), folder / name)
 
 
@@ -204,16 +192,14 @@ def _result_name(rule: str, level: str) -> str:
 def synthetic_level(
     rule: str,
     level: str,
-    rule_json: str | None = None,
     obs_extra: Mapping[str, list[str]] | None = None,
     stored: bool = True,
 ) -> ParsedLevel:
     """Two samples and three features with every field the rule level's first declaration keeps.
 
-    The var frame also holds the APB2 columns the producer catalogue names on the level, as a
-    converted result does. ``stored=False`` leaves out ``rule_json``.
+    ``stored=False`` leaves out ``rule_json``.
     """
-    declared = rules.declaration(rule, level)
+    declared = _declaration(rule, level)
     axis = cast(dict[str, list[str]], declared["axis"])
     columns = cast(dict[str, list[dict[str, JsonValue]]], declared["columns"])
     obs: dict[str, list[object]] = {
@@ -227,8 +213,6 @@ def synthetic_level(
     }
     for column in columns.get("var", []):
         var.setdefault(str(column["name"]), _values(str(column["type"]), FEATURES))
-    for name in _producer_columns(level):
-        var.setdefault(name, _values("boolean" if name.startswith("is_") else "string", FEATURES))
     abundance: dict[str, pl.DataFrame] = {}
     auxiliary: dict[str, pl.DataFrame] = {}
     measurements = cast(dict[str, list[dict[str, JsonValue]]], declared["measurements"])
@@ -240,14 +224,13 @@ def synthetic_level(
         (abundance if "abundance" in roles else auxiliary)[str(layer["name"])] = values
     uns: dict[str, JsonValue] = {}
     if stored:
-        text = rule_json or packaged_rule_declarations()[(rule, level)][0]
-        uns["provenance"] = {"rule_json": text}
+        uns["provenance"] = {"rule_json": packaged_rule_declarations()[(rule, level)][0]}
     return ParsedLevel.build(
         pl.DataFrame(obs),
         axis["obs_keys"],
         pl.DataFrame(var),
         axis["var_keys"],
-        rules.roles(rule, level),
+        _roles(declared),
         primary_layer=next(iter(abundance)),
         abundance=abundance,
         auxiliary=auxiliary,
@@ -277,16 +260,19 @@ def _layer(offset: int, integer: bool) -> pl.DataFrame:
     )
 
 
-def _producer_columns(level: str) -> list[str]:
-    """The APB2 columns the packaged producer catalogues name on one level."""
-    found: list[str] = []
-    for name in packaged_descriptions():
-        for producer in packaged_catalogues(name).producers:
-            for entry in producer.entries_on(level):
-                column = entry.reference.name
-                if column in FIXED_COLUMNS and column not in found:
-                    found.append(column)
-    return found
+def _declaration(rule: str, level: str) -> Declaration:
+    """The first effective declaration of a packaged rule level."""
+    return cast(Declaration, json.loads(packaged_rule_declarations()[(rule, level)][0]))
+
+
+def _roles(declared: Declaration) -> dict[str, str]:
+    """The var column each role names in one declaration."""
+    columns = cast(dict[str, list[dict[str, JsonValue]]], declared["columns"])
+    return {
+        role: str(column["name"])
+        for column in columns.get("var", [])
+        for role in cast(list[str], column.get("roles") or [])
+    }
 
 
 MAXQUANT = "maxquant_wide/rules.json"
@@ -294,17 +280,11 @@ DIANN = "diann/v2/rules.json"
 
 
 def _edge_results() -> dict[str, ParsedLevels]:
-    """Results that exercise an unreviewed level, a stale field and both annotation conventions."""
+    """Results that exercise an unreviewed level and both annotation conventions."""
     ion = "peptidoform_ion"
-    stale = cast(dict[str, JsonValue], json.loads(packaged_rule_declarations()[(MAXQUANT, ion)][0]))
-    measurements = cast(dict[str, list[dict[str, JsonValue]]], stale["measurements"])
-    for layer in measurements["layers"]:
-        if layer["name"] == "PEP":
-            layer["source"] = "^evidence\\.Changed PEP (?P<sample>.+)$"
     two_levels = {level: synthetic_level(DIANN, level) for level in (ion, "protein")}
     return {
         "edge-unreviewed": _one(ion, synthetic_level(MAXQUANT, ion, stored=False)),
-        "edge-stale": _one(ion, synthetic_level(MAXQUANT, ion, rule_json=json.dumps(stale))),
         "edge-sdrf": _one(
             ion,
             synthetic_level(
@@ -366,7 +346,7 @@ def _outcome(answer: Callable[[], Reference | None]) -> dict[str, JsonValue]:
         found = answer()
     except UnresolvedField as error:
         return {"error": "UnresolvedField", "status": error.resolution.status}
-    except (StaleField, MissingRequiredField) as error:
+    except MissingRequiredField as error:
         return {"error": type(error).__name__}
     finally:
         logger.removeHandler(handler)

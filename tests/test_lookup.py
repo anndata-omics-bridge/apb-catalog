@@ -1,8 +1,7 @@
-"""Stage 2: names without data, enforced requirements, stale fields, roles, prefixes, the table."""
+"""Stage 2: names without data, enforced requirements, role columns, prefixes, the table."""
 
 from __future__ import annotations
 
-import json
 import logging
 from collections.abc import Mapping, Sequence
 from typing import Any, cast
@@ -17,7 +16,6 @@ from apb_catalog.catalog import (
     DataCatalog,
     MissingRequiredField,
     Reference,
-    StaleField,
     attach_snapshot,
 )
 from apb_catalog.table import KEY_COLUMNS, catalogue_table
@@ -31,7 +29,6 @@ def _result(
     *,
     obs: Mapping[str, Sequence[str]] | None = None,
     roles: Mapping[str, str] | None = None,
-    rule_json: str | None = None,
     uns: Mapping[str, JsonValue] | None = None,
     metadata: dict[str, JsonValue] | None = None,
 ) -> ParsedLevels:
@@ -45,7 +42,7 @@ def _result(
         for offset, name in enumerate(layers)
     }
     stored: dict[str, JsonValue] = {
-        "provenance": {"rule_json": rule_json or declared_rule_json(rule, "peptidoform_ion")},
+        "provenance": {"rule_json": declared_rule_json(rule, "peptidoform_ion")},
         **(uns or {}),
     }
     level = ParsedLevel.build(
@@ -82,7 +79,7 @@ def test_catalog_answers_names_from_software_and_version() -> None:
 
 
 def test_catalog_names_roles_and_fixed_columns_of_the_apb_set() -> None:
-    """A role answers with the column the version's rule marks; a fixed name is that name."""
+    """A role's entry names the column the version's rule marks; a fixed name is that name."""
     apb = Catalog("DIA-NN", "2.6.0", "apb")
     assert apb.var("peptidoform_ion", kind="protein_assignment") == Reference(
         level="peptidoform_ion", location="var", name="Protein_Group"
@@ -97,7 +94,7 @@ def test_catalog_names_roles_and_fixed_columns_of_the_apb_set() -> None:
 
 
 def test_data_catalog_finds_the_role_column_of_the_result() -> None:
-    """The role names whichever column the result's own rule marked."""
+    """The apb set names DIA-NN 2's protein-assignment column, which the result holds."""
     parsed = _result(
         "diann/v2/rules.json",
         ["Precursor_Normalised"],
@@ -176,49 +173,6 @@ def test_enforce_needs_requirements() -> None:
         DataCatalog(_result("peaks/rules.json", ["Normalized_Area"]), "confidence", enforce="MUST")
 
 
-def _edited_rule(edit: str) -> str:
-    rule = json.loads(declared_rule_json("maxquant_wide/rules.json", "peptidoform_ion"))
-    layers = rule["measurements"]["layers"]
-    pep = next(layer for layer in layers if layer["name"] == "PEP")
-    if edit == "source":
-        pep["source"] = "Some other column"
-    elif edit == "drop":
-        layers.remove(pep)
-    else:
-        pep["note"] = "an edited note"
-    return json.dumps(rule)
-
-
-def test_a_field_declared_differently_is_stale() -> None:
-    """The stored rule read PEP from another column than the current rule: reconvert."""
-    parsed = _result(
-        "maxquant_wide/rules.json", ["Intensity", "PEP"], rule_json=_edited_rule("source")
-    )
-    with pytest.raises(
-        StaleField,
-        match=r'PEP: this result reads "Some other column", the current rule "evidence.PEP"; reconvert',
-    ):
-        DataCatalog(parsed, "confidence").layer("peptidoform_ion", kind="pep")
-
-
-def test_a_field_the_stored_rule_lacks_is_stale() -> None:
-    """The current rule declares PEP; the result's rule did not."""
-    parsed = _result(
-        "maxquant_wide/rules.json", ["Intensity", "PEP"], rule_json=_edited_rule("drop")
-    )
-    with pytest.raises(StaleField, match="this result reads no such field"):
-        DataCatalog(parsed, "confidence").layer("peptidoform_ion", kind="pep")
-
-
-def test_a_changed_note_is_not_stale() -> None:
-    """Only the field's declaration counts, without its note."""
-    parsed = _result(
-        "maxquant_wide/rules.json", ["Intensity", "PEP"], rule_json=_edited_rule("note")
-    )
-    found = DataCatalog(parsed, "confidence").layer("peptidoform_ion", kind="pep")
-    assert found is parsed.levels["peptidoform_ion"].layers["PEP"]
-
-
 def test_fields_lists_absent_fields_with_their_constant() -> None:
     """DIA-NN's PEP held one value, so APB2 left it out; ``fields`` says which."""
     uninformative: dict[str, JsonValue] = {
@@ -237,7 +191,7 @@ def test_fields_lists_absent_fields_with_their_constant() -> None:
 
 
 def test_the_long_table_lists_every_set() -> None:
-    """One row per entry and rule, the qualifiers as columns, and no concept."""
+    """One row per entry and software version, the qualifiers as columns, and no concept."""
     table = catalogue_table()
     assert table.columns[: len(KEY_COLUMNS)] == list(KEY_COLUMNS)
     assert table.columns[-2:] == ["requirement", "entry_id"]
@@ -253,5 +207,9 @@ def test_the_long_table_lists_every_set() -> None:
         (pl.col("set") == "confidence") & (pl.col("qualifier.kind") == "library_q_value")
     )
     assert {"Lib_Q_Value", "EG_LibraryQvalue"} <= set(library.get_column("name"))
-    duplicated = table.group_by("set", "entry_id", "rule").len().filter(pl.col("len") > 1)
-    assert duplicated.is_empty(), "set, entry id and rule identify a row"
+    duplicated = (
+        table.group_by("set", "entry_id", "software_version_pattern")
+        .len()
+        .filter(pl.col("len") > 1)
+    )
+    assert duplicated.is_empty(), "set, entry id and software version pattern identify a row"

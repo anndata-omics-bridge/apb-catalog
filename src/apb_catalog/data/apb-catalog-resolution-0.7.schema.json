@@ -153,7 +153,7 @@
     },
     "ProducedBinding": {
       "additionalProperties": false,
-      "description": "A level of a set without vendor catalogues: only APB's own fields answer.",
+      "description": "A level of a set without vendor catalogues: only apps' and annotations' fields answer.",
       "properties": {
         "status": {
           "const": "produced",
@@ -241,7 +241,7 @@
     },
     "Reference": {
       "additionalProperties": false,
-      "description": "Where one field lives in an APB result: by its APB output name, its role or a prefix.\n\nA ``varm`` field also names its feature-aligned table. A ``var`` field may be named by the\nrole the level's rule gives it, and an ``obs`` field of a sample annotation by the prefix of\nits column name; both are bound to the column a level holds before they answer.",
+      "description": "Where one field lives in an APB result: by its APB output name or a prefix.\n\nA ``varm`` field also names its feature-aligned table. An ``obs`` field of a sample\nannotation is named by the prefix of its column name and bound to the column a level holds\nbefore it answers.",
       "properties": {
         "level": {
           "title": "Level",
@@ -273,18 +273,6 @@
           ],
           "default": null,
           "title": "Table"
-        },
-        "role": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Role"
         },
         "prefix": {
           "anyOf": [
@@ -400,17 +388,12 @@
         "software_version_pattern": {
           "title": "Software Version Pattern",
           "type": "string"
-        },
-        "rule": {
-          "title": "Rule",
-          "type": "string"
         }
       },
       "required": [
         "level",
         "software_name",
-        "software_version_pattern",
-        "rule"
+        "software_version_pattern"
       ],
       "title": "ReviewedBinding",
       "type": "object"
@@ -440,17 +423,17 @@
     },
     "SourceEntry": {
       "additionalProperties": false,
-      "description": "The reviewed meaning of one retained field under the listed rule documents.",
+      "description": "The reviewed meaning of one retained field for the listed software version patterns.",
       "properties": {
         "entry_id": {
           "title": "Entry Id",
           "type": "string"
         },
-        "rules": {
+        "software_version_pattern": {
           "items": {
             "type": "string"
           },
-          "title": "Rules",
+          "title": "Software Version Pattern",
           "type": "array"
         },
         "reference": {
@@ -469,7 +452,7 @@
       },
       "required": [
         "entry_id",
-        "rules",
+        "software_version_pattern",
         "reference",
         "qualifiers",
         "evidence"
@@ -538,8 +521,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.6",
-      "default": "0.6",
+      "const": "0.7",
+      "default": "0.7",
       "title": "Contract Version",
       "type": "string"
     },

@@ -83,27 +83,12 @@ class MissingRequiredField(LookupError):
         self.row = row
 
 
-class StaleField(LookupError):
-    """A field the result's stored rule declares differently from the current packaged rule."""
-
-    def __init__(self, reference: SourceReference, stored: str, current: str) -> None:
-        super().__init__(
-            f"{reference.name}: this result reads {stored}, the current rule {current}; reconvert"
-        )
-        self.reference = reference
-
-
-def _bind(
-    entry: SourceEntry, roles: Mapping[str, str], obs_columns: tuple[str, ...]
-) -> tuple[SourceEntry, ...]:
-    """The entry bound to the level's column: by name, by the role's column or by prefix.
+def _bind(entry: SourceEntry, obs_columns: tuple[str, ...]) -> tuple[SourceEntry, ...]:
+    """The entry bound to the level's column: by name or by prefix.
 
     A prefix matching several columns binds to each, so the lookup reports them as ambiguous.
     """
     reference = entry.reference
-    if reference.role is not None:
-        column = roles.get(reference.role)
-        return () if column is None else (entry.bound(column),)
     if reference.prefix is not None:
         prefix = reference.prefix.lower()
         return tuple(
@@ -120,15 +105,14 @@ def level_view(
     catalogues: SourceCatalogues,
     *,
     retained: frozenset[Address] | set[Address],
-    roles: Mapping[str, str],
     obs_columns: tuple[str, ...] = (),
     ran: Callable[[ProducerCatalogue], bool],
     annotations: tuple[AnnotationCatalogue, ...] = (),
 ) -> LevelView:
-    """Bind one level to its set: the reviewed vendor entries, then APB's own fields.
+    """Bind one level to its set: the reviewed vendor entries, then the apps' and annotations'.
 
-    Only entries whose field the level holds answer; a producer that has not run leaves its
-    entries pending. A set with vendor catalogues answers only for a reviewed rule.
+    Only entries whose field the level holds answer; an app that has not run leaves its entries
+    pending. A set with vendor catalogues answers only for a reviewed software version.
     """
     if software is None or pattern is None or rule_level is None:
         return UnreviewedLevel(name, None, None, "the level records no rule_json software version")
@@ -148,7 +132,7 @@ def level_view(
         offered = [
             bound
             for entry in producer.entries_on(rule_level)
-            for bound in _bind(entry, roles, obs_columns)
+            for bound in _bind(entry, obs_columns)
         ]
         if ran(producer):
             entries += [entry for entry in offered if entry.reference.address() in retained]
@@ -158,7 +142,7 @@ def level_view(
         entries += [
             bound
             for entry in annotation.entries_on(rule_level)
-            for bound in _bind(entry, roles, obs_columns)
+            for bound in _bind(entry, obs_columns)
         ]
     if reviewed is not None:
         return ReviewedLevel(name, reviewed, tuple(entries), tuple(pending))
@@ -256,23 +240,29 @@ class _Lookups:
                 self.catalogues,
                 labels[entry.entry_id],
                 binding.software_version_pattern,
-                (_view_rule(view) or "*") if entry.rules else "*",
                 entry,
             )
             for entry in entries
         ]
 
 
-def _view_rule(view: LevelView) -> str | None:
-    return view.rule.variant.rule if isinstance(view, ReviewedLevel) else None
+def _catalogued(catalogues: SourceCatalogues, level: str) -> set[Address]:
+    """Every field the set's entries name on one level: without data, the catalogue says what a
+    level holds."""
+    return {
+        entry.reference.address()
+        for source in catalogues.sources()
+        for entry in source.entries
+        if entry.reference.level == level and entry.reference.name is not None
+    }
 
 
 class Catalog:
     """Which column one software version reports for each meaning, without any data.
 
     ``Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity").name``
-    is ``'Precursor_Quantity'``. The software's packaged APB2 rule
-    whose version pattern admits ``version`` decides which fields each level has.
+    is ``'Precursor_Quantity'``. The packaged rule levels whose version pattern admits
+    ``version`` give the levels; the set's entries for that pattern give each level's fields.
 
     Raises:
         ValueError: No packaged rule of the software admits the version.
@@ -302,8 +292,7 @@ class Catalog:
                 found.software_version_pattern,
                 found.level,
                 catalogues,
-                retained=rules.retained(found.rule, found.level),
-                roles=rules.roles(found.rule, found.level),
+                retained=_catalogued(catalogues, found.level),
                 ran=lambda producer: not producer.requires,
             )
         self._lookups = _Lookups(catalog, catalogues, views, enforce)
@@ -353,8 +342,7 @@ class DataCatalog:
     ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no PEP or APB2
     left it out because it held one value or none. Confidence lookups mean identification unless
     ``stage="quantification"`` says otherwise. Ambiguous or unreviewed answers raise
-    :class:`~apb_catalog.resolver.UnresolvedField`; a field the result's stored rule declares
-    differently from the current packaged rule raises :class:`StaleField`.
+    :class:`~apb_catalog.resolver.UnresolvedField`.
     """
 
     __slots__ = ("_lookups", "_parsed")
@@ -377,7 +365,6 @@ class DataCatalog:
                 rule_level,
                 catalogues,
                 retained=_retained(level),
-                roles=level.var.roles,
                 obs_columns=tuple(level.obs.frame.columns),
                 ran=lambda producer: producer.ran(result.metadata),
                 annotations=annotations,
@@ -452,36 +439,7 @@ class DataCatalog:
     def _find(
         self, level: str, location: Location, kind: str, qualifiers: Mapping[str, str]
     ) -> SourceReference | None:
-        reference = self._lookups.find(level, location, {"kind": kind, **qualifiers})
-        if reference is not None:
-            self._check_current(level, reference)
-        return reference
-
-    def _check_current(self, level: str, reference: SourceReference) -> None:
-        """Raise when the stored rule declares the field differently from the current rule."""
-        view = self._lookups.views[level]
-        rule = _view_rule(view)
-        stored_rule = _stored_rule(self._parsed.levels[level])
-        if rule is None or stored_rule is None:
-            return
-        location, _, name = reference.address()
-        stored = rules.field(stored_rule, location, name)
-        rule_level = cast(str, stored_rule["quantification_level"])
-        current = [
-            rules.field(declared, location, name)
-            for declared in rules.declarations(rule, rule_level)
-        ]
-        if stored in current or (stored is None and not any(current)):
-            return
-        declared = next((found for found in current if found is not None), None)
-        raise StaleField(reference, _source_of(stored), _source_of(declared))
-
-
-def _source_of(declared: dict[str, JsonValue] | None) -> str:
-    if declared is None:
-        return "no such field"
-    source = declared.get("source") or declared.get("inputs")
-    return json.dumps(source) if source is not None else json.dumps(declared, sort_keys=True)
+        return self._lookups.find(level, location, {"kind": kind, **qualifiers})
 
 
 def _fields_frame(rows: list[dict[str, object]]) -> pl.DataFrame:

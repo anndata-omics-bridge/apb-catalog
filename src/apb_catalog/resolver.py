@@ -116,11 +116,10 @@ class ReviewedBinding(FrozenModel):
     level: str
     software_name: str
     software_version_pattern: str
-    rule: str
 
 
 class ProducedBinding(FrozenModel):
-    """A level of a set without vendor catalogues: only APB's own fields answer."""
+    """A level of a set without vendor catalogues: only apps' and annotations' fields answer."""
 
     status: Literal["produced"] = "produced"
     level: str
@@ -237,12 +236,15 @@ class ReviewedLevel:
             level=self.level,
             software_name=catalogue.software_name,
             software_version_pattern=self.rule.variant.software_version_pattern,
-            rule=self.rule.variant.rule,
         )
 
     def resolve(self, request: FieldRequest, /) -> Resolution:
         """Resolve only when exactly one entry matches, none is undecided and none is pending."""
-        missing = f"no reviewed {self.rule.variant.rule} entry on {self.level} matches"
+        variant = self.rule.variant
+        missing = (
+            f"no reviewed {self.rule.catalogue.software_name} {variant.software_version_pattern} "
+            f"entry on {self.level} matches"
+        )
         return _resolve(self.entries, self.pending, request, missing)
 
 

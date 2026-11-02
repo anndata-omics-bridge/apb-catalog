@@ -325,7 +325,10 @@ def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
     assert [resolution.status for resolution in snapshot.resolutions] == ["resolved", "missing"]
     binding = snapshot.levels[0]
     assert isinstance(binding, ReviewedBinding)
-    assert (binding.software_name, binding.rule) == ("MaxQuant", "maxquant_wide/rules.json")
+    assert (binding.software_name, binding.software_version_pattern) == (
+        "MaxQuant",
+        "^(1\\.5|1\\.6|2\\.)",
+    )
     unreviewed = DataCatalog(_result(None, ["Intensity"]), "confidence").snapshot()
     assert isinstance(unreviewed.levels[0], UnreviewedBinding)
 
@@ -440,7 +443,6 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
         "location": "layers",
         "name": "PEP",
         "table": None,
-        "role": None,
         "prefix": None,
     }
     entry = next(entry for entry in stored["entries"] if entry["reference"] == answer["reference"])

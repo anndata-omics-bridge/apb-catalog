@@ -16,7 +16,7 @@ from typing import cast
 import polars as pl
 
 from apb_catalog.api import catalogues, rule_coverage
-from apb_catalog.coverage import version_label
+from apb_catalog.rules import version_label
 from apb_catalog.source import (
     SourceCatalogues,
     SourceEntry,
@@ -238,8 +238,6 @@ def _coverage(name: str, vocabulary: Vocabulary) -> list[str]:
 
 def _field(entry: SourceEntry) -> str:
     reference = entry.reference
-    if reference.role is not None:
-        return f"role {_code(reference.role)}"
     if reference.prefix is not None:
         return f"{_code(reference.prefix)}…"
     if reference.table is not None:
@@ -248,19 +246,18 @@ def _field(entry: SourceEntry) -> str:
 
 
 def _scope(instruction: str | None) -> str:
-    return "every rule" if instruction is None else "after " + instruction.removeprefix("run ")
+    return "every version" if instruction is None else "after " + instruction.removeprefix("run ")
 
 
 def _sourced(sources: SourceCatalogues) -> list[tuple[str, str, SourceEntry]]:
     """Every entry with who supplies it and for which versions."""
     found: list[tuple[str, str, SourceEntry]] = []
     for catalogue in sources.catalogues:
-        labels = {
-            variant.rule: version_label(variant.software_version_pattern)
-            for variant in catalogue.variants
-        }
         for entry in catalogue.entries:
-            versions = sorted({labels[rule] for rule in entry.rules}, key=_version_key)
+            versions = sorted(
+                {version_label(pattern) for pattern in entry.software_version_pattern},
+                key=_version_key,
+            )
             found.append((catalogue.software_name, ", ".join(versions), entry))
     for producer in sources.producers:
         found += [(producer.producer, _scope(producer.instruction), e) for e in producer.entries]

@@ -22,7 +22,7 @@ def test_without_arguments_every_catalogue_is_listed(
     """One line per set, packaged or plugin, saying whether it sets requirements."""
     assert _run() == 0
     output = capsys.readouterr().out
-    assert f"{toy_set}: 8 entries, requirements" in output
+    assert f"{toy_set}: 22 entries, requirements" in output
     assert "confidence: 22 entries, coverage only" in output
 
 
@@ -49,7 +49,7 @@ def test_software_shows_every_field_and_its_column(
     _run("check", toy_set, "fragpipe")
     output = capsys.readouterr().out
     assert "charge MUST: Charge (vendor)" in output
-    assert "decoy MAY: apb_Decoy ← Protein (vendor)" in output
+    assert "decoy MAY: apb_Decoy (vendor)" in output
     assert "group MUST: missing" in output
     assert "(apb_fasta; run `apb-fasta verify-peptides`)" in output
     assert "DIA-NN" not in output

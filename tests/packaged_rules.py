@@ -67,3 +67,29 @@ def retained_sources(rule: str, level: str) -> dict[tuple[str, str], str]:
         ("var", column["name"]): column.get("source", "") for column in columns.get("var", [])
     }
     return sources
+
+
+@cache
+def _rules_by_version() -> dict[tuple[str, str, str], str]:
+    return {
+        (software, pattern, level): rule
+        for rule, level in effective_rules()
+        for software, pattern in declared_software_versions(rule, level)
+    }
+
+
+def rule_of(software: str, pattern: str, level: str) -> str:
+    """Return the packaged rule that declares a software version pattern on a level."""
+    return _rules_by_version()[(software, pattern, level)]
+
+
+def declared_roles(rule: str, level: str) -> dict[str, str]:
+    """Map each var role a packaged rule level declares to the column it marks."""
+    columns = cast(
+        dict[str, list[dict[str, JsonValue]]], effective_rules()[(rule, level)][0]["columns"]
+    )
+    return {
+        role: str(column["name"])
+        for column in columns.get("var", [])
+        for role in cast(list[str], column.get("roles") or [])
+    }

@@ -1,4 +1,5 @@
-"""The language bundle carries the packaged rules and sets, never a plugin's; its test bundle the answers."""
+"""The language bundle carries the packaged sets and rule levels, never a plugin's; its test bundle the
+answers."""
 
 from __future__ import annotations
 
@@ -6,11 +7,11 @@ import csv
 import io
 import json
 from collections.abc import Iterator
+from importlib import resources
 from pathlib import Path
 from typing import Any, cast
 
 import pytest
-from apb2.api import packaged_rule_declarations
 from scripts.build_bundle import build
 
 from apb_catalog.source import TABLES, packaged_descriptions
@@ -60,9 +61,9 @@ def test_the_manifest_lists_every_file_each_bundle_holds(bundles: tuple[Path, Pa
 
 
 def test_the_bundle_holds_only_what_a_lookup_reads(bundle: Path, test_bundle: Path) -> None:
-    """The served bundle holds the rules and the catalogue tables; the answers and synthetic
-    results go to the test bundle."""
-    assert {path.split("/")[0] for path in _held(bundle)} == {"rules", "catalogues"}
+    """The served bundle holds the catalogue tables, ``rule_levels.csv`` among them; the
+    answers and synthetic results go to the test bundle."""
+    assert {path.split("/")[0] for path in _held(bundle)} == {"catalogues"}
     assert {path.split("/")[0] for path in _held(test_bundle)} == {"cases", "results.tar.gz"}
     assert (
         _object(bundle / "manifest.json")["version"]
@@ -83,12 +84,11 @@ def test_a_plugin_set_never_enters_the_bundle(bundle: Path, test_bundle: Path) -
     assert {case["catalogue"] for case in cases} == set(packaged)
 
 
-def test_the_declarations_keep_apb2s_order(bundle: Path) -> None:
-    """A Catalog takes a level's first declaration, so their order is part of the contract."""
-    declared = _rows(bundle / "rules" / "declarations.json")
-    assert [(row["rule"], row["level"]) for row in declared] == list(packaged_rule_declarations())
-    assert [tuple(row["declarations"]) for row in declared] == list(
-        packaged_rule_declarations().values()
+def test_the_bundle_carries_the_packaged_rule_levels(bundle: Path) -> None:
+    """Readers take the levels of each software version from the table the build wrote."""
+    packaged = resources.files("apb_catalog").joinpath("data", "rule_levels.csv")
+    assert (bundle / "catalogues" / "rule_levels.csv").read_text("utf-8") == packaged.read_text(
+        "utf-8"
     )
 
 
@@ -100,4 +100,4 @@ def test_every_outcome_is_among_the_expected_answers(test_bundle: Path) -> None:
         for case in cases
         for request in case.get("requests", [])
     }
-    assert outcomes == {"answer", "UnresolvedField", "StaleField", "MissingRequiredField"}
+    assert outcomes == {"answer", "UnresolvedField", "MissingRequiredField"}

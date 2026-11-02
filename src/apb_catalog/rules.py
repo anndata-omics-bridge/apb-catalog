@@ -1,60 +1,51 @@
-"""What APB2's packaged rules declare: the fields each rule level keeps, its roles, its versions."""
+"""The levels APB2 converts for each software version range, as the catalog's build wrote them.
+
+Nothing here reads APB2's parse rules: ``scripts/rule_levels.py`` writes ``rule_levels.csv``
+from them when the catalog is written.
+"""
 
 from __future__ import annotations
 
-import json
+import csv
+import io
 import re
 from dataclasses import dataclass
 from functools import cache
-from typing import Literal, cast
-
-from apb2.api import JsonValue, packaged_rule_declarations
+from importlib import resources
+from typing import Literal
 
 type Location = Literal["obs", "layers", "var", "varm"]
 type Address = tuple[Location, str | None, str]
-type Declaration = dict[str, JsonValue]
+
+COLUMNS = ("software", "software_version_pattern", "version", "level")
+"""The columns of ``rule_levels.csv``."""
 
 
 @dataclass(frozen=True, slots=True)
 class RuleLevel:
-    """One packaged rule level and the software version range its rule declares."""
+    """One level APB2 converts for a software version range, with the range's label."""
 
-    rule: str
-    level: str
     software_name: str
     software_version_pattern: str
-
-
-@cache
-def declarations(rule: str, level: str) -> tuple[Declaration, ...]:
-    """Every effective declaration a packaged rule level can store; none for an unknown one."""
-    texts = packaged_rule_declarations().get((rule, level), ())
-    return tuple(cast(Declaration, json.loads(text)) for text in texts)
-
-
-def declaration(rule: str, level: str) -> Declaration:
-    """The first effective declaration of a packaged rule level."""
-    found = declarations(rule, level)
-    if not found:
-        raise KeyError(f"no packaged rule {rule} declares the level {level}")
-    return found[0]
+    version: str
+    level: str
 
 
 @cache
 def rule_levels() -> tuple[RuleLevel, ...]:
-    """Every packaged rule level with its software name and version pattern."""
-    found: list[RuleLevel] = []
-    for rule, level in packaged_rule_declarations():
-        stored = declaration(rule, level)
-        found.append(
-            RuleLevel(
-                rule,
-                level,
-                cast(str, stored["software_name"]),
-                cast(str, stored["software_version_pattern"]),
-            )
-        )
-    return tuple(found)
+    """Every packaged rule level, in APB2's order.
+
+    Raises:
+        ValueError: ``rule_levels.csv`` has other columns than ``COLUMNS``.
+    """
+    text = resources.files("apb_catalog").joinpath("data", "rule_levels.csv").read_text("utf-8")
+    reader = csv.DictReader(io.StringIO(text))
+    if tuple(reader.fieldnames or ()) != COLUMNS:
+        raise ValueError(f"rule_levels.csv has the columns {reader.fieldnames}, not {COLUMNS}")
+    return tuple(
+        RuleLevel(row["software"], row["software_version_pattern"], row["version"], row["level"])
+        for row in reader
+    )
 
 
 def matching(software: str, version: str) -> tuple[RuleLevel, ...]:
@@ -67,58 +58,13 @@ def matching(software: str, version: str) -> tuple[RuleLevel, ...]:
     )
 
 
-def _columns(stored: Declaration, location: str) -> list[dict[str, JsonValue]]:
-    columns = cast(dict[str, list[dict[str, JsonValue]]], stored.get("columns") or {})
-    return columns.get(location, [])
+def version_label(pattern: str) -> str:
+    """The concise reading of one rule's software version pattern.
 
-
-def _layers(stored: Declaration) -> list[dict[str, JsonValue]]:
-    measurements = cast(dict[str, list[dict[str, JsonValue]]], stored.get("measurements") or {})
-    return measurements.get("layers", [])
-
-
-def field(stored: Declaration, location: Location, name: str) -> dict[str, JsonValue] | None:
-    """One field's declaration without its note, or ``None`` when the rule declares no such field.
-
-    ``varm`` fields come from producers after conversion, so no rule declares them.
+    Raises:
+        KeyError: No packaged rule declares the pattern.
     """
-    candidates = (
-        _layers(stored)
-        if location == "layers"
-        else []
-        if location == "varm"
-        else _columns(stored, location)
-    )
-    for candidate in candidates:
-        if candidate.get("name") == name:
-            return {key: value for key, value in candidate.items() if key != "note"}
-    return None
-
-
-@cache
-def retained(rule: str, level: str) -> frozenset[Address]:
-    """The obs, var and layer fields a packaged rule level declares."""
-    stored = declaration(rule, level)
-    found: set[Address] = {("layers", None, cast(str, layer["name"])) for layer in _layers(stored)}
-    for location in ("obs", "var"):
-        found |= {
-            (cast(Location, location), None, cast(str, column["name"]))
-            for column in _columns(stored, location)
-        }
-    return frozenset(found)
-
-
-@cache
-def roles(rule: str, level: str) -> dict[str, str]:
-    """The var column each role names on a packaged rule level."""
-    found: dict[str, str] = {}
-    for column in _columns(declaration(rule, level), "var"):
-        for role in cast(list[str], column.get("roles") or []):
-            found[role] = cast(str, column["name"])
-    return found
-
-
-def var_inputs(rule: str, level: str, name: str) -> tuple[str, ...]:
-    """The vendor columns APB2 computes one var column of a packaged rule level from."""
-    column = field(declaration(rule, level), "var", name)
-    return () if column is None else tuple(cast(list[str], column.get("inputs") or []))
+    for found in rule_levels():
+        if found.software_version_pattern == pattern:
+            return found.version
+    raise KeyError(f"no packaged rule declares the version pattern {pattern!r}")

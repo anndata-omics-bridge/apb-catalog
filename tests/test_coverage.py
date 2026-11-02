@@ -6,6 +6,7 @@ import polars as pl
 import pytest
 
 from apb_catalog.coverage import catalogues, coverage_of, rule_coverage
+from apb_catalog.rules import rule_levels
 from apb_catalog.source import (
     CatalogueDescription,
     Evidence,
@@ -19,8 +20,8 @@ from apb_catalog.source import (
 from apb_catalog.vocabulary import Qualifier, SetVocabulary
 
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
-RULE = "diann/v2/rules.json"
-ION = RuleVariant(rule=RULE, level="peptidoform_ion", software_version_pattern="^2\\..*")
+PATTERN = "^2\\..*"
+ION = RuleVariant(level="peptidoform_ion", software_version_pattern=PATTERN)
 REQUIRED = (
     RequirementRow(level="peptidoform_ion", location="var", kind="group", requirement="MUST"),
     RequirementRow(level="peptidoform_ion", location="var", kind="charge", requirement="MUST"),
@@ -48,7 +49,7 @@ def _entry(name: str, kind: str, origin: str = "vendor", location: str = "var") 
     return SourceEntry.model_validate(
         {
             "entry_id": f"{origin}.peptidoform_ion.{name}",
-            "rules": [RULE] if origin == "vendor" else [],
+            "software_version_pattern": [PATTERN] if origin == "vendor" else [],
             "reference": {
                 "level": "peptidoform_ion",
                 "location": location,
@@ -105,19 +106,12 @@ def test_unsupported_fields_name_their_requirement_and_no_column() -> None:
     assert missing.select("kind", "requirement").rows() == [("charge", "MUST"), ("decoy", "MAY")]
 
 
-def test_computed_columns_name_their_vendor_inputs() -> None:
-    """``apb_Decoy`` is computed from DIA-NN's ``Decoy``; the row names that input."""
-    decoy = coverage_of(_sources(GROUP, CHARGE, DECOY)).filter(pl.col("kind") == "decoy")
-    assert decoy.get_column("inputs").to_list() == [["Decoy"]]
-
-
-def test_a_producer_field_counts_only_where_the_rule_retains_its_column() -> None:
-    """APB2 writes ``ProForma_peptidoform`` on DIA-NN ions, but no ``ProForma_fragment`` there."""
-    kept = _entry("ProForma_peptidoform", "peptidoform", origin="apb2")
-    absent = _entry("ProForma_fragment", "charge", origin="apb2")
-    coverage = coverage_of(_sources(GROUP, producers=(_producer(kept, absent),)))
-    assert coverage.filter(pl.col("producer") == "tool").get_column("column").to_list() == [
-        "ProForma_peptidoform"
+def test_an_app_field_counts_on_every_level_of_every_software() -> None:
+    """The catalog reads no rule, so an app's field counts wherever the app has an entry."""
+    flag = _entry("is_unique", "peptidoform", origin="apb_fasta")
+    coverage = coverage_of(_sources(GROUP, producers=(_producer(flag),)))
+    assert coverage.filter(pl.col("producer") == "tool").select("column", "needs").rows() == [
+        ("is_unique", None)
     ]
 
 
@@ -147,7 +141,7 @@ def test_requirements_must_name_vocabulary_kinds() -> None:
 
 def test_a_requirement_row_matches_its_qualifiers() -> None:
     """The abundance set's SHOULD asks for an un-normalized intensity, not any intensity."""
-    coverage = rule_coverage("abundance").filter(pl.col("rule") == "fragpipe/rules.json")
+    coverage = rule_coverage("abundance").filter(pl.col("software") == "FragPipe")
     missing = coverage.filter(pl.col("column").is_null())
     assert missing.select("kind", "qualifiers", "requirement").rows() == [
         ("intensity", None, "SHOULD")
@@ -184,7 +178,11 @@ def test_an_unknown_set_is_refused() -> None:
 
 
 def test_every_packaged_rule_level_carries_the_apb_must_fields() -> None:
-    """The apb set has no vendor catalogue, so every packaged rule level is checked; none fails."""
+    """The apb set reviews every packaged rule level; none fails."""
     coverage = rule_coverage("apb")
     assert coverage.filter(pl.col("verdict") == "fail").is_empty()
-    assert set(coverage.get_column("rule")) >= {"diann/v2/rules.json", "maxquant_wide/rules.json"}
+    checked = set(coverage.select("software", "software_version_pattern", "level").iter_rows())
+    assert checked == {
+        (found.software_name, found.software_version_pattern, found.level)
+        for found in rule_levels()
+    }

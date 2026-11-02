@@ -7,7 +7,7 @@ Every packaged catalogue set, generated from `src/apb_catalog/data/` by `make do
 | Set | Holds | Used by | Entries |
 | --- | --- | --- | --- |
 | [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 40 |
-| [`apb`](#apb) | The fields APB writes itself for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns and sample annotations. | apb-export: export rules ask for APB's own columns by kind | 66 |
+| [`apb`](#apb) | The fields APB writes itself for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns and sample annotations. | apb-export: export rules ask for APB's own columns by kind | 204 |
 | [`chromatography`](#chromatography) | Retention times, elution-peak bounds and peak widths, with the unit the software reports them in. | apb-export: QPX feature retention times in seconds for pMultiQC | 54 |
 | [`confidence`](#confidence) | How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature. | apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision<br>apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers | 22 |
 | [`proteobench_entrapment`](#proteobench_entrapment) | The precursor q-values ProteoBench's entrapment scoring ranks by, each its own kind. | apb-proteobench: EntrapmentAnalyzer and run entrapment<br>apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback | 7 |
@@ -269,26 +269,279 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | `protein_assignment` | var | · | SHOULD | SHOULD | SHOULD | SHOULD |
 | `fasta_accessions` | var | MAY | MAY | MAY | MAY | MAY |
 
+### Coverage
+
+**protein**, all `var`
+
+<div class="coverage-matrix" markdown>
+
+| Software | Version | `decoy` | `contaminant` | `protein_assignment` | `fasta_accessions` | Check |
+| --- | --- | :-: | :-: | :-: | :-: | :-: |
+| AlphaDIA | 2.x | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 1.8–1.9 | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 2.x | ✓ | ✓ | ✓ | ✓ | pass |
+| MaxQuant | 1.5, 1.6, 2.x | ✓ | ✓ | ✓ | ✓ | pass |
+| MSAngel | 2.x | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 15 | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 19–20 | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 21 | ✓ | ✓ | ✓ | ✓ | pass |
+
+</div>
+
+**peptide**, all `var`
+
+<div class="coverage-matrix" markdown>
+
+| Software | Version | `peptide` | `decoy` | `contaminant` | `protein_assignment` | `fasta_accessions` | Check |
+| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: |
+| MaxQuant | 1.5, 1.6, 2.x | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+
+</div>
+
+**peptidoform**, all `var`
+
+<div class="coverage-matrix" markdown>
+
+| Software | Version | `peptide` | `peptidoform` | `peptidoform_unlocalized` | `decoy` | `contaminant` | `protein_assignment` | `fasta_accessions` | Check |
+| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| MaxQuant | 1.5, 1.6, 2.x | ✓ | · | ✓ | ✓ | ✓ | ✓ | ✓ | warn |
+| Sage | 0.x | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | warn |
+| WOMBAT-P | 0.9.11 | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | warn |
+
+</div>
+
+**peptidoform_ion**, all `var`
+
+<div class="coverage-matrix" markdown>
+
+| Software | Version | `peptide` | `peptidoform` | `peptidoform_ion` | `decoy` | `contaminant` | `protein_assignment` | `fasta_accessions` | Check |
+| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| AlphaDIA | 1.10 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| AlphaDIA | 1.12 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| AlphaDIA | 2.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| AlphaPept | 0.5 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 1.8–1.9 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 2.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| FragPipe | 22–23 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| i2MassChroQ | 1.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| MaxQuant | 1.5, 1.6, 2.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| MetaMorpheus | 1.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| MSAngel | 2.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| pb_custom | any | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| PEAKS | 13 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| ProlineStudio | 2.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| quantms | 1.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| Sage | 0.x | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 15 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 19–20 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 21 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| WOMBAT-P | 0.9.11 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+
+</div>
+
+**peptidoform_fragment**, all `var`
+
+<div class="coverage-matrix" markdown>
+
+| Software | Version | `peptide` | `peptidoform` | `peptidoform_ion` | `peptidoform_fragment` | `decoy` | `contaminant` | `protein_assignment` | `fasta_accessions` | Check |
+| --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| DIA-NN | 1.8–1.9 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | pass |
+| Spectronaut | 15 | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | warn |
+| Spectronaut | 19–20 | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | warn |
+| Spectronaut | 21 | ✓ | ✓ | ✓ | · | ✓ | ✓ | ✓ | ✓ | warn |
+
+</div>
+
 ### Fields
 
-| Kind | Location | Software | Versions | APB field | Levels |
-| --- | --- | --- | --- | --- | --- |
-| `peptide` | var | APB2 | every rule | `ProForma_peptide` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-| `peptidoform` | var | APB2 | every rule | `ProForma_peptidoform` | peptidoform, peptidoform_ion, peptidoform_fragment |
-| `peptidoform_unlocalized` | var | APB2 | every rule | `ProForma_peptidoform_unlocalized` | peptidoform |
-| `peptidoform_ion` | var | APB2 | every rule | `ProForma_ion` | peptidoform_ion, peptidoform_fragment |
-| `peptidoform_fragment` | var | APB2 | every rule | `ProForma_fragment` | peptidoform_fragment |
-| `decoy` | var | APB2 | every rule | `apb_Decoy` | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-| `contaminant` | var | APB2 | every rule | `apb_Contaminant` | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-| `protein_assignment` | var | APB2 | every rule | role `protein_assignment` | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-| `fasta_accessions` | var | APB2 | every rule | role `fasta_accessions` | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-| `condition` | obs | APB2 annotate | prolfquapp annotation | `Experiment`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-|  |  | APB2 annotate | prolfquapp annotation | `bait`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-|  |  | APB2 annotate | sdrf annotation | `factor_value_`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-|  |  | APB2 annotate | prolfquapp annotation | `group`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-| `bioreplicate` | obs | APB2 annotate | prolfquapp annotation | `BioReplicate`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-|  |  | APB2 annotate | sdrf annotation | `characteristics_biological_replicate`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
-|  |  | APB2 annotate | prolfquapp annotation | `subject`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+**`peptide`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10, 1.12, 2.x | `ProForma_peptide` | peptidoform_ion |
+|  | AlphaPept | 0.5 | `ProForma_peptide` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_peptide` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `ProForma_peptide` | peptidoform_ion |
+|  | FragPipe | 22–23 | `ProForma_peptide` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `ProForma_peptide` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `ProForma_peptide` | peptide, peptidoform, peptidoform_ion |
+|  | MetaMorpheus | 1.x | `ProForma_peptide` | peptidoform_ion |
+|  | MSAngel | 2.x | `ProForma_peptide` | peptidoform_ion |
+|  | pb_custom | any | `ProForma_peptide` | peptidoform_ion |
+|  | PEAKS | 13 | `ProForma_peptide` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `ProForma_peptide` | peptidoform_ion |
+|  | quantms | 1.x | `ProForma_peptide` | peptidoform_ion |
+|  | Sage | 0.x | `ProForma_peptide` | peptidoform, peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `ProForma_peptide` | peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `ProForma_peptide` | peptidoform, peptidoform_ion |
+
+**`peptidoform`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10, 1.12, 2.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | AlphaPept | 0.5 | `ProForma_peptidoform` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_peptidoform` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | FragPipe | 22–23 | `ProForma_peptidoform` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | MetaMorpheus | 1.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | MSAngel | 2.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | pb_custom | any | `ProForma_peptidoform` | peptidoform_ion |
+|  | PEAKS | 13 | `ProForma_peptidoform` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | quantms | 1.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | Sage | 0.x | `ProForma_peptidoform` | peptidoform, peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `ProForma_peptidoform` | peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `ProForma_peptidoform` | peptidoform, peptidoform_ion |
+
+**`peptidoform_unlocalized`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | MaxQuant | 1.5, 1.6, 2.x | `ProForma_peptidoform_unlocalized` | peptidoform |
+
+**`peptidoform_ion`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10, 1.12, 2.x | `ProForma_ion` | peptidoform_ion |
+|  | AlphaPept | 0.5 | `ProForma_ion` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_ion` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `ProForma_ion` | peptidoform_ion |
+|  | FragPipe | 22–23 | `ProForma_ion` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `ProForma_ion` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `ProForma_ion` | peptidoform_ion |
+|  | MetaMorpheus | 1.x | `ProForma_ion` | peptidoform_ion |
+|  | MSAngel | 2.x | `ProForma_ion` | peptidoform_ion |
+|  | pb_custom | any | `ProForma_ion` | peptidoform_ion |
+|  | PEAKS | 13 | `ProForma_ion` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `ProForma_ion` | peptidoform_ion |
+|  | quantms | 1.x | `ProForma_ion` | peptidoform_ion |
+|  | Sage | 0.x | `ProForma_ion` | peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `ProForma_ion` | peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `ProForma_ion` | peptidoform_ion |
+
+**`peptidoform_fragment`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_fragment` | peptidoform_fragment |
+
+**`decoy`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10, 1.12, 2.x | `apb_Decoy` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `apb_Decoy` | protein |
+|  | AlphaPept | 0.5 | `apb_Decoy` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `apb_Decoy` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `apb_Decoy` | protein, peptidoform_ion |
+|  | FragPipe | 22–23 | `apb_Decoy` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `apb_Decoy` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `apb_Decoy` | protein, peptide, peptidoform, peptidoform_ion |
+|  | MetaMorpheus | 1.x | `apb_Decoy` | peptidoform_ion |
+|  | MSAngel | 2.x | `apb_Decoy` | protein, peptidoform_ion |
+|  | pb_custom | any | `apb_Decoy` | peptidoform_ion |
+|  | PEAKS | 13 | `apb_Decoy` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `apb_Decoy` | peptidoform_ion |
+|  | quantms | 1.x | `apb_Decoy` | peptidoform_ion |
+|  | Sage | 0.x | `apb_Decoy` | peptidoform, peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `apb_Decoy` | protein, peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `apb_Decoy` | peptidoform, peptidoform_ion |
+
+**`contaminant`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10, 1.12, 2.x | `apb_Contaminant` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `apb_Contaminant` | protein |
+|  | AlphaPept | 0.5 | `apb_Contaminant` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `apb_Contaminant` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `apb_Contaminant` | protein, peptidoform_ion |
+|  | FragPipe | 22–23 | `apb_Contaminant` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `apb_Contaminant` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `apb_Contaminant` | protein, peptide, peptidoform, peptidoform_ion |
+|  | MetaMorpheus | 1.x | `apb_Contaminant` | peptidoform_ion |
+|  | MSAngel | 2.x | `apb_Contaminant` | protein, peptidoform_ion |
+|  | pb_custom | any | `apb_Contaminant` | peptidoform_ion |
+|  | PEAKS | 13 | `apb_Contaminant` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `apb_Contaminant` | peptidoform_ion |
+|  | quantms | 1.x | `apb_Contaminant` | peptidoform_ion |
+|  | Sage | 0.x | `apb_Contaminant` | peptidoform, peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `apb_Contaminant` | protein, peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `apb_Contaminant` | peptidoform, peptidoform_ion |
+
+**`protein_assignment`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10 | `Genes` | peptidoform_ion |
+|  | AlphaDIA | 1.12 | `Proteins` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `Protein_Group` | protein, peptidoform_ion |
+|  | AlphaPept | 0.5 | `Protein_Group` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Group` | protein, peptidoform_ion |
+|  | FragPipe | 22–23 | `Protein` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `Proteins` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Protein_IDs` | protein, peptide, peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Proteins` | peptidoform |
+|  | MetaMorpheus | 1.x | `Proteins` | peptidoform_ion |
+|  | MSAngel | 2.x | `Same_Set_Proteins` | protein, peptidoform_ion |
+|  | pb_custom | any | `Proteins` | peptidoform_ion |
+|  | PEAKS | 13 | `Accession` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `Same_Set_Proteins` | peptidoform_ion |
+|  | quantms | 1.x | `Protein` | peptidoform_ion |
+|  | Sage | 0.x | `Proteins` | peptidoform, peptidoform_ion |
+|  | Spectronaut | 15, 19–20, 21 | `PG_ProteinGroups` | protein, peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `protein_group` | peptidoform, peptidoform_ion |
+
+**`fasta_accessions`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| var | AlphaDIA | 1.10 | `Genes` | peptidoform_ion |
+|  | AlphaDIA | 1.12, 2.x | `Proteins` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `Protein_Group` | protein |
+|  | AlphaPept | 0.5 | `Protein_Group` | peptidoform_ion |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Group` | protein |
+|  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Ids` | peptidoform_ion |
+|  | FragPipe | 22–23 | `Protein` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `Proteins` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Protein_IDs` | protein |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Proteins` | peptide, peptidoform, peptidoform_ion |
+|  | MetaMorpheus | 1.x | `Proteins` | peptidoform_ion |
+|  | MSAngel | 2.x | `Proteins` | protein, peptidoform_ion |
+|  | pb_custom | any | `Proteins` | peptidoform_ion |
+|  | PEAKS | 13 | `Accession` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `Proteins` | peptidoform_ion |
+|  | quantms | 1.x | `Protein` | peptidoform_ion |
+|  | Sage | 0.x | `Proteins` | peptidoform, peptidoform_ion |
+|  | Spectronaut | 15 | `PG_ProteinGroups` | protein, peptidoform_ion, peptidoform_fragment |
+|  | Spectronaut | 19–20, 21 | `PG_ProteinAccessions` | protein, peptidoform_ion, peptidoform_fragment |
+|  | WOMBAT-P | 0.9.11 | `protein_group` | peptidoform, peptidoform_ion |
+
+**`condition`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| obs | APB2 annotate | prolfquapp annotation | `Experiment`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+|  | APB2 annotate | prolfquapp annotation | `bait`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+|  | APB2 annotate | sdrf annotation | `factor_value_`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+|  | APB2 annotate | prolfquapp annotation | `group`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`bioreplicate`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| obs | APB2 annotate | prolfquapp annotation | `BioReplicate`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+|  | APB2 annotate | sdrf annotation | `characteristics_biological_replicate`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+|  | APB2 annotate | prolfquapp annotation | `subject`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
 
 <!-- end of generated block: apb -->
 

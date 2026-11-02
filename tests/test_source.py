@@ -14,25 +14,23 @@ from apb_catalog.source import (
     SourceCatalogue,
     SourceCatalogues,
     SourceEntry,
-    catalogue_descriptions,
-    catalogue_set,
     packaged_catalogues,
     packaged_descriptions,
 )
 from tests.packaged_rules import (
     abundance_layers,
+    declared_roles,
     declared_software_versions,
     declared_var_column,
     effective_rules,
     retained_sources,
+    rule_of,
 )
 
 CONFIDENCE = packaged_catalogues("confidence").vocabulary
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
-ION = RuleVariant(
-    rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^1\\."
-)
+ION = RuleVariant(level="peptidoform_ion", software_version_pattern="^1\\.")
 
 
 def _catalogues(name: str) -> tuple[SourceCatalogue, ...]:
@@ -42,7 +40,7 @@ def _catalogues(name: str) -> tuple[SourceCatalogue, ...]:
 def _entry(name: str, **qualifiers: str) -> SourceEntry:
     return SourceEntry(
         entry_id=f"vendor.peptidoform_ion.{name}",
-        rules=("vendor/rules.json",),
+        software_version_pattern=("^1\\.",),
         reference=Reference(level="peptidoform_ion", location="layers", name=name),
         qualifiers={"kind": "pep", "stage": "identification"} | qualifiers,
         evidence=Evidence(basis="test"),
@@ -71,41 +69,25 @@ def test_an_unknown_catalogue_set_is_rejected() -> None:
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_variants_name_the_software_and_version_their_rules_declare(name: str) -> None:
-    """Levels bind by software name and version, so each variant states its rule's pair."""
-    wrong = {
-        (variant.rule, variant.level): sorted(
-            declared_software_versions(variant.rule, variant.level)
-        )
-        for catalogue in _catalogues(name)
-        for variant in catalogue.variants
-        if declared_software_versions(variant.rule, variant.level)
-        != {(catalogue.software_name, variant.software_version_pattern)}
-    }
-    assert wrong == {}, f"these variants disagree with their rules: {wrong}"
-
-
-@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_entries_name_fields_the_rules_retain(name: str) -> None:
-    """Every entry refers to an APB output name each of its rules retains."""
+    """Every entry refers to an APB output name the rule of each of its versions retains."""
     missing = [
-        f"{entry.entry_id} under {rule}"
+        f"{entry.entry_id} under {pattern}"
         for catalogue in _catalogues(name)
         for entry in catalogue.entries
-        for rule in entry.rules
+        for pattern in entry.software_version_pattern
         if (entry.reference.location, entry.reference.name)
-        not in retained_sources(rule, entry.reference.level)
+        not in retained_sources(
+            rule_of(catalogue.software_name, pattern, entry.reference.level),
+            entry.reference.level,
+        )
     ]
     assert missing == []
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
-    """A new software version needs a catalogue, even one recording that nothing is relevant.
-
-    Levels bind by software name and version, so two rules declaring both, such as MaxQuant's
-    ``maxquant`` and ``maxquant_wide``, share one variant.
-    """
+    """A new software version needs a catalogue, even one recording that nothing is relevant."""
     if not _catalogues(name):
         pytest.skip("a set without vendor catalogues needs no review")
     reviewed = {
@@ -118,7 +100,7 @@ def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
         for rule, level in effective_rules()
         for software, version in declared_software_versions(rule, level)
     }
-    assert packaged - reviewed == set()
+    assert reviewed == packaged
 
 
 ABUNDANCE_LEFT_OUT = {
@@ -143,10 +125,11 @@ ABUNDANCE_LEFT_OUT = {
 def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
     """A new abundance layer in an APB2 rule fails here until a reviewer catalogues it."""
     catalogued = {
-        (rule, entry.reference.level, entry.reference.name)
+        (rule_of(catalogue.software_name, pattern, entry.reference.level), level, name)
         for catalogue in _catalogues("abundance")
         for entry in catalogue.entries
-        for rule in entry.rules
+        for pattern in entry.software_version_pattern
+        for level, name in [(entry.reference.level, entry.reference.name)]
     }
     marked = {
         (rule, level, name)
@@ -159,15 +142,16 @@ def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
 
 def test_a_kind_has_at_most_one_vendor_entry_per_rule_level() -> None:
     """The catalog picks one layer per kind; a kind it cannot name, ``unknown``, may repeat."""
-    seen: dict[tuple[str, str, str, str], str | None] = {}
-    repeated: list[tuple[str, str, str, str, str | None, str | None]] = []
+    seen: dict[tuple[str, str, str, str, str], str | None] = {}
+    repeated: list[tuple[str, str, str, str, str, str | None, str | None]] = []
     for catalogue in _catalogues("abundance"):
         for entry in catalogue.entries:
             kind = entry.qualifiers["kind"]
             if kind == "unknown":
                 continue
-            for rule in entry.rules:
-                key = (rule, entry.reference.level, entry.reference.location, kind)
+            for pattern in entry.software_version_pattern:
+                reference = entry.reference
+                key = (catalogue.software_name, pattern, reference.level, reference.location, kind)
                 if key in seen:
                     repeated.append((*key, seen[key], entry.reference.name))
                 seen[key] = entry.reference.name
@@ -175,8 +159,8 @@ def test_a_kind_has_at_most_one_vendor_entry_per_rule_level() -> None:
 
 
 def test_an_entry_must_use_a_declared_rule_variant() -> None:
-    """An entry cannot claim a rule level the catalogue never reviewed."""
-    stray = _entry("PEP").model_copy(update={"rules": ("other/rules.json",)})
+    """An entry cannot claim a software version the catalogue never reviewed."""
+    stray = _entry("PEP").model_copy(update={"software_version_pattern": ("^9\\.",)})
     with pytest.raises(ValueError, match="uses"):
         _catalogue(stray)
 
@@ -210,12 +194,13 @@ def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
 
 
 def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
-    """Vendor and producer entries share one id space, so a snapshot names each unambiguously."""
-    later = RuleVariant(
-        rule="vendor/rules.json", level="peptidoform_ion", software_version_pattern="^2\\."
-    )
+    """Vendor and app entries share one id space, so a snapshot names each unambiguously."""
+    later = RuleVariant(level="peptidoform_ion", software_version_pattern="^2\\.")
     first = _catalogue(_entry("PEP"))
-    second = _catalogue(_entry("PEP"), variants=(later,))
+    second = _catalogue(
+        _entry("PEP").model_copy(update={"software_version_pattern": ("^2\\.",)}),
+        variants=(later,),
+    )
     with pytest.raises(ValueError, match="repeats"):
         SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
 
@@ -230,11 +215,12 @@ def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:
     return ProducerCatalogue.model_validate(fields)
 
 
-def test_producer_entries_apply_to_every_rule() -> None:
-    """A producer writes its fields whatever the vendor, so its entries name no rule."""
-    with pytest.raises(ValueError, match="apply to every rule"):
+def test_app_entries_apply_to_every_software_version() -> None:
+    """An app writes its fields whatever the software, so its entries name no version."""
+    with pytest.raises(ValueError, match="apply to every software version"):
         _producer(_entry("PEP"))
-    assert _producer(_entry("PEP").model_copy(update={"rules": ()})).entries_on("peptidoform_ion")
+    unversioned = _entry("PEP").model_copy(update={"software_version_pattern": ()})
+    assert _producer(unversioned).entries_on("peptidoform_ion")
 
 
 def test_a_required_run_comes_with_an_instruction() -> None:
@@ -264,9 +250,13 @@ def test_a_varm_reference_names_its_table() -> None:
         Reference(level="peptidoform_ion", location="var", name="flag", table="fasta_validation")
 
 
-@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_vendor_files_hold_no_apb2_columns(name: str) -> None:
-    """APB2's canonical ProForma columns are not the vendor's; the APB2 catalogue holds them."""
+DOMAIN_SETS = tuple(name for name in packaged_descriptions() if name != "apb")
+"""The sets that catalogue the vendors' own columns; ``apb`` catalogues the columns APB2 writes."""
+
+
+@pytest.mark.parametrize("name", DOMAIN_SETS)
+def test_domain_sets_hold_no_apb2_columns(name: str) -> None:
+    """APB2's canonical ProForma columns belong to the apb set, not to a domain set."""
     canonical = [
         entry.entry_id
         for catalogue in _catalogues(name)
@@ -276,46 +266,70 @@ def test_vendor_files_hold_no_apb2_columns(name: str) -> None:
     assert canonical == []
 
 
-@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
+@pytest.mark.parametrize("name", DOMAIN_SETS)
 def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> None:
     """A decoy or contaminant flag with no vendor input is false by declaration, not reported."""
     constant = [
-        f"{entry.entry_id} under {rule}"
+        f"{entry.entry_id} under {pattern}"
         for catalogue in _catalogues(name)
         for entry in catalogue.entries
         if entry.reference.name in ("apb_Decoy", "apb_Contaminant")
-        for rule in entry.rules
-        if not declared_var_column(rule, entry.reference.level, entry.reference.name).get("inputs")
+        for pattern in entry.software_version_pattern
+        if not declared_var_column(
+            rule_of(catalogue.software_name, pattern, entry.reference.level),
+            entry.reference.level,
+            entry.reference.name,
+        ).get("inputs")
     ]
     assert constant == []
 
 
-def test_apb2_entries_name_fixed_columns_or_var_roles(toy_set: str) -> None:
-    """Every APB2 entry, packaged or plugin, names a fixed column a packaged rule writes on its
-    level, or a var role."""
-    unwritten: list[str] = []
-    for name in catalogue_descriptions():
-        for producer in catalogue_set(name).producers:
-            if producer.producer != "APB2":
-                continue
-            for entry in producer.entries:
-                reference = entry.reference
-                if reference.role is not None:
-                    if reference.role not in VAR_ROLES:
-                        unwritten.append(entry.entry_id)
-                elif reference.name not in FIXED_COLUMNS or not any(
-                    ("var", reference.name) in retained_sources(rule, level)
-                    for rule, level in effective_rules()
-                    if level == reference.level
-                ):
-                    unwritten.append(entry.entry_id)
+def _apb_columns() -> set[tuple[str, str, str, str, str]]:
+    """Every (software, pattern, level, column, kind) the apb set catalogues."""
+    return {
+        (catalogue.software_name, pattern, entry.reference.level, name, entry.qualifiers["kind"])
+        for catalogue in _catalogues("apb")
+        for entry in catalogue.entries
+        for pattern in entry.software_version_pattern
+        for name in [entry.reference.name or ""]
+    }
+
+
+def test_apb_entries_name_fixed_columns_or_role_columns() -> None:
+    """Every apb entry names a column APB2 fixes, or the column the rule marks with the role its
+    kind names."""
+    unwritten = [
+        (software, pattern, level, name, kind)
+        for software, pattern, level, name, kind in _apb_columns()
+        if name not in FIXED_COLUMNS
+        and declared_roles(rule_of(software, pattern, level), level).get(kind) != name
+    ]
     assert unwritten == []
+
+
+def test_every_fixed_and_role_column_a_rule_writes_has_an_apb_entry() -> None:
+    """A new rule level fails here until the apb set names APB2's columns for it."""
+    catalogued = {
+        (software, pattern, level, name) for software, pattern, level, name, _ in _apb_columns()
+    }
+    written = {
+        (software, pattern, level, name)
+        for rule, level in effective_rules()
+        for software, pattern in declared_software_versions(rule, level)
+        for location, name in retained_sources(rule, level)
+        if location == "var" and name in FIXED_COLUMNS
+    } | {
+        (software, pattern, level, column)
+        for rule, level in effective_rules()
+        for software, pattern in declared_software_versions(rule, level)
+        for role, column in declared_roles(rule, level).items()
+        if role in VAR_ROLES
+    }
+    assert written - catalogued == set()
 
 
 def test_every_fixed_column_and_var_role_has_an_apb_kind() -> None:
     """The apb set drifts from apb2 the moment apb2 fixes a new name or adds a var role."""
-    entries = [
-        entry for producer in packaged_catalogues("apb").producers for entry in producer.entries
-    ]
-    assert {entry.reference.name for entry in entries if entry.reference.name} == set(FIXED_COLUMNS)
-    assert {entry.reference.role for entry in entries if entry.reference.role} == set(VAR_ROLES)
+    columns = _apb_columns()
+    assert {name for _, _, _, name, _ in columns} >= set(FIXED_COLUMNS)
+    assert {kind for _, _, _, _, kind in columns} >= set(VAR_ROLES)
