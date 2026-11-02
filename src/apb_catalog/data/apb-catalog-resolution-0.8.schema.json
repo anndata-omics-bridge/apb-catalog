@@ -11,6 +11,10 @@
         "reference": {
           "$ref": "#/$defs/Reference"
         },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
         "qualifiers": {
           "additionalProperties": {
             "type": "string"
@@ -30,6 +34,7 @@
       "required": [
         "entry_id",
         "reference",
+        "key",
         "qualifiers"
       ],
       "title": "Candidate",
@@ -87,7 +92,7 @@
     },
     "FieldRequest": {
       "additionalProperties": false,
-      "description": "A consumer's question: one level, constrained by accepted qualifier values.\n\nQualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer\ncould not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``\ntables.",
+      "description": "A consumer's question: one level, constrained by accepted qualifier values.\n\n``key`` names the access key asked for; ``qualifiers`` hold what it stands for, its kind and\nfixed values, plus any further qualifiers the caller asked for. Qualifiers left out accept\nany value. Accepting ``unknown`` admits entries whose reviewer could not establish that\nqualifier. A ``var`` request also reads feature-aligned ``varm`` tables.",
       "properties": {
         "level": {
           "title": "Level",
@@ -103,6 +108,18 @@
             }
           ],
           "default": null
+        },
+        "key": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Key"
         },
         "qualifiers": {
           "additionalProperties": {
@@ -423,7 +440,7 @@
     },
     "SourceEntry": {
       "additionalProperties": false,
-      "description": "The reviewed meaning of one retained field for the listed software version patterns.",
+      "description": "The reviewed meaning of one retained field for the listed software version patterns.\n\n``key`` is the set's access key whose kind and fixed qualifier values the entry carries.",
       "properties": {
         "entry_id": {
           "title": "Entry Id",
@@ -438,6 +455,10 @@
         },
         "reference": {
           "$ref": "#/$defs/Reference"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
         },
         "qualifiers": {
           "additionalProperties": {
@@ -454,6 +475,7 @@
         "entry_id",
         "software_version_pattern",
         "reference",
+        "key",
         "qualifiers",
         "evidence"
       ],
@@ -521,8 +543,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.7",
-      "default": "0.7",
+      "const": "0.8",
+      "default": "0.8",
       "title": "Contract Version",
       "type": "string"
     },

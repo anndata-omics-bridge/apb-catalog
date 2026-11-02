@@ -73,17 +73,41 @@ class Evidence(FrozenModel):
 
 
 class SourceEntry(FrozenModel):
-    """The reviewed meaning of one retained field for the listed software version patterns."""
+    """The reviewed meaning of one retained field for the listed software version patterns.
+
+    ``key`` is the set's access key whose kind and fixed qualifier values the entry carries.
+    """
 
     entry_id: str
     software_version_pattern: tuple[str, ...]
     reference: Reference
+    key: str
     qualifiers: dict[str, str]
     evidence: Evidence
 
     def bound(self, name: str, /) -> SourceEntry:
         """This entry with its reference bound to one level's column."""
         return self.model_copy(update={"reference": self.reference.bound(name)})
+
+
+class Key(FrozenModel):
+    """One access key of a set: the name callers ask by, standing for a kind and the qualifier
+    values it fixes; a qualifier it does not fix stays open."""
+
+    key: str
+    kind: str
+    fixed: dict[str, str] = Field(default_factory=dict)
+    psi_ms: tuple[str, ...] = ()
+
+    def predicate(self) -> dict[str, tuple[str, ...]]:
+        """The qualifier values a request for this key accepts."""
+        return {"kind": (self.kind,), **{name: (value,) for name, value in self.fixed.items()}}
+
+    def describes(self, qualifiers: Mapping[str, str], /) -> bool:
+        """Whether an entry with these qualifiers has this key."""
+        return qualifiers.get("kind") == self.kind and all(
+            qualifiers.get(name) == value for name, value in self.fixed.items()
+        )
 
 
 class RuleVariant(FrozenModel):
@@ -225,13 +249,11 @@ class AnnotationCatalogue(FrozenModel):
 
 
 class RequirementRow(FrozenModel):
-    """How strongly a consumer needs one meaning on one level: a field location, a kind and
-    the other qualifiers the field must carry."""
+    """How strongly a consumer needs one meaning on one level: a field location and a key."""
 
     level: str
     location: Location
-    kind: str
-    qualifiers: dict[str, str] = Field(default_factory=dict)
+    key: str
     requirement: Requirement
 
     def describes(self, entry: SourceEntry, /) -> bool:
@@ -239,20 +261,12 @@ class RequirementRow(FrozenModel):
         return (
             entry.reference.level == self.level
             and entry.reference.location in READS[self.location]
-            and entry.qualifiers["kind"] == self.kind
-            and all(entry.qualifiers.get(name) == value for name, value in self.qualifiers.items())
+            and entry.key == self.key
         )
 
-    def asked(
-        self, level: str, location: Location, qualifiers: Mapping[str, tuple[str, ...]]
-    ) -> bool:
-        """Whether a request on one level and location asks for this row's meaning."""
-        return (
-            level == self.level
-            and location == self.location
-            and qualifiers.get("kind") == (self.kind,)
-            and all(qualifiers.get(name) == (value,) for name, value in self.qualifiers.items())
-        )
+    def asked(self, level: str, location: Location, key: str | None) -> bool:
+        """Whether a request on one level and location asks for this row's key."""
+        return level == self.level and location == self.location and key == self.key
 
 
 type Requirements = tuple[RequirementRow, ...]
@@ -277,14 +291,16 @@ class SourceCatalogues:
     ``producers`` hold the fields apps write after conversion and ``annotations`` the
     sample-annotation fields; both apply to every software version. A set made only of them has no vendor catalogue and needs
     no review. ``requirements`` are the consumer's requirement rows; a set without them is
-    checked for coverage only.
+    checked for coverage only. ``keys`` are the set's access keys; each entry has exactly one.
     """
 
     __slots__ = (
+        "_by_key",
         "_by_version",
         "annotations",
         "catalogues",
         "description",
+        "keys",
         "producers",
         "requirements",
         "vocabulary",
@@ -300,6 +316,7 @@ class SourceCatalogues:
         producers: tuple[ProducerCatalogue, ...] = (),
         annotations: tuple[AnnotationCatalogue, ...] = (),
         requirements: Requirements = (),
+        keys: tuple[Key, ...] = (),
     ) -> None:
         self.vocabulary = vocabulary
         self.vocabulary_version = vocabulary_version
@@ -308,26 +325,19 @@ class SourceCatalogues:
         self.producers = producers
         self.annotations = annotations
         self.requirements = requirements
+        self.keys = keys
+        self._by_key = {found.key: found for found in keys}
+        if len(self._by_key) != len(keys):
+            raise ValueError("a key repeats in the set")
         self._by_version: dict[tuple[str, str, str], ReviewedRule] = {}
         entries = [entry for source in self.sources() for entry in source.entries]
         entry_ids = [entry.entry_id for entry in entries]
         if len(entry_ids) != len(set(entry_ids)):
             raise ValueError("an entry id repeats across the set's catalogues")
-        for entry in entries:
-            try:
-                vocabulary.check_description(entry.qualifiers)
-            except ValueError as error:
-                raise ValueError(f"{entry.entry_id}: {error}") from error
+        _check_keys(vocabulary, keys, entries)
         for row in requirements:
-            try:
-                vocabulary.check_predicate(
-                    {
-                        name: (value,)
-                        for name, value in ({"kind": row.kind} | row.qualifiers).items()
-                    }
-                )
-            except ValueError as error:
-                raise ValueError(f"requirement on {row.level}: {error}") from error
+            if row.key not in self._by_key:
+                raise ValueError(f"requirement on {row.level}: unknown key {row.key!r}")
         for catalogue in catalogues:
             for variant in catalogue.variants:
                 key = (catalogue.software_name, variant.software_version_pattern, variant.level)
@@ -350,13 +360,50 @@ class SourceCatalogues:
         """Return the rule reviewed for one software version's level, or ``None`` if none was."""
         return self._by_version.get((software_name, software_version_pattern, level))
 
+    def key(self, name: str, /) -> Key:
+        """Return one of the set's access keys.
+
+        Raises:
+            ValueError: The set has no such key.
+        """
+        if name not in self._by_key:
+            raise ValueError(f"unknown key {name!r}; keys: {sorted(self._by_key)}")
+        return self._by_key[name]
+
+    def has_key(self, name: str, /) -> bool:
+        """Whether the set has this key."""
+        return name in self._by_key
+
     def requirement_for(
-        self, level: str, location: Location, qualifiers: Mapping[str, tuple[str, ...]]
+        self, level: str, location: Location, key: str | None
     ) -> RequirementRow | None:
         """Return the requirement row a request asks for, if any."""
-        return next(
-            (row for row in self.requirements if row.asked(level, location, qualifiers)), None
-        )
+        return next((row for row in self.requirements if row.asked(level, location, key)), None)
+
+
+def _check_keys(
+    vocabulary: SetVocabulary, keys: Sequence[Key], entries: Sequence[SourceEntry]
+) -> None:
+    """Require every key to name admitted values and every entry to carry admitted qualifiers
+    and have exactly the one key it records."""
+    for found in keys:
+        try:
+            vocabulary.check_predicate(found.predicate())
+        except ValueError as error:
+            raise ValueError(f"key {found.key!r}: {error}") from error
+    for entry in entries:
+        try:
+            vocabulary.check_description(entry.qualifiers)
+        except ValueError as error:
+            raise ValueError(f"{entry.entry_id}: {error}") from error
+        matching = key_of(keys, entry.qualifiers)
+        if matching != [entry.key]:
+            raise ValueError(f"{entry.entry_id} has the key {entry.key!r}; matches {matching}")
+
+
+def key_of(keys: Sequence[Key], qualifiers: Mapping[str, str], /) -> list[str]:
+    """The keys an entry with these qualifiers has: exactly one in a consistent set."""
+    return [found.key for found in keys if found.describes(qualifiers)]
 
 
 class CatalogueDescription(FrozenModel):
@@ -366,7 +413,7 @@ class CatalogueDescription(FrozenModel):
     used_by: tuple[str, ...]
 
 
-TABLES = ("entries", "entry_qualifiers", "vocabulary", "requirements", "producers")
+TABLES = ("entries", "entry_qualifiers", "vocabulary", "keys", "requirements", "producers")
 """The CSV tables a catalogue folder holds, each named ``<table>.csv``; ``datapackage.json``
 declares their columns."""
 
@@ -461,12 +508,13 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
         return [row for row in _table(folder, table) if row["set"] == name]
 
     description, vocabulary = _vocabulary(name, rows("vocabulary"))
+    keys = tuple(_key(row) for row in rows("keys"))
     qualifiers: dict[str, dict[str, str]] = {}
     for row in rows("entry_qualifiers"):
         qualifiers.setdefault(row["entry_id"], {})[row["qualifier"]] = row["value"]
     by_source: dict[str, list[SourceEntry]] = {}
     for row in rows("entries"):
-        entry = _entry(row, qualifiers.pop(row["entry_id"], {}))
+        entry = _entry(row, qualifiers.pop(row["entry_id"], {}), keys)
         by_source.setdefault(row["source"], []).append(entry)
     if qualifiers:
         raise ValueError(f"{name}: entry_qualifiers.csv qualifies no entry {sorted(qualifiers)}")
@@ -507,6 +555,7 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
             )
             for row in rows("requirements")
         ),
+        keys,
     )
 
 
@@ -539,8 +588,26 @@ def _vocabulary(name: str, rows: Sequence[Row]) -> tuple[CatalogueDescription, S
     return description, vocabulary
 
 
-def _entry(row: Row, qualifiers: Mapping[str, str]) -> SourceEntry:
-    """One entry from its ``entries.csv`` row and its other qualifiers."""
+_KEY_COLUMNS = ("set", "key", "kind", "psi_ms")
+"""The columns of ``keys.csv`` besides those of the qualifiers a key fixes."""
+
+
+def _key(row: Row) -> Key:
+    """One key from its ``keys.csv`` row: an empty qualifier column leaves that qualifier open."""
+    return Key(
+        key=row["key"],
+        kind=row["kind"],
+        fixed={name: value for name, value in row.items() if name not in _KEY_COLUMNS and value},
+        psi_ms=tuple(row["psi_ms"].split(";")) if row["psi_ms"] else (),
+    )
+
+
+def _entry(row: Row, qualifiers: Mapping[str, str], keys: Sequence[Key]) -> SourceEntry:
+    """One entry from its ``entries.csv`` row, its other qualifiers and the key they match.
+
+    Raises:
+        ValueError: The entry matches no key, or more than one.
+    """
     if row["reference_by"] not in ("name", "prefix"):
         raise ValueError(f"{row['entry_id']}: reference_by is name or prefix")
     reference = Reference.model_validate(
@@ -551,6 +618,10 @@ def _entry(row: Row, qualifiers: Mapping[str, str]) -> SourceEntry:
             row["reference_by"]: row["reference"],
         }
     )
+    described = {"kind": row["kind"], **qualifiers}
+    matching = key_of(keys, described)
+    if len(matching) != 1:
+        raise ValueError(f"{row['entry_id']}: matches the keys {matching}, not exactly one")
     return SourceEntry(
         entry_id=row["entry_id"],
         software_version_pattern=(
@@ -559,7 +630,8 @@ def _entry(row: Row, qualifiers: Mapping[str, str]) -> SourceEntry:
             else ()
         ),
         reference=reference,
-        qualifiers={"kind": row["kind"], **qualifiers},
+        key=matching[0],
+        qualifiers=described,
         evidence=Evidence(basis=row["basis"], source=row["evidence_url"] or None),
     )
 

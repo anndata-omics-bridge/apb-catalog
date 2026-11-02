@@ -1,7 +1,7 @@
 {
   "name": "apb-catalog",
   "title": "APB catalogue sets",
-  "version": "0.13",
+  "version": "0.14",
   "resources": [
     {
       "name": "entries",
@@ -60,18 +60,34 @@
       }
     },
     {
+      "name": "keys",
+      "path": "keys.csv",
+      "description": "The access keys of each set, one meaning each: the kind and the qualifier values a key stands for. An entry has the key whose kind and fixed values it carries.",
+      "schema": {
+        "fields": [
+          {"name": "set", "type": "string", "description": "The catalogue set."},
+          {"name": "key", "type": "string", "description": "The name callers ask by."},
+          {"name": "kind", "type": "string", "description": "The kind the key stands for."},
+          {"name": "normalization", "type": "string", "description": "The normalization the key stands for; empty when the key leaves it open."},
+          {"name": "stage", "type": "string", "description": "The stage the key stands for; empty when the key leaves it open."},
+          {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, separated by ';'; may be empty."}
+        ],
+        "primaryKey": ["set", "key"]
+      }
+    },
+    {
       "name": "requirements",
       "path": "requirements.csv",
-      "description": "How strongly a set's consumer needs one kind on one level and location.",
+      "description": "How strongly a set's consumer needs one key on one level and location.",
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
           {"name": "level", "type": "string", "description": "The quantification level."},
           {"name": "location", "type": "string", "description": "obs, layers, var or varm."},
-          {"name": "kind", "type": "string", "description": "The kind required."},
+          {"name": "key", "type": "string", "description": "The key required."},
           {"name": "requirement", "type": "string", "description": "MUST, SHOULD or MAY."}
         ],
-        "primaryKey": ["set", "level", "location", "kind"]
+        "primaryKey": ["set", "level", "location", "key"]
       }
     },
     {

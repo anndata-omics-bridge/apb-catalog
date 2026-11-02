@@ -7,7 +7,8 @@ The CSV tables under `src/apb_catalog/data/` are the source of truth, one file p
 | `entries.csv` | One row per catalogued field: its set, its source (the conversion software, with every column its APB2 rule writes; an app such as apb-fasta; or `annotation:<convention>` for sample-annotation fields found by column prefix), the software version patterns it holds for, where it lives, its kind and its evidence |
 | `entry_qualifiers.csv` | Each entry's qualifiers besides its kind |
 | `vocabulary.csv` | Each set's row with its purpose and users, its qualifiers and their values; every qualifier defines `unknown` |
-| `requirements.csv` | Each set's requirement rows, if it has any |
+| `keys.csv` | Each set's keys: the name callers ask by, the kind and the `normalization` or `stage` it fixes, empty where it leaves one open, and its PSI-MS terms |
+| `requirements.csv` | Each set's requirement rows by key, if it has any |
 | `producers.csv` | Apps whose fields exist only once they have run: the metadata path recording the run, and what to run |
 | `rule_levels.csv` | The levels APB2 converts for each software version pattern, with the pattern's label; written by `make rule-levels` from APB2's packaged rules |
 | `datapackage.json` | Each table's columns and keys, and the catalog version |
@@ -36,31 +37,33 @@ One row in `entries.csv`, and its other qualifiers in `entry_qualifiers.csv`:
 
 ```csv
 set,entry_id,source,software_version_pattern,level,location,table,reference_by,reference,kind,basis,evidence_url
-confidence,diann.peptidoform_ion.PEP,DIA-NN,^2\..*,peptidoform_ion,layers,,name,PEP,pep,"DIA-NN README: 'run-specific posterior error probability for the precursor'.",https://github.com/vdemichev/DiaNN#main-output-reference
+confidence,diann.peptidoform_ion.layers.PEP,DIA-NN,^2\..*,peptidoform_ion,layers,,name,PEP,pep,"DIA-NN README: 'run-specific posterior error probability for the precursor'.",https://github.com/vdemichev/DiaNN#main-output-reference
 ```
 
 ```csv
 set,entry_id,qualifier,value
-confidence,diann.peptidoform_ion.PEP,stage,identification
+confidence,diann.peptidoform_ion.layers.PEP,stage,identification
 ```
 
 | Column | Holds |
 | --- | --- |
+| `entry_id` | Where the field lives: `<software>.<level>.<location>.<column>`, a `varm` table before its column; a column holding two kinds in one set adds the kind, as in `diann.peptidoform_fragment.var.Protein_Group.fasta_accessions`. `test_an_entry_id_names_its_software_level_location_and_column` checks it |
 | `software_version_pattern` | The version patterns of the software's APB2 rules the entry holds for, as `rule_levels.csv` and a converted result write them, separated by `;`; empty for an app's or an annotation's entry |
 | `reference_by`, `reference` | `name` and the APB output name, not the vendor column: `Q_Value`, not `Q.Value`; or `prefix` and an obs column prefix |
 | `table` | The feature-aligned table of a `varm` field |
 | `kind` and `entry_qualifiers.csv` | Every qualifier the set's vocabulary declares; `unknown` where the evidence does not establish one |
 | `basis`, `evidence_url` | Why the meaning holds, and where it is stated |
 
-A meaning two fields of one level share makes lookups `ambiguous`, and no test catches it: give each field its own kind, as `confidence` does with `library_q_value`.
+Each entry has exactly one key: the one whose kind and fixed values it carries; the load fails otherwise. `test_a_key_has_at_most_one_vendor_entry_per_rule_level` fails when two fields of one level and location share a key in a vendor set; give each its own kind, as `confidence` does with `library_q_value`, or its own key.
 
 ## Adding a set
 
 1. Add its row, purpose and users, and its vocabulary, `kind` and any other qualifiers with `unknown` among their values, to `vocabulary.csv`
-2. Add its entries to `entries.csv` and their qualifiers to `entry_qualifiers.csv`
-3. Add its requirement rows, if any, to `requirements.csv`
-4. Catalogue only the fields its consumer reads, or, for a set that qualifies an APB2 role, every field with that role
-5. Add a section with its generated-block markers to `docs/catalogues.md`, then run `make docs-tables`
+2. Add its keys to `keys.csv`: one per kind, or one per kind and value of a qualifier that changes the meaning
+3. Add its entries to `entries.csv` and their qualifiers to `entry_qualifiers.csv`
+4. Add its requirement rows, if any, to `requirements.csv`
+5. Catalogue only the fields its consumer reads, or, for a set that qualifies an APB2 role, every field with that role
+6. Add a section with its generated-block markers to `docs/catalogues.md`, then run `make docs-tables`
 
 ## Plugin sets
 
@@ -92,7 +95,9 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 | `test_apb_entries_name_fixed_columns_or_role_columns` | An `apb` entry names neither a fixed column nor the column its rule marks with the role its kind names |
 | `test_every_fixed_and_role_column_a_rule_writes_has_an_apb_entry` | A packaged rule level writes a fixed or role column `apb` does not name for that software version |
 | `test_every_set_answers_without_apb2s_rule_declarations` | A lookup, the coverage check or the long table reads APB2's parse rules |
-| `test_requirements_must_name_vocabulary_kinds` | `requirements.csv` names a kind or value the vocabulary does not define |
+| `test_every_entry_has_exactly_one_key` | An entry's kind and qualifiers match no key of its set, or several |
+| `test_a_key_has_at_most_one_vendor_entry_per_rule_level` | Two fields of one software version, level and location share a key in a vendor set |
+| `test_requirements_must_name_the_sets_keys` | `requirements.csv` names a key the set does not list |
 | `test_the_catalogue_page_matches_the_generator` | `docs/catalogues.md` differs from `make docs-tables` |
 | `tests/test_bundle.py` | The bundle cannot be built, for example a new version pattern has no `SAMPLE_VERSIONS` entry in `scripts/build_bundle.py` |
 

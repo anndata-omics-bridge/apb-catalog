@@ -30,6 +30,7 @@ COVERAGE_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "version": pl.String,
     "software_version_pattern": pl.String,
     "level": pl.String,
+    "key": pl.String,
     "kind": pl.String,
     "qualifiers": pl.String,
     "origin": pl.String,
@@ -42,7 +43,7 @@ COVERAGE_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "verdict": pl.String,
 }
 """One row per catalogued or required field of one rule level; a level with neither has one
-row without a kind."""
+row without a key."""
 
 CATALOGUES_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "catalogue": pl.String,
@@ -76,7 +77,8 @@ def rule_coverage(catalogue: str) -> pl.DataFrame:
     """Check every packaged rule level against one catalogue set, one row per field.
 
     Columns: ``software``, ``version`` (the label), ``software_version_pattern``, ``level``,
-    ``kind``, ``qualifiers`` (the other qualifiers as ``key=value``), ``origin``, ``producer``
+    ``key``, ``kind``, ``qualifiers`` (the other qualifiers as ``name=value``), ``origin``,
+    ``producer``
     (the app, null for the conversion software's fields), ``requirement``, ``location``,
     ``table``, ``column`` (null when unsupported), ``needs`` (what to run before the field
     exists) and ``verdict`` (the rule level's, null for a set without requirements).
@@ -138,8 +140,7 @@ def _variant_rows(
     rows += [
         {
             **base,
-            "kind": row.kind,
-            "qualifiers": _pairs(row.qualifiers),
+            **_meaning(sources, row.key),
             "location": row.location,
             "requirement": row.requirement,
         }
@@ -159,15 +160,15 @@ def _pairs(qualifiers: dict[str, str]) -> str | None:
     return ";".join(f"{name}={value}" for name, value in sorted(qualifiers.items())) or None
 
 
-def _kind(entry: SourceEntry) -> str:
-    return entry.qualifiers["kind"]
+def _meaning(sources: SourceCatalogues, key: str) -> dict[str, object]:
+    """The key, kind and other qualifiers of a required key no entry supplies."""
+    found = sources.key(key)
+    return {"key": key, "kind": found.kind, "qualifiers": _pairs(found.fixed)}
 
 
 def _position(required: list[RequirementRow], row: dict[str, object]) -> tuple[int, bool]:
-    kind = cast(str | None, row.get("kind"))
-    rank = next(
-        (index for index, found in enumerate(required) if found.kind == kind), len(required)
-    )
+    key = cast(str | None, row.get("key"))
+    rank = next((index for index, found in enumerate(required) if found.key == key), len(required))
     return (rank, row.get("producer") is not None)
 
 
@@ -183,7 +184,8 @@ def _field(entry: SourceEntry, producer: ProducerCatalogue | None) -> dict[str, 
     others = {name: value for name, value in entry.qualifiers.items() if name != "kind"}
     origin = others.pop("origin", None)
     return {
-        "kind": _kind(entry),
+        "key": entry.key,
+        "kind": entry.qualifiers["kind"],
         "qualifiers": _pairs(others),
         "origin": origin,
         "producer": None if producer is None else producer.producer,

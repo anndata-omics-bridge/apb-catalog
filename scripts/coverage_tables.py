@@ -2,7 +2,7 @@
 
 Run ``make docs-tables`` after changing a catalogue; ``tests/test_docs.py`` fails until the page
 matches. Only the blocks between the generated-block markers are rewritten: one listing every
-set, and one per set with its vocabulary, requirements, coverage and fields. The coverage
+set, and one per set with its vocabulary, keys, requirements, coverage and fields. The coverage
 tables come from ``apb_catalog.api.rule_coverage``, the rule check ``apb-catalog check`` prints.
 """
 
@@ -68,12 +68,18 @@ class Vocabulary:
 
     def __init__(self, sources: SourceCatalogues) -> None:
         self._qualifiers = sources.vocabulary.qualifiers
+        self._keys = [found.key for found in sources.keys]
+        self._fixed = {found.key: found.fixed for found in sources.keys}
 
     def meaning_qualifiers(self) -> tuple[str, ...]:
         """The qualifiers besides ``kind`` that choose a meaning, in vocabulary order."""
         return tuple(
             name for name in self._qualifiers if name != "kind" and name not in VALUE_QUALIFIERS
         )
+
+    def open_qualifiers(self, key: str) -> tuple[str, ...]:
+        """The meaning qualifiers a key leaves open, in vocabulary order."""
+        return tuple(name for name in self.meaning_qualifiers() if name not in self._fixed[key])
 
     def value_qualifiers(self) -> tuple[str, ...]:
         """The qualifiers that describe a field's values, in vocabulary order."""
@@ -83,6 +89,10 @@ class Vocabulary:
         """A value's position in its qualifier's vocabulary; ``unknown`` comes last."""
         values = list(self._qualifiers[qualifier].values)
         return values.index(value) if value in values else len(values)
+
+    def key_rank(self, key: str) -> int:
+        """A key's position in the set's keys table."""
+        return self._keys.index(key)
 
     def table(self, used: dict[str, set[str]]) -> str:
         """Every qualifier value the set's fields use, with its meaning."""
@@ -104,38 +114,56 @@ def _used_values(sources: SourceCatalogues) -> dict[str, set[str]]:
             for name, value in entry.qualifiers.items():
                 used.setdefault(name, set()).add(value)
     for row in sources.requirements:
-        used.setdefault("kind", set()).add(row.kind)
-        for name, value in row.qualifiers.items():
+        for name, (value,) in sources.key(row.key).predicate().items():
             used.setdefault(name, set()).add(value)
     return used
+
+
+# ----------------------------------------------------------------------------------------- keys
+
+
+def _keys(sources: SourceCatalogues) -> str:
+    """Every key of the set, the kind and qualifier values it stands for, and its PSI-MS terms."""
+    fixed = [
+        name
+        for name in sources.vocabulary.qualifiers
+        if any(name in found.fixed for found in sources.keys)
+    ]
+    header = ["Key", "Kind", *(name.capitalize() for name in fixed), "PSI-MS"]
+    rows = [
+        [
+            _code(found.key),
+            _code(found.kind),
+            *(_code(found.fixed[name]) if name in found.fixed else "" for name in fixed),
+            ", ".join(found.psi_ms),
+        ]
+        for found in sources.keys
+    ]
+    return _table(header, rows)
 
 
 # ------------------------------------------------------------------------------- requirements
 
 
 def _requirements(sources: SourceCatalogues, vocabulary: Vocabulary) -> str | None:
-    """How strongly the set needs each kind on each level; ``None`` for a set without rows."""
+    """How strongly the set needs each key on each level; ``None`` for a set without rows."""
     if not sources.requirements:
         return None
     levels = [level for level in LEVELS if any(row.level == level for row in sources.requirements)]
-    by_meaning: dict[tuple[str, str, str], dict[str, str]] = {}
+    by_meaning: dict[tuple[str, str], dict[str, str]] = {}
     for row in sources.requirements:
-        qualifiers = ", ".join(f"{name}={value}" for name, value in row.qualifiers.items())
-        by_meaning.setdefault((row.kind, row.location, qualifiers), {})[row.level] = row.requirement
+        by_meaning.setdefault((row.key, row.location), {})[row.level] = row.requirement
     ordered = sorted(
-        by_meaning,
-        key=lambda key: (vocabulary.rank("kind", key[0]), LOCATIONS.index(key[1]), key[2]),
+        by_meaning, key=lambda key: (vocabulary.key_rank(key[0]), LOCATIONS.index(key[1]))
     )
-    qualified = any(key[2] for key in ordered)
-    header = ["Kind", "Location", *(["Qualifiers"] if qualified else []), *levels]
+    header = ["Key", "Location", *levels]
     rows = [
         [
-            _code(kind),
+            _code(key),
             location,
-            *([_code(qualifiers) if qualifiers else ""] if qualified else []),
-            *(by_meaning[(kind, location, qualifiers)].get(level, ABSENT) for level in levels),
+            *(by_meaning[(key, location)].get(level, ABSENT) for level in levels),
         ]
-        for kind, location, qualifiers in ordered
+        for key, location in ordered
     ]
     return _table(header, rows, centred_from=len(header) - len(levels))
 
@@ -152,30 +180,25 @@ def _qualifiers(row: Row) -> dict[str, str]:
 
 
 def _column(row: Row, vocabulary: Vocabulary) -> Column:
+    """The location, the key and the values of the meaning qualifiers its key leaves open."""
     qualifiers = _qualifiers(row)
     return (
         cast(str, row["location"]),
-        cast(str, row["kind"]),
-        *(qualifiers[name] for name in vocabulary.meaning_qualifiers()),
+        cast(str, row["key"]),
+        *(qualifiers[name] for name in vocabulary.open_qualifiers(cast(str, row["key"]))),
     )
 
 
-def _column_order(column: Column, vocabulary: Vocabulary) -> tuple[int, ...]:
-    location, kind, *values = column
-    return (
-        LOCATIONS.index(location),
-        vocabulary.rank("kind", kind),
-        *(
-            vocabulary.rank(name, value)
-            for name, value in zip(vocabulary.meaning_qualifiers(), values, strict=True)
-        ),
-    )
+def _column_order(column: Column, vocabulary: Vocabulary) -> tuple[object, ...]:
+    location, key, *values = column
+    return (LOCATIONS.index(location), vocabulary.key_rank(key), *values)
 
 
 def _column_header(column: Column, *, located: bool) -> str:
-    """The kind, the values of its other meaning qualifiers, and the location where it varies."""
-    location, kind, *values = column
-    return ", ".join([_code(kind), *values]) + (f" ({location})" if located else "")
+    """The key, the values of the meaning qualifiers it leaves open, and the location where it
+    varies."""
+    location, key, *values = column
+    return ", ".join([_code(key), *values]) + (f" ({location})" if located else "")
 
 
 def _coverage(name: str, vocabulary: Vocabulary) -> list[str]:
@@ -271,7 +294,7 @@ def _sourced(sources: SourceCatalogues) -> list[tuple[str, str, SourceEntry]]:
 class FieldRow:
     """One catalogued field as the Fields tables show it, before its levels are merged."""
 
-    kind: str
+    key: str
     location: str
     meaning: tuple[str, ...]
     software: str
@@ -306,18 +329,18 @@ def _first_of_group(group: list[str], previous: list[str]) -> list[str]:
     return ["" if index < changed else cell for index, cell in enumerate(group)]
 
 
-PER_KIND = 2
-"""A set averaging this many fields per kind gets one table per kind; fewer share one table."""
+PER_KEY = 2
+"""A set averaging this many fields per key gets one table per key; fewer share one table."""
 
 
 def _fields(sources: SourceCatalogues, vocabulary: Vocabulary) -> list[str]:
-    """The catalogued fields, sorted by kind; a field catalogued on several levels is one row."""
+    """The catalogued fields, sorted by key; a field catalogued on several levels is one row."""
     meaning = vocabulary.meaning_qualifiers()
     values = vocabulary.value_qualifiers()
     levels: dict[FieldRow, set[str]] = {}
     for software, versions, entry in _sourced(sources):
         row = FieldRow(
-            kind=entry.qualifiers["kind"],
+            key=entry.key,
             location=entry.reference.location,
             meaning=tuple(entry.qualifiers[name] for name in meaning),
             software=software,
@@ -335,17 +358,17 @@ def _fields(sources: SourceCatalogues, vocabulary: Vocabulary) -> list[str]:
         *(name.capitalize() for name in values),
         "Levels",
     ]
-    kinds = sorted({row.kind for row in levels}, key=lambda kind: vocabulary.rank("kind", kind))
-    split = len(levels) >= PER_KIND * len(kinds)
+    keys = sorted({row.key for row in levels}, key=vocabulary.key_rank)
+    split = len(levels) >= PER_KEY * len(keys)
     blocks: list[str] = []
     rows: list[list[str]] = []
-    for kind in kinds:
+    for key in keys:
         previous: list[str] = []
         for row in sorted(
-            (row for row in levels if row.kind == kind), key=lambda row: row.order(vocabulary)
+            (row for row in levels if row.key == key), key=lambda row: row.order(vocabulary)
         ):
             group = [
-                *([] if split else [_code(kind)]),
+                *([] if split else [_code(key)]),
                 row.location,
                 *(_code(value) for value in row.meaning),
             ]
@@ -361,9 +384,9 @@ def _fields(sources: SourceCatalogues, vocabulary: Vocabulary) -> list[str]:
             )
             previous = group
         if split:
-            blocks.append(f"**{_code(kind)}**\n\n" + _table(header, rows))
+            blocks.append(f"**{_code(key)}**\n\n" + _table(header, rows))
             rows = []
-    return blocks if split else [_table(["Kind", *header], rows)]
+    return blocks if split else [_table(["Key", *header], rows)]
 
 
 # --------------------------------------------------------------------------------- the page
@@ -390,7 +413,7 @@ def block(name: str) -> str:
     """The generated part of one catalogue set's section."""
     sources = packaged_catalogues(name)
     vocabulary = Vocabulary(sources)
-    parts = ["### Vocabulary", vocabulary.table(_used_values(sources))]
+    parts = ["### Vocabulary", vocabulary.table(_used_values(sources)), "### Keys", _keys(sources)]
     requirements = _requirements(sources, vocabulary)
     if requirements is not None:
         parts += ["### Requirements", requirements]

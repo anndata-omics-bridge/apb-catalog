@@ -26,8 +26,8 @@ pip install apb-catalog
 from apb_catalog.api import DataCatalog
 
 confidence = DataCatalog(parsed, "confidence")             # parsed: an apb2 ParsedLevels result
-confidence.kinds("peptidoform_ion", "layers")              # ('pep', 'q_value')
-pep = confidence.layer("peptidoform_ion", kind="pep")      # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
+confidence.keys("peptidoform_ion", "layers")               # ('pep', 'q_value')
+pep = confidence.layer("peptidoform_ion", "pep")           # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
 ```
 
 ```bash

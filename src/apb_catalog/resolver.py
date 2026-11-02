@@ -18,14 +18,23 @@ type ResolutionStatus = Literal["resolved", "missing", "ambiguous", "unknown"]
 class FieldRequest(FrozenModel):
     """A consumer's question: one level, constrained by accepted qualifier values.
 
-    Qualifiers left out accept any value. Accepting ``unknown`` admits entries whose reviewer
-    could not establish that qualifier. A ``var`` request also reads feature-aligned ``varm``
-    tables.
+    ``key`` names the access key asked for; ``qualifiers`` hold what it stands for, its kind and
+    fixed values, plus any further qualifiers the caller asked for. Qualifiers left out accept
+    any value. Accepting ``unknown`` admits entries whose reviewer could not establish that
+    qualifier. A ``var`` request also reads feature-aligned ``varm`` tables.
     """
 
     level: str
     location: Location | None = None
+    key: str | None = None
     qualifiers: dict[str, tuple[str, ...]] = Field(default_factory=dict)
+
+    def wanted(self) -> str:
+        """The key asked for and the qualifiers the request accepts, for messages."""
+        accepted = ", ".join(
+            f"{name}={'|'.join(values)}" for name, values in self.qualifiers.items()
+        )
+        return accepted if self.key is None else f"{self.key} ({accepted})"
 
     def selects(self, entry: SourceEntry, /) -> bool:
         """Whether an entry answers at this level's location."""
@@ -57,6 +66,7 @@ class Candidate(FrozenModel):
 
     entry_id: str
     reference: Reference
+    key: str
     qualifiers: dict[str, str]
     undecided: tuple[str, ...] = ()
 
@@ -80,11 +90,11 @@ class Resolution(FrozenModel):
             raise ValueError("a resolution carries a reference exactly when it is resolved")
         return self
 
-    def offered(self, qualifier: str, /) -> tuple[str, ...]:
-        """Return the distinct values the candidates carry, raising when the level is unreviewed."""
+    def offered(self) -> tuple[str, ...]:
+        """Return the distinct keys the candidates have, raising when the level is unreviewed."""
         if self.status == "unknown" and not self.candidates:
             raise UnresolvedField(self)
-        return tuple(sorted({candidate.qualifiers[qualifier] for candidate in self.candidates}))
+        return tuple(sorted({candidate.key for candidate in self.candidates}))
 
     def found(self) -> Reference | None:
         """Return the reference, ``None`` when the field is missing, and raise when undecidable."""
@@ -98,12 +108,9 @@ class UnresolvedField(LookupError):
 
     def __init__(self, resolution: Resolution) -> None:
         request = resolution.request
-        wanted = ", ".join(
-            f"{name}={'|'.join(values)}" for name, values in request.qualifiers.items()
-        )
         names = ", ".join(str(candidate.reference.name) for candidate in resolution.candidates)
         super().__init__(
-            f"{wanted} on {request.level} is {resolution.status}: "
+            f"{request.wanted()} on {request.level} is {resolution.status}: "
             f"{'; '.join(resolution.reasons)}" + (f"; candidates: {names}" if names else "")
         )
         self.resolution = resolution
@@ -161,6 +168,7 @@ def _resolve(
         Candidate(
             entry_id=entry.entry_id,
             reference=entry.reference,
+            key=entry.key,
             qualifiers=entry.qualifiers,
             undecided=request.undecided(entry.qualifiers),
         )
@@ -176,6 +184,7 @@ def _resolve(
             Candidate(
                 entry_id=found.entry.entry_id,
                 reference=found.entry.reference,
+                key=found.entry.key,
                 qualifiers=found.entry.qualifiers,
             )
             for found in waiting

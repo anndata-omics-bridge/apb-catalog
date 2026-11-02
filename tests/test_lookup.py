@@ -61,17 +61,17 @@ def _result(
 def test_catalog_answers_names_from_software_and_version() -> None:
     """The packaged rule whose version pattern admits the version decides the columns."""
     abundance = Catalog("DIA-NN", "2.6.0", "abundance")
-    assert abundance.layer("peptidoform_ion", kind="intensity") == Reference(
+    assert abundance.layer("peptidoform_ion", key="intensity") == Reference(
         level="peptidoform_ion", location="layers", name="Precursor_Quantity"
     )
-    assert abundance.kinds("peptidoform_ion", "layers") == (
+    assert abundance.keys("peptidoform_ion", "layers") == (
         "intensity",
         "ms1_intensity",
         "normalized_intensity",
         "normalized_ms1_intensity",
     )
     older = Catalog("DIA-NN", "1.8.1", "confidence")
-    assert older.var("peptidoform_ion", kind="library_q_value") == Reference(
+    assert older.var("peptidoform_ion", key="library_q_value") == Reference(
         level="peptidoform_ion", location="var", name="Lib_Q_Value"
     )
     with pytest.raises(ValueError, match=r"no packaged DIA-NN rule admits version '9.0'"):
@@ -81,13 +81,13 @@ def test_catalog_answers_names_from_software_and_version() -> None:
 def test_catalog_names_roles_and_fixed_columns_of_the_apb_set() -> None:
     """A role's entry names the column the version's rule marks; a fixed name is that name."""
     apb = Catalog("DIA-NN", "2.6.0", "apb")
-    assert apb.var("peptidoform_ion", kind="protein_assignment") == Reference(
+    assert apb.var("peptidoform_ion", key="protein_assignment") == Reference(
         level="peptidoform_ion", location="var", name="Protein_Group"
     )
-    assert apb.var("peptidoform_ion", kind="peptidoform_ion") == Reference(
+    assert apb.var("peptidoform_ion", key="peptidoform_ion") == Reference(
         level="peptidoform_ion", location="var", name="ProForma_ion"
     )
-    assert apb.var("protein", kind="peptide") is None
+    assert apb.var("protein", key="peptide") is None
     fields = apb.fields()
     assert fields.get_column("present").all()
     assert "concept" not in fields.columns
@@ -101,7 +101,7 @@ def test_data_catalog_finds_the_role_column_of_the_result() -> None:
         {"Protein_Group": ["P1", "P2"]},
         roles={"protein_assignment": "Protein_Group"},
     )
-    found = DataCatalog(parsed, "apb").var("peptidoform_ion", kind="protein_assignment")
+    found = DataCatalog(parsed, "apb").var("peptidoform_ion", key="protein_assignment")
     assert found is not None and found.to_list() == ["P1", "P2"]
 
 
@@ -115,12 +115,12 @@ def test_an_annotation_column_is_found_by_its_convention_prefix() -> None:
         metadata={"prolfquapp": {"schema_version": "4"}},
     )
     catalog = DataCatalog(annotated, "apb")
-    condition = catalog.obs("peptidoform_ion", kind="condition")
+    condition = catalog.obs("peptidoform_ion", key="condition")
     assert condition is not None and condition.to_list() == ["A", "A", "B"]
-    replicate = catalog.obs("peptidoform_ion", kind="bioreplicate")
+    replicate = catalog.obs("peptidoform_ion", key="bioreplicate")
     assert replicate is not None and replicate.to_list() == ["s1", "s2", "s1"]
     plain = DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"], obs=obs), "apb")
-    assert plain.obs("peptidoform_ion", kind="condition") is None, "no convention recorded"
+    assert plain.obs("peptidoform_ion", key="condition") is None, "no convention recorded"
 
 
 def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCaptureFixture) -> None:
@@ -128,9 +128,11 @@ def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCapture
     parsed = _result("peaks/rules.json", ["Normalized_Area"])
     catalog = DataCatalog(parsed, "abundance", enforce="MUST")
     with caplog.at_level(logging.WARNING, logger="apb_catalog"):
-        found = catalog.layer("peptidoform_ion", kind="intensity")
+        found = catalog.layer("peptidoform_ion", key="intensity")
     assert found is None
-    assert "SHOULD field kind=intensity on peptidoform_ion" in caplog.text
+    assert "SHOULD field intensity (kind=intensity, normalization=none) on peptidoform_ion" in (
+        caplog.text
+    )
     attached = attach_snapshot(parsed, catalog.snapshot())
     records = cast(dict[str, Any], attached.levels["peptidoform_ion"].metadata[METADATA_KEY])
     summary = {entry["name"]: entry for entry in records["abundance"]["summary"]}
@@ -149,7 +151,7 @@ def test_enforce_should_raises_for_a_missing_should_field() -> None:
         _result("peaks/rules.json", ["Normalized_Area"]), "abundance", enforce="SHOULD"
     )
     with pytest.raises(MissingRequiredField, match="SHOULD field"):
-        catalog.layer("peptidoform_ion", kind="intensity")
+        catalog.layer("peptidoform_ion", key="intensity")
 
 
 def test_enforce_raises_for_a_missing_must_field() -> None:
@@ -157,20 +159,25 @@ def test_enforce_raises_for_a_missing_must_field() -> None:
     catalog = DataCatalog(
         _result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb", enforce="MUST"
     )
-    with pytest.raises(MissingRequiredField, match="MUST field kind=peptide"):
-        catalog.var("peptidoform_ion", kind="peptide")
+    with pytest.raises(MissingRequiredField, match=r"MUST field peptide \(kind=peptide\)"):
+        catalog.var("peptidoform_ion", key="peptide")
     assert (
         DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb").var(
-            "peptidoform_ion", kind="peptide"
+            "peptidoform_ion", key="peptide"
         )
         is None
     ), "without enforce, absence is None"
 
 
 def test_enforce_needs_requirements() -> None:
-    """A set without requirement rows has nothing to enforce."""
+    """A set without requirement rows has nothing to enforce; a data catalog composes apb's."""
     with pytest.raises(ValueError, match="sets no requirements"):
-        DataCatalog(_result("peaks/rules.json", ["Normalized_Area"]), "confidence", enforce="MUST")
+        Catalog("PEAKS", "13", "confidence", enforce="MUST")
+    composed = DataCatalog(
+        _result("peaks/rules.json", ["Normalized_Area"]), "confidence", enforce="MUST"
+    )
+    with pytest.raises(MissingRequiredField, match="MUST field peptide"):
+        composed.var("peptidoform_ion", "peptide")
 
 
 def test_fields_lists_absent_fields_with_their_constant() -> None:
@@ -203,9 +210,7 @@ def test_the_long_table_lists_every_set() -> None:
         "apb",
         "chromatography",
     }
-    library = table.filter(
-        (pl.col("set") == "confidence") & (pl.col("qualifier.kind") == "library_q_value")
-    )
+    library = table.filter((pl.col("set") == "confidence") & (pl.col("kind") == "library_q_value"))
     assert {"Lib_Q_Value", "EG_LibraryQvalue"} <= set(library.get_column("name"))
     duplicated = (
         table.group_by("set", "entry_id", "software_version_pattern")

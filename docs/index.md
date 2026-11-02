@@ -5,7 +5,7 @@ APB Catalog finds a field of an [APB2](https://github.com/anndata-omics-bridge/a
 ```python
 from apb_catalog.api import DataCatalog
 
-pep = DataCatalog(result, "confidence").layer("peptidoform_ion", kind="pep")
+pep = DataCatalog(result, "confidence").layer("peptidoform_ion", "pep")
 ```
 
 `pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP.

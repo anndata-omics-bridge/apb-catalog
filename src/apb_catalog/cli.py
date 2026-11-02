@@ -77,7 +77,7 @@ def meaning(
 ) -> int:
     """Print CATALOGUE as one table: the column holding each catalogued meaning per rule level.
 
-    One row per packaged rule level and field, with its kind and the catalogue's qualifiers;
+    One row per packaged rule level and field, with its key, kind and the catalogue's qualifiers;
     ``none`` where the level has no column for it. With ``--software`` and ``--version``, only
     the fields that software version's packaged rule declares. With ``--format csv``, the same
     rows as CSV.
@@ -89,7 +89,7 @@ def meaning(
         if software is not None and version is not None:
             fields = Catalog(software, version, catalogue).fields()
             qualifiers = [name for name in fields.columns if name.startswith("qualifier.")]
-            table = fields.select("level", "location", "table", "name", *qualifiers)
+            table = fields.select("level", "location", "table", "name", "key", "kind", *qualifiers)
         else:
             table = _meanings(rule_coverage(catalogue))
     except ValueError as error:
@@ -107,8 +107,8 @@ def table(catalogue: str | None = None, /, *, output: Path | None = None) -> int
     """Write every catalogue set, or CATALOGUE alone, as one long CSV table.
 
     One row per entry and software version it applies to: set, source, software version
-    pattern, level, location, table, name, one ``qualifier.<name>`` column per qualifier,
-    requirement and entry id. Written to standard output, or to ``--output``.
+    pattern, level, location, table, name, key, kind, one ``qualifier.<name>`` column per other
+    qualifier, requirement and entry id. Written to standard output, or to ``--output``.
     """
     try:
         rows = catalogue_table(catalogue)
@@ -123,7 +123,7 @@ def table(catalogue: str | None = None, /, *, output: Path | None = None) -> int
 
 
 def _meanings(coverage: pl.DataFrame) -> pl.DataFrame:
-    """Software, version, level, column and kind, then one column per qualifier of the set."""
+    """Software, version, level, column, key and kind, then one column per other qualifier."""
     pairs = cast(list[str], coverage.get_column("qualifiers").drop_nulls().to_list())
     names = sorted({pair.split("=", 1)[0] for text in pairs for pair in text.split(";")})
     qualifiers = [
@@ -147,6 +147,7 @@ def _meanings(coverage: pl.DataFrame) -> pl.DataFrame:
         "version",
         "level",
         column.fill_null("none").alias("column"),
+        "key",
         "kind",
         *qualifiers,
     )
@@ -171,16 +172,16 @@ def _summary(variant: str, rows: pl.DataFrame) -> str:
     if missing.is_empty():
         return line
     fields = ", ".join(
-        f"{kind} {requirement}"
-        for kind, requirement in missing.select("kind", "requirement").iter_rows()
+        f"{key} {requirement}"
+        for key, requirement in missing.select("key", "requirement").iter_rows()
     )
     return f"{line}: missing {fields}"
 
 
 def _field(row: dict[str, object]) -> str:
-    if row["kind"] is None:
+    if row["key"] is None:
         return "no catalogued field"
-    label = str(row["kind"])
+    label = str(row["key"])
     if row["qualifiers"]:
         label += f" [{row['qualifiers']}]"
     if row["requirement"]:

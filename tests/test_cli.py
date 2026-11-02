@@ -23,7 +23,7 @@ def test_without_arguments_every_catalogue_is_listed(
     assert _run() == 0
     output = capsys.readouterr().out
     assert f"{toy_set}: 22 entries, requirements" in output
-    assert "confidence: 22 entries, coverage only" in output
+    assert "confidence: 21 entries, coverage only" in output
 
 
 def test_check_fails_when_a_level_misses_a_must_field(
@@ -58,20 +58,28 @@ def test_software_shows_every_field_and_its_column(
 def test_meaning_prints_the_column_of_every_meaning_per_rule_level(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """One row per rule level and field, with its kind and the set's qualifier as columns."""
+    """One row per rule level and field, with its key, kind and the set's qualifier as columns."""
     assert _run("meaning", "abundance") == 0
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0].split() == ["software", "version", "level", "column", "kind"]
-    assert ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Quantity", "intensity"] in [
-        line.split() for line in lines
-    ]
+    header = ["software", "version", "level", "column", "key", "kind", "normalization"]
+    assert lines[0].split() == header
+    row = ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Normalised", "normalized_intensity"]
+    assert [*row, "intensity", "run_setting"] in [line.split() for line in lines]
 
 
 def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str]) -> None:
     """CSV has the text table's columns and one row per field of the rule check."""
     assert _run("meaning", "abundance", "--format", "csv") == 0
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
-    assert table.columns == ["software", "version", "level", "column", "kind"]
+    assert table.columns == [
+        "software",
+        "version",
+        "level",
+        "column",
+        "key",
+        "kind",
+        "normalization",
+    ]
     assert table.height == rule_coverage("abundance").height
 
 

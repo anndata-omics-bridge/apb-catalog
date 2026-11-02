@@ -79,5 +79,5 @@ def test_every_set_answers_without_apb2s_rule_declarations(
         assert not rule_coverage(name).is_empty()
         assert not Catalog("DIA-NN", "2.6.0", name).fields().is_empty()
         DataCatalog(result, name).fields()
-    found = DataCatalog(result, "apb").var("peptidoform_ion", kind="protein_assignment")
+    found = DataCatalog(result, "apb").var("peptidoform_ion", key="protein_assignment")
     assert found is not None and found.to_list() == ["P1", "P2"]

@@ -33,6 +33,7 @@ def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntr
             "entry_id": f"vendor.peptidoform_ion.{name}",
             "software_version_pattern": ("^1\\.",),
             "reference": {"level": "peptidoform_ion", "location": location, "name": name},
+            "key": described["kind"],
             "qualifiers": described,
             "evidence": Evidence(basis="test"),
         }
@@ -188,7 +189,7 @@ def test_a_pending_entry_makes_its_answer_unknown_with_the_reason() -> None:
     )
     answer = level.resolve(_request(location="var", kind=("q_value",)))
     assert (answer.status, answer.reasons) == ("unknown", ("tool has not run; run `tool`",))
-    assert answer.offered("kind") == ("q_value",)
+    assert answer.offered() == ("q_value",)
     assert level.resolve(_request(kind=("pep",))).status == "resolved"
 
 
@@ -204,6 +205,7 @@ def test_a_var_request_reads_varm_tables_too() -> None:
                 "name": "flag",
                 "table": "checks",
             },
+            "key": "pep",
             "qualifiers": {"kind": "pep", "stage": "identification"},
             "evidence": Evidence(basis="test"),
         }

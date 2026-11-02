@@ -12,8 +12,13 @@ from apb_catalog.source import (
 )
 
 KEY_COLUMNS = ("set", "source", "software_version_pattern", "level", "location", "table", "name")
-"""The columns before the qualifiers; ``qualifier.<name>``, ``requirement`` and ``entry_id``
-follow."""
+"""The columns before the meaning; ``key``, ``kind``, ``qualifier.<name>`` for each other
+qualifier, ``requirement`` and ``entry_id`` follow."""
+
+
+def other_qualifiers(sources: SourceCatalogues, /) -> tuple[str, ...]:
+    """The set's qualifiers besides ``kind``, in vocabulary order."""
+    return tuple(name for name in sources.vocabulary.qualifiers if name != "kind")
 
 
 def field_name(entry: SourceEntry, /) -> str:
@@ -31,7 +36,7 @@ def entry_row(
     software_version_pattern: str | None,
     entry: SourceEntry,
 ) -> dict[str, object]:
-    """One table row: where the entry's field lives, its qualifiers and its requirement."""
+    """One table row: where the entry's field lives, its key and qualifiers, its requirement."""
     reference = entry.reference
     row = next((row for row in sources.requirements if row.describes(entry)), None)
     return {
@@ -42,7 +47,9 @@ def entry_row(
         "location": reference.location,
         "table": reference.table,
         "name": field_name(entry),
-        **{f"qualifier.{name}": entry.qualifiers[name] for name in sources.vocabulary.qualifiers},
+        "key": entry.key,
+        "kind": entry.qualifiers["kind"],
+        **{f"qualifier.{name}": entry.qualifiers[name] for name in other_qualifiers(sources)},
         "requirement": None if row is None else row.requirement,
         "entry_id": entry.entry_id,
     }
@@ -66,8 +73,14 @@ def set_rows(set_name: str, sources: SourceCatalogues) -> list[dict[str, object]
 
 
 def schema(sources: SourceCatalogues, /) -> dict[str, type[pl.DataType]]:
-    """The table's columns for one set: the key columns, its qualifiers, requirement, entry id."""
-    columns = [*KEY_COLUMNS, *(f"qualifier.{name}" for name in sources.vocabulary.qualifiers)]
+    """The table's columns for one set: the key columns, key, kind, its other qualifiers,
+    requirement, entry id."""
+    columns = [
+        *KEY_COLUMNS,
+        "key",
+        "kind",
+        *(f"qualifier.{name}" for name in other_qualifiers(sources)),
+    ]
     return dict.fromkeys((*columns, "requirement", "entry_id"), pl.String)
 
 
@@ -77,8 +90,8 @@ def catalogue_table(catalogue: str | None = None) -> pl.DataFrame:
     Columns: ``set``, ``source`` (the conversion software, an app or
     ``annotation:<convention>``), ``software_version_pattern`` (null for an entry of every
     software version), ``level``, ``location``, ``table``, ``name`` (``prefix:<prefix>`` for a
-    field found by column-name prefix), one ``qualifier.<name>`` column per qualifier,
-    ``requirement`` and ``entry_id``. A row is identified by ``set``, ``entry_id`` and
+    field found by column-name prefix), ``key``, ``kind``, one ``qualifier.<name>`` column per
+    other qualifier, ``requirement`` and ``entry_id``. A row is identified by ``set``, ``entry_id`` and
     ``software_version_pattern``.
 
     Raises:
@@ -91,4 +104,4 @@ def catalogue_table(catalogue: str | None = None) -> pl.DataFrame:
     ]
     rows = pl.concat(frames, how="diagonal")
     qualifiers = [name for name in rows.columns if name.startswith("qualifier.")]
-    return rows.select(*KEY_COLUMNS, *qualifiers, "requirement", "entry_id")
+    return rows.select(*KEY_COLUMNS, "key", "kind", *qualifiers, "requirement", "entry_id")

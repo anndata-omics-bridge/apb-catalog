@@ -1,4 +1,4 @@
-set,level,location,kind,requirement
+set,level,location,key,requirement
 abundance,peptidoform_ion,layers,intensity,SHOULD
 apb,peptidoform_ion,var,peptide,MUST
 apb,peptidoform,var,peptide,MUST

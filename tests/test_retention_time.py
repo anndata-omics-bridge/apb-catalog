@@ -26,12 +26,12 @@ from tests.packaged_rules import declared_rule_json
 )
 def test_reviewed_rt_names_and_units(software: str, version: str, column: str, unit: str) -> None:
     catalog = Catalog(software, version, "chromatography")
-    assert catalog.layer("peptidoform_ion", kind="retention_time", unit=unit) == Reference(
+    assert catalog.layer("peptidoform_ion", key="retention_time", unit=unit) == Reference(
         level="peptidoform_ion", location="layers", name=column
     )
     other = "second" if unit == "minute" else "minute"
-    assert catalog.layer("peptidoform_ion", kind="retention_time", unit=other) is None
-    assert catalog.layer("protein", kind="retention_time") is None
+    assert catalog.layer("peptidoform_ion", key="retention_time", unit=other) is None
+    assert catalog.layer("protein", key="retention_time") is None
 
 
 def _result(include_rt: bool) -> ParsedLevels:
@@ -59,7 +59,7 @@ def _result(include_rt: bool) -> ParsedLevels:
 def test_data_catalog_returns_original_values_without_converting() -> None:
     parsed = _result(True)
     catalog = DataCatalog(parsed, "chromatography")
-    found = catalog.layer("peptidoform_ion", kind="retention_time", unit="minute")
+    found = catalog.layer("peptidoform_ion", key="retention_time", unit="minute")
     assert found is not None
     assert found is parsed.levels["peptidoform_ion"].layers["RT"]
     assert_frame_equal(found.wide(), parsed.levels["peptidoform_ion"].layers["RT"].wide())
@@ -70,29 +70,29 @@ def test_data_catalog_returns_original_values_without_converting() -> None:
 
 def test_rt_is_optional_in_a_reviewed_result() -> None:
     catalog = DataCatalog(_result(False), "chromatography")
-    assert catalog.layer("peptidoform_ion", kind="retention_time", unit="minute") is None
+    assert catalog.layer("peptidoform_ion", key="retention_time", unit="minute") is None
 
 
 def test_an_older_rule_without_retained_rt_answers_missing() -> None:
     catalog = Catalog("AlphaDIA", "1.10.0", "chromatography")
-    assert catalog.layer("peptidoform_ion", kind="retention_time") is None
+    assert catalog.layer("peptidoform_ion", key="retention_time") is None
 
 
 def test_feature_average_rt_is_distinct_from_per_run_rt() -> None:
     catalog = Catalog("MaxQuant", "2.4.0.0", "chromatography")
-    assert catalog.var("peptidoform", kind="retention_time", unit="minute") == Reference(
+    assert catalog.var("peptidoform", key="retention_time", unit="minute") == Reference(
         level="peptidoform", location="var", name="Retention_Time"
     )
-    assert catalog.layer("peptidoform", kind="retention_time") is None
+    assert catalog.layer("peptidoform", key="retention_time") is None
 
 
 def test_instrument_dependent_units_are_not_assumed() -> None:
     catalog = Catalog("FragPipe", "22.0", "chromatography")
-    assert catalog.layer("peptidoform_ion", kind="retention_time", unit="unknown") == Reference(
+    assert catalog.layer("peptidoform_ion", key="retention_time", unit="unknown") == Reference(
         level="peptidoform_ion", location="layers", name="Apex_Retention_Time"
     )
     with pytest.raises(UnresolvedField, match="unknown"):
-        catalog.layer("peptidoform_ion", kind="retention_time", unit="second")
+        catalog.layer("peptidoform_ion", key="retention_time", unit="second")
 
 
 @pytest.mark.parametrize(
@@ -136,7 +136,7 @@ def test_measured_aligned_predicted_and_library_rt_are_separate_kinds(
 ) -> None:
     catalog = Catalog(software, version, "chromatography")
     lookup = catalog.layer if location == "layers" else catalog.var
-    found = lookup("peptidoform_ion", kind=kind, unit=unit)
+    found = lookup("peptidoform_ion", key=kind, unit=unit)
     assert found == Reference(level="peptidoform_ion", location=location, name=column)
 
 
@@ -161,6 +161,6 @@ def test_peak_bounds_widths_and_scan_times_are_their_own_kinds(
     software: str, version: str, kind: str, column: str, unit: str
 ) -> None:
     found = Catalog(software, version, "chromatography").layer(
-        "peptidoform_ion", kind=kind, unit=unit
+        "peptidoform_ion", key=kind, unit=unit
     )
     assert found == Reference(level="peptidoform_ion", location="layers", name=column)

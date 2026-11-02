@@ -10,6 +10,7 @@ from apb_catalog.rules import rule_levels
 from apb_catalog.source import (
     CatalogueDescription,
     Evidence,
+    Key,
     ProducerCatalogue,
     RequirementRow,
     RuleVariant,
@@ -23,9 +24,12 @@ DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 PATTERN = "^2\\..*"
 ION = RuleVariant(level="peptidoform_ion", software_version_pattern=PATTERN)
 REQUIRED = (
-    RequirementRow(level="peptidoform_ion", location="var", kind="group", requirement="MUST"),
-    RequirementRow(level="peptidoform_ion", location="var", kind="charge", requirement="MUST"),
-    RequirementRow(level="peptidoform_ion", location="var", kind="decoy", requirement="MAY"),
+    RequirementRow(level="peptidoform_ion", location="var", key="group", requirement="MUST"),
+    RequirementRow(level="peptidoform_ion", location="var", key="charge", requirement="MUST"),
+    RequirementRow(level="peptidoform_ion", location="var", key="decoy", requirement="MAY"),
+)
+KEYS = tuple(
+    Key(key=kind, kind=kind) for kind in ("group", "charge", "decoy", "contaminant", "peptidoform")
 )
 VOCABULARY = SetVocabulary(
     definition="A synthetic field the tests look up.",
@@ -56,6 +60,7 @@ def _entry(name: str, kind: str, origin: str = "vendor", location: str = "var") 
                 "name": name,
                 "table": table,
             },
+            "key": kind,
             "qualifiers": {"kind": kind, "origin": origin},
             "evidence": Evidence(basis="test"),
         }
@@ -70,7 +75,9 @@ def _sources(
         variants=(ION,),
         entries=entries,
     )
-    return SourceCatalogues(VOCABULARY, "test", (vendor,), DESCRIPTION, producers, (), REQUIRED)
+    return SourceCatalogues(
+        VOCABULARY, "test", (vendor,), DESCRIPTION, producers, (), REQUIRED, KEYS
+    )
 
 
 def _producer(*entries: SourceEntry, requires: tuple[str, ...] = ()) -> ProducerCatalogue:
@@ -127,26 +134,26 @@ def test_a_later_producer_counts_with_what_to_run() -> None:
     ]
 
 
-def test_requirements_must_name_vocabulary_kinds() -> None:
-    """A requirement for a kind the set's vocabulary does not define is refused."""
+def test_requirements_must_name_the_sets_keys() -> None:
+    """A requirement for a key the set does not list is refused."""
     vendor = SourceCatalogue(
         software_name="DIA-NN",
         variants=(ION,),
         entries=(GROUP,),
     )
-    row = RequirementRow(level="peptidoform_ion", location="var", kind="fdr", requirement="MUST")
-    with pytest.raises(ValueError, match="does not admit 'fdr'"):
-        SourceCatalogues(VOCABULARY, "test", (vendor,), DESCRIPTION, (), (), (row,))
+    row = RequirementRow(level="peptidoform_ion", location="var", key="fdr", requirement="MUST")
+    with pytest.raises(ValueError, match="unknown key 'fdr'"):
+        SourceCatalogues(VOCABULARY, "test", (vendor,), DESCRIPTION, (), (), (row,), KEYS)
 
 
-def test_a_requirement_row_matches_its_qualifiers() -> None:
+def test_a_requirement_row_matches_its_key() -> None:
     """The abundance set's SHOULD asks for an un-normalized intensity, not any intensity."""
     coverage = rule_coverage("abundance").filter(pl.col("software") == "FragPipe")
     missing = coverage.filter(pl.col("column").is_null())
-    assert missing.select("kind", "qualifiers", "requirement").rows() == [
-        ("intensity", None, "SHOULD")
+    assert missing.select("key", "kind", "qualifiers", "requirement").rows() == [
+        ("intensity", "intensity", "normalization=none", "SHOULD")
     ]
-    assert "intensity_unknown_normalization" in coverage.get_column("kind").to_list()
+    assert "intensity_unknown_normalization" in coverage.get_column("key").to_list()
     assert set(coverage.get_column("verdict")) == {"warn"}
 
 

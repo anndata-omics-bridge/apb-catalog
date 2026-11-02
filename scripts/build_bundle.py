@@ -85,7 +85,7 @@ SAMPLE_VERSIONS: dict[str, str] = {
 """One software version each rule's version pattern admits, to construct a ``Catalog`` with."""
 
 type Declaration = dict[str, JsonValue]
-type Request = tuple[str, Location, dict[str, str]]
+type Request = tuple[str, Location, str, dict[str, str]]
 
 
 def main(argv: list[str]) -> int:
@@ -356,9 +356,9 @@ def _outcome(answer: Callable[[], Reference | None]) -> dict[str, JsonValue]:
     return outcome
 
 
-def _kinds(answer: Callable[[], tuple[str, ...]]) -> dict[str, JsonValue]:
+def _keys(answer: Callable[[], tuple[str, ...]]) -> dict[str, JsonValue]:
     try:
-        return {"kinds": list(answer())}
+        return {"keys": list(answer())}
     except UnresolvedField as error:
         return {"error": "UnresolvedField", "status": error.resolution.status}
 
@@ -366,13 +366,13 @@ def _kinds(answer: Callable[[], tuple[str, ...]]) -> dict[str, JsonValue]:
 def requests(sources: SourceCatalogues, level: str) -> list[Request]:
     """Every request a set's entries and requirement rows on one level ask, without repeats.
 
-    Each entry asks once with all its qualifiers and once with its kind alone.
+    Each entry asks for its key once with the qualifiers its key leaves open and once alone.
     """
     found: dict[str, Request] = {}
 
-    def add(location: Location, qualifiers: dict[str, str]) -> None:
-        key = json.dumps([location, qualifiers], sort_keys=True)
-        found.setdefault(key, (level, location, qualifiers))
+    def add(location: Location, key: str, qualifiers: dict[str, str]) -> None:
+        seen = json.dumps([location, key, qualifiers], sort_keys=True)
+        found.setdefault(seen, (level, location, key, qualifiers))
 
     for source in sources.sources():
         for entry in source.entries:
@@ -381,19 +381,25 @@ def requests(sources: SourceCatalogues, level: str) -> list[Request]:
             location: Location = (
                 "var" if entry.reference.location == "varm" else entry.reference.location
             )
-            add(location, dict(entry.qualifiers))
-            add(location, {"kind": entry.qualifiers["kind"]})
+            fixed = sources.key(entry.key).predicate()
+            add(
+                location,
+                entry.key,
+                {name: value for name, value in entry.qualifiers.items() if name not in fixed},
+            )
+            add(location, entry.key, {})
     for row in sources.requirements:
         if row.level == level:
-            add(row.location, {"kind": row.kind, **row.qualifiers})
+            add(row.location, row.key, {})
     return list(found.values())
 
 
 def _request_case(request: Request, outcome: dict[str, JsonValue]) -> JsonValue:
-    level, location, qualifiers = request
+    level, location, key, qualifiers = request
     return {
         "level": level,
         "location": location,
+        "key": key,
         "qualifiers": cast(dict[str, JsonValue], qualifiers),
         "outcome": outcome,
     }
@@ -428,13 +434,7 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
                 request for level in dict.fromkeys(levels) for request in requests(sources, level)
             ]
             absent = _absent_level(levels)
-            asked.append(
-                (
-                    absent,
-                    "layers",
-                    {"kind": next(iter(sources.vocabulary.qualifiers["kind"].values))},
-                )
-            )
+            asked.append((absent, "layers", sources.keys[0].key, {}))
             cases.append(
                 {
                     "catalogue": name,
@@ -444,7 +444,7 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
                         _request_case(request, _outcome(_catalog_answer(catalog, request)))
                         for request in asked
                     ],
-                    "kinds": _kinds_cases(catalog, [*dict.fromkeys(levels), absent]),
+                    "keys": _keys_cases(catalog, [*dict.fromkeys(levels), absent]),
                     "fields": _records(catalog.fields()),
                 }
             )
@@ -460,25 +460,21 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
 
 
 def _catalog_answer(catalog: Catalog, request: Request) -> Callable[[], Reference | None]:
-    level, location, qualifiers = request
-    kind = qualifiers["kind"]
-    others = {name: value for name, value in qualifiers.items() if name != "kind"}
+    level, location, key, qualifiers = request
     if location == "layers":
-        return lambda: catalog.layer(level, kind, **others)
+        return lambda: catalog.layer(level, key, **qualifiers)
     if location == "obs":
-        return lambda: catalog.obs(level, kind, **others)
-    return lambda: catalog.var(level, kind, **others)
+        return lambda: catalog.obs(level, key, **qualifiers)
+    return lambda: catalog.var(level, key, **qualifiers)
 
 
-def _kinds_cases(catalog: Catalog | DataCatalog, levels: list[str]) -> list[JsonValue]:
+def _keys_cases(catalog: Catalog | DataCatalog, levels: list[str]) -> list[JsonValue]:
     locations: tuple[Location, ...] = ("obs", "layers", "var")
     return [
         {
             "level": level,
             "location": location,
-            "outcome": _kinds(
-                lambda level=level, location=location: catalog.kinds(level, location)
-            ),
+            "outcome": _keys(lambda level=level, location=location: catalog.keys(level, location)),
         }
         for level in levels
         for location in locations
@@ -498,18 +494,17 @@ def data_catalog_cases(
                 (None, "MUST", "SHOULD") if sources.requirements else (None,)
             )
             for enforce in enforced:
-                catalog = DataCatalog(parsed, name, enforce)
+                catalog = DataCatalog(parsed, name, enforce=enforce)
                 asked: list[Request]
                 if enforce is None:
                     asked = [request for level in levels for request in requests(sources, level)]
                 else:
                     asked = [
-                        (row.level, row.location, {"kind": row.kind, **row.qualifiers})
+                        (row.level, row.location, row.key, {})
                         for row in sources.requirements
                         if row.level in parsed.levels
                     ]
-                kind = next(iter(sources.vocabulary.qualifiers["kind"].values))
-                asked.append((absent, "layers", {"kind": kind}))
+                asked.append((absent, "layers", sources.keys[0].key, {}))
                 case: dict[str, JsonValue] = {
                     "result": result,
                     "catalogue": name,
@@ -520,27 +515,17 @@ def data_catalog_cases(
                     ],
                 }
                 if enforce is None:
-                    case["kinds"] = _kinds_cases(catalog, [*levels, absent])
+                    case["keys"] = _keys_cases(catalog, [*levels, absent])
                     case["fields"] = _records(catalog.fields())
                 cases.append(case)
-    cases.append(
-        {
-            "result": "edge-two-levels",
-            "catalogue": "confidence",
-            "enforce": "MUST",
-            "error": "ValueError",
-        }
-    )
     return cases
 
 
 def _data_answer(catalog: DataCatalog, request: Request) -> Callable[[], Reference | None]:
-    level, location, qualifiers = request
-    kind = qualifiers["kind"]
-    others = {name: value for name, value in qualifiers.items() if name != "kind"}
+    level, location, key, qualifiers = request
 
     def answer() -> Reference | None:
-        found = catalog._find(level, location, kind, others)  # pyright: ignore[reportPrivateUsage]
+        found = catalog._find(level, location, key, qualifiers)  # pyright: ignore[reportPrivateUsage]
         return None if found is None else Reference.of(found)
 
     return answer
@@ -571,7 +556,9 @@ def table_cases(sets: Mapping[str, SourceCatalogues]) -> dict[str, JsonValue]:
         "catalogues": _records(overview),
         "rule_coverage": {name: _records(coverage_of(sources)) for name, sources in sets.items()},
         "catalogue_table": {
-            "all": _records(combined.select(*KEY_COLUMNS, *qualifiers, "requirement", "entry_id")),
+            "all": _records(
+                combined.select(*KEY_COLUMNS, "key", "kind", *qualifiers, "requirement", "entry_id")
+            ),
             **{name: _records(table) for name, table in tables.items()},
         },
     }

@@ -2,18 +2,25 @@
 
 from __future__ import annotations
 
+import csv
+import io
+from collections import Counter
+from importlib import resources
+
 import pytest
 from apb2.api import FIXED_COLUMNS, VAR_ROLES
 
 from apb_catalog.source import (
     CatalogueDescription,
     Evidence,
+    Key,
     ProducerCatalogue,
     Reference,
     RuleVariant,
     SourceCatalogue,
     SourceCatalogues,
     SourceEntry,
+    key_of,
     packaged_catalogues,
     packaged_descriptions,
 )
@@ -28,6 +35,7 @@ from tests.packaged_rules import (
 )
 
 CONFIDENCE = packaged_catalogues("confidence").vocabulary
+KEYS = packaged_catalogues("confidence").keys
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
 ION = RuleVariant(level="peptidoform_ion", software_version_pattern="^1\\.")
@@ -37,11 +45,12 @@ def _catalogues(name: str) -> tuple[SourceCatalogue, ...]:
     return packaged_catalogues(name).catalogues
 
 
-def _entry(name: str, **qualifiers: str) -> SourceEntry:
+def _entry(name: str, key: str = "pep", **qualifiers: str) -> SourceEntry:
     return SourceEntry(
         entry_id=f"vendor.peptidoform_ion.{name}",
         software_version_pattern=("^1\\.",),
         reference=Reference(level="peptidoform_ion", location="layers", name=name),
+        key=key,
         qualifiers={"kind": "pep", "stage": "identification"} | qualifiers,
         evidence=Evidence(basis="test"),
     )
@@ -106,7 +115,7 @@ def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
 ABUNDANCE_LEFT_OUT = {
     # DIA-NN's gene-group quantity sits on the protein-group level, which answers for its own entity.
     ("protein", "Genes_MaxLFQ"),
-    # One entry per kind: AlphaPept's MS1 sum over the peak area is its intensity; the apex and
+    # One entry per key: AlphaPept's MS1 sum over the peak area is its intensity; the apex and
     # maximum variants stay readable by name.
     ("peptidoform_ion", "MS1_Int_Sum_Apex"),
     ("peptidoform_ion", "MS1_Int_Max_Area"),
@@ -119,7 +128,7 @@ ABUNDANCE_LEFT_OUT = {
     ("peptidoform_ion", "EG_TargetQuantity_Settings"),
     ("peptidoform_ion", "EG_ReferenceQuantity_Settings"),
 }
-"""Abundance-role layers the catalog leaves out; one kind has at most one entry per rule level."""
+"""Abundance-role layers the catalog leaves out; one key has at most one entry per rule level."""
 
 
 def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
@@ -140,22 +149,63 @@ def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
     assert catalogued == marked
 
 
-def test_a_kind_has_at_most_one_vendor_entry_per_rule_level() -> None:
-    """The catalog picks one layer per kind; a kind it cannot name, ``unknown``, may repeat."""
+@pytest.mark.parametrize(
+    "name", ("abundance", "confidence", "proteobench_entrapment", "chromatography")
+)
+def test_a_key_has_at_most_one_vendor_entry_per_rule_level(name: str) -> None:
+    """The catalog picks one field per key, location and software version; a kind it cannot
+    name, ``unknown``, may repeat."""
     seen: dict[tuple[str, str, str, str, str], str | None] = {}
     repeated: list[tuple[str, str, str, str, str, str | None, str | None]] = []
-    for catalogue in _catalogues("abundance"):
+    for catalogue in _catalogues(name):
         for entry in catalogue.entries:
-            kind = entry.qualifiers["kind"]
-            if kind == "unknown":
+            if entry.key == "unknown":
                 continue
             for pattern in entry.software_version_pattern:
                 reference = entry.reference
-                key = (catalogue.software_name, pattern, reference.level, reference.location, kind)
-                if key in seen:
-                    repeated.append((*key, seen[key], entry.reference.name))
-                seen[key] = entry.reference.name
+                slot = (
+                    catalogue.software_name,
+                    pattern,
+                    reference.level,
+                    reference.location,
+                    entry.key,
+                )
+                if slot in seen:
+                    repeated.append((*slot, seen[slot], entry.reference.name))
+                seen[slot] = entry.reference.name
     assert repeated == []
+
+
+@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
+def test_every_entry_has_exactly_one_key(name: str) -> None:
+    """Each entry's kind and qualifiers match one key of its set, the key it records."""
+    sources = packaged_catalogues(name)
+    mismatched = [
+        entry.entry_id
+        for source in sources.sources()
+        for entry in source.entries
+        if key_of(sources.keys, entry.qualifiers) != [entry.key]
+    ]
+    assert mismatched == []
+
+
+def test_an_entry_must_match_exactly_one_key() -> None:
+    """An entry whose qualifiers no key stands for, or two keys stand for, is refused."""
+    open_pep = Key(key="any_pep", kind="pep")
+    with pytest.raises(ValueError, match="matches"):
+        SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=())
+    with pytest.raises(ValueError, match="matches"):
+        SourceCatalogues(
+            CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=(*KEYS, open_pep)
+        )
+
+
+def test_a_key_names_admitted_values_once() -> None:
+    """A key's kind and fixed values are the vocabulary's, and its name repeats nowhere."""
+    with pytest.raises(ValueError, match="does not admit"):
+        SourceCatalogues(CONFIDENCE, "test", (), DESCRIPTION, keys=(Key(key="fdr", kind="fdr"),))
+    with pytest.raises(ValueError, match="repeats"):
+        SourceCatalogues(CONFIDENCE, "test", (), DESCRIPTION, keys=(*KEYS, KEYS[0]))
 
 
 def test_an_entry_must_use_a_declared_rule_variant() -> None:
@@ -175,14 +225,23 @@ def test_entry_qualifiers_must_describe_every_vocabulary_qualifier() -> None:
     """Leaving a qualifier out is rejected; ``unknown`` must be recorded explicitly."""
     partial = _entry("PEP").model_copy(update={"qualifiers": {"kind": "pep"}})
     with pytest.raises(ValueError, match="qualifiers must be exactly"):
-        SourceCatalogues(CONFIDENCE, "test", (_catalogue(partial),), DESCRIPTION)
+        SourceCatalogues(CONFIDENCE, "test", (_catalogue(partial),), DESCRIPTION, keys=KEYS)
 
 
 def test_entry_qualifier_values_must_be_admitted() -> None:
     """A value outside the vocabulary is rejected, while ``unknown`` is accepted."""
-    SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP", stage="unknown")),), DESCRIPTION)
+    undecided = Key(key="pep_unknown_stage", kind="pep", fixed={"stage": "unknown"})
+    SourceCatalogues(
+        CONFIDENCE,
+        "test",
+        (_catalogue(_entry("PEP", key="pep_unknown_stage", stage="unknown")),),
+        DESCRIPTION,
+        keys=(*KEYS, undecided),
+    )
     with pytest.raises(ValueError, match="does not admit"):
-        SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP", kind="fdr")),), DESCRIPTION)
+        SourceCatalogues(
+            CONFIDENCE, "test", (_catalogue(_entry("PEP", kind="fdr")),), DESCRIPTION, keys=KEYS
+        )
 
 
 def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
@@ -190,7 +249,7 @@ def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
     first = _catalogue(_entry("PEP"))
     second = _catalogue()
     with pytest.raises(ValueError, match="reviewed more than once"):
-        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
+        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
 
 
 def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
@@ -202,7 +261,29 @@ def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
         variants=(later,),
     )
     with pytest.raises(ValueError, match="repeats"):
-        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION)
+        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
+
+
+def _built_id(row: dict[str, str], *, repeated: bool) -> str:
+    """The id a row's own columns spell: software, level, location, a ``varm`` table, column."""
+    table = [row["table"]] if row["table"] else []
+    parts = [row["entry_id"].split(".")[0], row["level"], row["location"], *table, row["reference"]]
+    return ".".join([*parts, row["kind"]] if repeated else parts)
+
+
+def test_an_entry_id_names_its_software_level_location_and_column() -> None:
+    """``<software>.<level>.<location>.<column>``, so the id says where the field lives; a column
+    holding two kinds in one set adds the kind. Each source keeps one software token."""
+    text = resources.files("apb_catalog").joinpath("data", "entries.csv").read_text("utf-8")
+    rows: list[dict[str, str]] = list(csv.DictReader(io.StringIO(text)))
+    places = Counter((row["set"], _built_id(row, repeated=False)) for row in rows)
+    for row in rows:
+        repeated = places[(row["set"], _built_id(row, repeated=False))] > 1
+        assert row["entry_id"] == _built_id(row, repeated=repeated)
+    tokens: dict[str, set[str]] = {}
+    for row in rows:
+        tokens.setdefault(row["source"], set()).add(row["entry_id"].split(".")[0])
+    assert all(len(found) == 1 for found in tokens.values()), tokens
 
 
 def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:

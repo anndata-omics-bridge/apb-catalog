@@ -17,6 +17,7 @@ import polars as pl
 from apb2.api import FinalLayerTable, JsonValue, ParsedLevel, ParsedLevels
 
 from apb_catalog import rules
+from apb_catalog.levels import Level
 from apb_catalog.resolver import (
     AbsentLevel,
     FieldRequest,
@@ -42,7 +43,6 @@ from apb_catalog.source import Reference as SourceReference
 from apb_catalog.table import entry_row
 
 METADATA_KEY = "catalog"
-_DEFAULTS = {"stage": "identification"}
 _LOG = logging.getLogger("apb_catalog")
 
 type Enforce = Literal["MUST", "SHOULD"] | None
@@ -72,11 +72,8 @@ class MissingRequiredField(LookupError):
     """A field the set requires is absent from the rule or the result, under ``enforce``."""
 
     def __init__(self, resolution: Resolution, row: RequirementRow) -> None:
-        wanted = ", ".join(
-            f"{name}={'|'.join(values)}" for name, values in resolution.request.qualifiers.items()
-        )
         super().__init__(
-            f"{row.requirement} field {wanted} on {row.level} is missing: "
+            f"{row.requirement} field {resolution.request.wanted()} on {row.level} is missing: "
             f"{'; '.join(resolution.reasons)}"
         )
         self.resolution = resolution
@@ -166,15 +163,24 @@ class _Lookups:
         self.resolutions: list[Resolution] = []
 
     def request(
-        self, level: str, location: Location, qualifiers: Mapping[str, str]
+        self, level: str, location: Location, key: str | None, qualifiers: Mapping[str, str]
     ) -> FieldRequest:
-        declared = self.catalogues.vocabulary.qualifiers
-        described = {name: value for name, value in _DEFAULTS.items() if name in declared}
-        described |= qualifiers
+        """The request for a key, or for every key when ``key`` is ``None``, narrowed by further
+        qualifiers.
+
+        Raises:
+            ValueError: The set has no such key, or a qualifier names the kind or a value the key
+                already fixes.
+        """
+        fixed = {} if key is None else self.catalogues.key(key).predicate()
+        clashing = sorted(({"kind"} | set(fixed)) & set(qualifiers))
+        if clashing:
+            raise ValueError(f"ask by key; {key or 'the lookup'} fixes {', '.join(clashing)}")
         return FieldRequest(
             level=level,
             location=location,
-            qualifiers={name: (value,) for name, value in described.items()},
+            key=key,
+            qualifiers=fixed | {name: (value,) for name, value in qualifiers.items()},
         )
 
     def answer(self, request: FieldRequest) -> Resolution:
@@ -187,13 +193,13 @@ class _Lookups:
         return resolution
 
     def find(
-        self, level: str, location: Location, qualifiers: Mapping[str, str]
+        self, level: str, location: Location, key: str, qualifiers: Mapping[str, str]
     ) -> SourceReference | None:
         """The field asked for; a missing required field raises or warns as ``enforce`` says."""
-        request = self.request(level, location, qualifiers)
+        request = self.request(level, location, key, qualifiers)
         resolution = self.answer(request)
         row = (
-            self.catalogues.requirement_for(level, location, request.qualifiers)
+            self.catalogues.requirement_for(level, location, key)
             if resolution.status == "missing" and self.enforce is not None
             else None
         )
@@ -207,10 +213,10 @@ class _Lookups:
         _LOG.warning(str(MissingRequiredField(resolution, row)))
         return None
 
-    def kinds(
+    def keys(
         self, level: str, location: Location, qualifiers: Mapping[str, str]
     ) -> tuple[str, ...]:
-        return self.answer(self.request(level, location, qualifiers)).offered("kind")
+        return self.answer(self.request(level, location, None, qualifiers)).offered()
 
     def entries(self) -> tuple[SourceEntry, ...]:
         return tuple(entry for view in self.views.values() for entry in view.entries)
@@ -260,9 +266,11 @@ def _catalogued(catalogues: SourceCatalogues, level: str) -> set[Address]:
 class Catalog:
     """Which column one software version reports for each meaning, without any data.
 
-    ``Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", kind="intensity").name``
-    is ``'Precursor_Quantity'``. The packaged rule levels whose version pattern admits
+    ``Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", "intensity").name`` is
+    ``'Precursor_Quantity'``. The packaged rule levels whose version pattern admits
     ``version`` give the levels; the set's entries for that pattern give each level's fields.
+
+    A lookup asks by one of the set's keys; further qualifiers, such as ``unit``, narrow it.
 
     Raises:
         ValueError: No packaged rule of the software admits the version.
@@ -302,21 +310,21 @@ class Catalog:
         """What this catalogue set holds and who uses it."""
         return self._lookups.catalogues.description
 
-    def kinds(self, level: str, location: Location, **qualifiers: str) -> tuple[str, ...]:
-        """The kinds the level offers at one location, given the other qualifiers."""
-        return self._lookups.kinds(level, location, qualifiers)
+    def keys(self, level: str, location: Location, **qualifiers: str) -> tuple[str, ...]:
+        """The keys the level offers at one location, given further qualifiers."""
+        return self._lookups.keys(level, location, qualifiers)
 
-    def layer(self, level: str, kind: str, **qualifiers: str) -> Reference | None:
+    def layer(self, level: str, key: str, **qualifiers: str) -> Reference | None:
         """Where the sample-by-feature layer with this meaning lives, or ``None``."""
-        return self._found(level, "layers", kind, qualifiers)
+        return self._found(level, "layers", key, qualifiers)
 
-    def var(self, level: str, kind: str, **qualifiers: str) -> Reference | None:
+    def var(self, level: str, key: str, **qualifiers: str) -> Reference | None:
         """Where the per-feature column with this meaning lives, in ``var`` or a ``varm`` table."""
-        return self._found(level, "var", kind, qualifiers)
+        return self._found(level, "var", key, qualifiers)
 
-    def obs(self, level: str, kind: str, **qualifiers: str) -> Reference | None:
+    def obs(self, level: str, key: str, **qualifiers: str) -> Reference | None:
         """Where the per-sample column with this meaning lives, or ``None``."""
-        return self._found(level, "obs", kind, qualifiers)
+        return self._found(level, "obs", key, qualifiers)
 
     def fields(self) -> pl.DataFrame:
         """Every catalogued field the rule declares, one row per field, as ``apb-catalog table``
@@ -329,67 +337,74 @@ class Catalog:
         return _fields_frame(rows)
 
     def _found(
-        self, level: str, location: Location, kind: str, qualifiers: Mapping[str, str]
+        self, level: str, location: Location, key: str, qualifiers: Mapping[str, str]
     ) -> Reference | None:
-        found = self._lookups.find(level, location, {"kind": kind, **qualifiers})
+        found = self._lookups.find(level, location, key, qualifiers)
         return None if found is None else Reference.of(found)
 
 
 class DataCatalog:
-    """What one APB result's fields mean to one consumer, with the data handed back directly.
+    """What one APB result's fields mean to its consumers, with the data handed back directly.
 
-    ``DataCatalog(result, "confidence").layer("peptidoform_ion", kind="pep")`` returns MaxQuant's
-    ``PEP`` or Spectronaut's ``EG_PEP`` layer, or ``None`` when the vendor reports no PEP or APB2
-    left it out because it held one value or none. Confidence lookups mean identification unless
-    ``stage="quantification"`` says otherwise. Ambiguous or unreviewed answers raise
+    ``DataCatalog(result, "abundance", "confidence")`` composes those sets with ``apb``, which is
+    always in, so obs and var answer whatever else is named. A key routes to the sets that
+    define it; two sets naming different fields for one key on one level is an error.
+
+    ``levels["peptidoform_ion"].layers["pep"]`` is MaxQuant's ``PEP`` or Spectronaut's
+    ``EG_PEP`` matrix, as AnnData returns it; a name that is no key reads the level's own field
+    of that name, as cf_xarray does. ``layer("peptidoform_ion", "pep")`` returns the apb2 layer
+    itself, or ``None`` when the vendor reports no PEP or APB2 left it out because it held one
+    value or none; further qualifiers narrow it. Ambiguous or unreviewed answers raise
     :class:`~apb_catalog.resolver.UnresolvedField`.
     """
 
-    __slots__ = ("_lookups", "_parsed")
+    __slots__ = ("_known", "_parsed", "_sets", "levels")
 
-    def __init__(self, result: ParsedLevels, catalog: str, enforce: Enforce = None) -> None:
+    def __init__(self, result: ParsedLevels, *catalogs: str, enforce: Enforce = None) -> None:
         self._parsed = result
-        catalogues = catalogue_set(catalog)
-        annotations = tuple(
-            annotation
-            for annotation in catalogues.annotations
-            if annotation.applies(result.metadata)
+        names = list(dict.fromkeys((*catalogs, BASE)))
+        self._sets = {name: _data_lookups(result, name, enforce) for name in names}
+        if enforce is not None and not any(
+            lookups.catalogues.requirements for lookups in self._sets.values()
+        ):
+            raise ValueError(f"catalogues {names} set no requirements, so nothing to enforce")
+        _check_shared_keys(self._sets)
+        self._known = frozenset(
+            found.key for lookups in self._sets.values() for found in lookups.catalogues.keys
         )
-        views: dict[str, LevelView] = {}
-        for name, level in result.levels.items():
-            software, pattern, rule_level = rule_version(level) or (None, None, None)
-            views[name] = level_view(
-                name,
-                software,
-                pattern,
-                rule_level,
-                catalogues,
-                retained=_retained(level),
-                obs_columns=tuple(level.obs.frame.columns),
-                ran=lambda producer: producer.ran(result.metadata),
-                annotations=annotations,
-            )
-        self._lookups = _Lookups(catalog, catalogues, views, enforce)
+        self.levels = {
+            name: Level(name, level, self._key_field, self._offered, self._known)
+            for name, level in result.levels.items()
+        }
 
     @property
     def description(self) -> CatalogueDescription:
-        """What this catalogue set holds and who uses it."""
-        return self._lookups.catalogues.description
+        """What the first catalogue set named holds and who uses it."""
+        return self._first().catalogues.description
 
-    def kinds(self, level: str, location: Location, **qualifiers: str) -> tuple[str, ...]:
-        """The kinds the level offers at one location, given the other qualifiers."""
-        return self._lookups.kinds(level, location, qualifiers)
+    def keys(self, level: str, location: Location, **qualifiers: str) -> tuple[str, ...]:
+        """The keys the level offers at one location, given further qualifiers, from every set
+        that declares those qualifiers."""
+        eligible = [
+            lookups
+            for lookups in self._sets.values()
+            if set(qualifiers) <= set(lookups.catalogues.vocabulary.qualifiers)
+        ]
+        if not eligible:
+            raise ValueError(f"no catalogue set declares the qualifiers {sorted(qualifiers)}")
+        offered = {key for lookups in eligible for key in lookups.keys(level, location, qualifiers)}
+        return tuple(sorted(offered))
 
-    def layer(self, level: str, kind: str, **qualifiers: str) -> FinalLayerTable | None:
+    def layer(self, level: str, key: str, **qualifiers: str) -> FinalLayerTable | None:
         """Return the sample-by-feature layer with this meaning, or ``None``."""
-        reference = self._find(level, "layers", kind, qualifiers)
+        reference = self._find(level, "layers", key, qualifiers)
         return (
             None if reference is None else self._parsed.levels[level].layers[reference.address()[2]]
         )
 
-    def var(self, level: str, kind: str, **qualifiers: str) -> pl.Series | None:
+    def var(self, level: str, key: str, **qualifiers: str) -> pl.Series | None:
         """Return the per-feature column with this meaning, from ``var`` or a ``varm`` table."""
-        reference = self._find(level, "var", kind, qualifiers)
+        reference = self._find(level, "var", key, qualifiers)
         if reference is None:
             return None
         found = self._parsed.levels[level]
@@ -398,9 +413,9 @@ class DataCatalog:
             return found.var.frame[name]
         return found.varm[reference.table][name]
 
-    def obs(self, level: str, kind: str, **qualifiers: str) -> pl.Series | None:
+    def obs(self, level: str, key: str, **qualifiers: str) -> pl.Series | None:
         """Return the per-sample column with this meaning, or ``None``."""
-        reference = self._find(level, "obs", kind, qualifiers)
+        reference = self._find(level, "obs", key, qualifiers)
         return (
             None
             if reference is None
@@ -408,38 +423,122 @@ class DataCatalog:
         )
 
     def fields(self) -> pl.DataFrame:
-        """Every catalogued field of the result, one row per field, as ``apb-catalog table``
-        shows them, with ``present`` and, for a field APB2 left out because it held one value,
-        that ``constant``."""
+        """Every catalogued field of the result in every composed set, one row per field, as
+        ``apb-catalog table`` shows them, with ``present`` and, for a field APB2 left out
+        because it held one value, that ``constant``."""
         rows: list[dict[str, object]] = []
-        for name, view in self._lookups.views.items():
-            rows += [
-                {**row, "present": True, "constant": None}
-                for row in self._lookups.rows(view, view.entries)
-            ]
-            if not isinstance(view, ReviewedLevel):
-                continue
-            held = {entry.entry_id for entry in view.entries}
-            left_out = _left_out(self._parsed.levels[name])
-            absent = tuple(entry for entry in view.rule.entries() if entry.entry_id not in held)
-            rows += [
-                {**row, "present": False, "constant": left_out.get(entry.reference.address())}
-                for entry, row in zip(absent, self._lookups.rows(view, absent), strict=True)
-            ]
+        for lookups in self._sets.values():
+            for name, view in lookups.views.items():
+                rows += [
+                    {**row, "present": True, "constant": None}
+                    for row in lookups.rows(view, view.entries)
+                ]
+                if not isinstance(view, ReviewedLevel):
+                    continue
+                held = {entry.entry_id for entry in view.entries}
+                left_out = _left_out(self._parsed.levels[name])
+                absent = tuple(entry for entry in view.rule.entries() if entry.entry_id not in held)
+                rows += [
+                    {**row, "present": False, "constant": left_out.get(entry.reference.address())}
+                    for entry, row in zip(absent, lookups.rows(view, absent), strict=True)
+                ]
         return _fields_frame(rows)
 
     def resolve(self, request: FieldRequest) -> Resolution:
-        """Answer one explicit request and record it for the snapshot."""
-        return self._lookups.resolve(request)
+        """Answer one explicit request in the first set that defines its key, and record it."""
+        if request.key is None:
+            return self._first().resolve(request)
+        return self._defining(request.key)[0].resolve(request)
 
-    def snapshot(self) -> ResolutionSnapshot:
-        """Return a self-contained record of the bindings, fields and every lookup so far."""
-        return self._lookups.snapshot()
+    def snapshot(self, catalog: str | None = None) -> ResolutionSnapshot:
+        """Return one set's self-contained record of the bindings, fields and every lookup so
+        far; the first set named by default."""
+        return (self._first() if catalog is None else self._sets[catalog]).snapshot()
+
+    def _first(self) -> _Lookups:
+        return next(iter(self._sets.values()))
+
+    def _defining(self, key: str, qualifiers: Mapping[str, str] | None = None) -> list[_Lookups]:
+        """The sets that define a key and declare every further qualifier asked; the first set
+        that defines it when none declares them, so its lookup names what it lacks."""
+        found = [lookups for lookups in self._sets.values() if lookups.catalogues.has_key(key)]
+        if not found:
+            raise ValueError(f"unknown key {key!r}; keys: {sorted(self._known)}")
+        declaring = [
+            lookups
+            for lookups in found
+            if set(qualifiers or {}) <= set(lookups.catalogues.vocabulary.qualifiers)
+        ]
+        return declaring or found[:1]
 
     def _find(
-        self, level: str, location: Location, kind: str, qualifiers: Mapping[str, str]
+        self, level: str, location: Location, key: str, qualifiers: Mapping[str, str]
     ) -> SourceReference | None:
-        return self._lookups.find(level, location, {"kind": kind, **qualifiers})
+        """The field one key names, asked of every set that defines the key; the first found."""
+        found: SourceReference | None = None
+        for lookups in self._defining(key, qualifiers):
+            reference = lookups.find(level, location, key, qualifiers)
+            found = found or reference
+        return found
+
+    def _key_field(self, level: str, location: Location, key: str) -> SourceReference | None:
+        return self._find(level, location, key, {})
+
+    def _offered(self, level: str, location: Location) -> tuple[str, ...]:
+        return self.keys(level, location)
+
+
+BASE = "apb"
+"""The set every data catalog composes: APB's own fields, so obs and var always answer."""
+
+
+def _data_lookups(result: ParsedLevels, name: str, enforce: Enforce) -> _Lookups:
+    """One set bound to every level of a result; ``enforce`` applies where the set has
+    requirements."""
+    catalogues = catalogue_set(name)
+    annotations = tuple(
+        annotation for annotation in catalogues.annotations if annotation.applies(result.metadata)
+    )
+    views: dict[str, LevelView] = {}
+    for level_name, level in result.levels.items():
+        software, pattern, rule_level = rule_version(level) or (None, None, None)
+        views[level_name] = level_view(
+            level_name,
+            software,
+            pattern,
+            rule_level,
+            catalogues,
+            retained=_retained(level),
+            obs_columns=tuple(level.obs.frame.columns),
+            ran=lambda producer: producer.ran(result.metadata),
+            annotations=annotations,
+        )
+    return _Lookups(name, catalogues, views, enforce if catalogues.requirements else None)
+
+
+def _check_shared_keys(sets: Mapping[str, _Lookups]) -> None:
+    """Require sets that share a key to name the same fields with it, level by level and slot by
+    slot; a set may name more, told apart by a qualifier the other set lacks.
+
+    Raises:
+        ValueError: Two sets name different fields for one key in one slot of a level.
+    """
+    named: dict[tuple[str, str, Location], dict[str, set[Address]]] = {}
+    for set_name, lookups in sets.items():
+        for level, view in lookups.views.items():
+            for entry in view.entries:
+                location: Location = (
+                    "var" if entry.reference.location == "varm" else entry.reference.location
+                )
+                slot = named.setdefault((level, entry.key, location), {})
+                slot.setdefault(set_name, set()).add(entry.reference.address())
+    for (level, key, location), by_set in named.items():
+        fields = list(by_set.values())
+        if any(not (one <= other or other <= one) for one in fields for other in fields):
+            raise ValueError(
+                f"key {key!r} names different {location} fields on {level} in the sets "
+                f"{sorted(by_set)}"
+            )
 
 
 def _fields_frame(rows: list[dict[str, object]]) -> pl.DataFrame:
