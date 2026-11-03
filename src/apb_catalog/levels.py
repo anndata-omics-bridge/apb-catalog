@@ -5,6 +5,8 @@ MaxLFQ matrix, observations by variables. A name is looked up as one of the cata
 then as the level's own name in that slot, and raises :class:`KeyError` when it is neither. As
 AnnData, ``X`` and the layers are numpy matrices; ``var`` and ``obs`` columns are polars Series,
 and a list of names, ``obs[["group"]]``, reads every column they name as a polars DataFrame.
+``layers.get("pep")`` returns ``None`` where ``[...]`` raises, and ``layers.name("pep")`` the
+field's name; both take the qualifiers a key leaves open.
 
 ``Catalog("DIA-NN", "1.9.2", "abundance").levels["peptidoform_ion"].layers["intensity"]`` is
 ``'Precursor_Quantity'``: the same slots without data hold names.
@@ -12,7 +14,7 @@ and a list of names, ``obs[["group"]]``, reads every column they name as a polar
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import overload, override
 
@@ -30,8 +32,9 @@ type Matrix = np.ndarray[tuple[int, int], np.dtype[np.generic]]
 class Lookup:
     """How a catalog answers keys on its levels."""
 
-    field: Callable[[str, Location, str], Reference | None]
-    """The one field a key names on a level and location, ``None`` when the level has none."""
+    field: Callable[[str, Location, str, Mapping[str, str]], Reference | None]
+    """The one field a key names on a level and location, narrowed by further qualifiers;
+    ``None`` when the level has none."""
     fields: Callable[[str, Location, str], tuple[Reference, ...]]
     """Every field a key names on a level and location."""
     offered: Callable[[str, Location], tuple[str, ...]]
@@ -122,7 +125,8 @@ class Slot[Value]:
     """One slot of a level, read by key first and by the level's own name second.
 
     As cf_xarray's accessor: ``keys()`` and ``in`` know the catalog's keys only; the level's own
-    names are read but not listed.
+    names are read but not listed. ``get`` and ``name`` take further qualifiers, such as
+    ``unit="minute"``, which ``[...]`` cannot.
     """
 
     __slots__ = ("_level", "_location", "_lookup", "_named", "_read")
@@ -148,11 +152,29 @@ class Slot[Value]:
             KeyError: The name is neither a key the level answers nor one of its own names.
             UnresolvedField: The key names several fields, or one the catalogue cannot decide.
         """
-        if name in self._lookup.known:
-            found = self._lookup.field(self._level, self._location, name)
-            if found is not None:
-                return self._read(found)
-        return self._read(self._own(name))
+        return self._read(self._found(name, {}))
+
+    def get(self, key: str, **qualifiers: str) -> Value | None:
+        """The field a key names, narrowed by further qualifiers, else the level's own field of
+        that name; ``None`` when it is neither.
+
+        Raises:
+            UnresolvedField: The key names several fields, or one the catalogue cannot decide.
+            ValueError: Qualifiers with a name that is no key, or a qualifier the key fixes.
+        """
+        reference = self._reference(key, qualifiers)
+        return None if reference is None else self._read(reference)
+
+    def name(self, key: str, **qualifiers: str) -> str:
+        """The name of the field ``get`` reads: ``'PEP'``; ``table/column`` for a column of a
+        ``varm`` table.
+
+        Raises:
+            KeyError: The name is neither a key the level answers nor one of its own names.
+            UnresolvedField: The key names several fields, or one the catalogue cannot decide.
+            ValueError: Qualifiers with a name that is no key, or a qualifier the key fixes.
+        """
+        return field_name(self._found(key, qualifiers))
 
     def __contains__(self, name: object) -> bool:
         """Whether the level offers this key here."""
@@ -162,10 +184,26 @@ class Slot[Value]:
         """The keys the level offers in this slot."""
         return set(self._lookup.offered(self._level, self._location))
 
-    def _own(self, name: str) -> Reference:
+    def _reference(self, key: str, qualifiers: Mapping[str, str]) -> Reference | None:
+        if key in self._lookup.known or qualifiers:
+            found = self._lookup.field(self._level, self._location, key, qualifiers)
+            if found is not None:
+                return found
+        return self._own(key)
+
+    def _found(self, key: str, qualifiers: Mapping[str, str]) -> Reference:
+        reference = self._reference(key, qualifiers)
+        if reference is None:
+            raise self._missing(key)
+        return reference
+
+    def _own(self, name: str) -> Reference | None:
         if name not in self._named:
-            raise KeyError(f"{self._level} {self._location} has no key or field {name!r}")
+            return None
         return Reference(level=self._level, location=self._location, name=name)
+
+    def _missing(self, name: str) -> KeyError:
+        return KeyError(f"{self._level} {self._location} has no key or field {name!r}")
 
 
 class Columns[Value, Frame](Slot[Value]):
@@ -215,7 +253,10 @@ class Columns[Value, Frame](Slot[Value]):
             found = self._lookup.fields(self._level, self._location, name)
             if found:
                 return found
-        return (self._own(name),)
+        own = self._own(name)
+        if own is None:
+            raise self._missing(name)
+        return (own,)
 
 
 def _frame(columns: Sequence[tuple[str, pl.Series]]) -> pl.DataFrame:

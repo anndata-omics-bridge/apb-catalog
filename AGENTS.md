@@ -24,7 +24,7 @@ The closest `AGENTS.md` wins. Explicit user instructions override this file.
   blanket exclusions, file-wide ignores, or unqualified `# type: ignore`.
 - Ruff is the sole formatter and linter. Do not add Black, isort, Flake8, mypy,
   or another overlapping formatter/type checker.
-- Keep `__init__.py` empty and import from defining modules inside this package. Other anndata_bridge packages import this one only from `apb_catalog.api`, and it imports them only from theirs.
+- Keep `__init__.py` empty and import from defining modules inside this package. Other anndata_bridge packages import this one only from `apb_catalog.api`, or `apb_catalog.api_pandas` for the pandas API on AnnData objects, and it imports them only from theirs.
 - Use Google-style docstrings for public APIs and the configured 100-character
   line length.
 

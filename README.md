@@ -25,10 +25,13 @@ pip install apb-catalog
 ```python
 from apb_catalog.api import DataCatalog
 
-confidence = DataCatalog(parsed, "confidence")             # parsed: an apb2 ParsedLevels result
-confidence.keys("peptidoform_ion", "layers")               # ('pep', 'q_value')
-pep = confidence.layer("peptidoform_ion", "pep")           # MaxQuant PEP, Spectronaut EG_PEP, DIA-NN PEP
+ion = DataCatalog(parsed, "confidence").levels["peptidoform_ion"]  # parsed: an apb2 ParsedLevels result
+ion.layers.keys()                  # {'pep', 'q_value'}
+pep = ion.layers.get("pep")        # runs × ions, numpy; None when the vendor reports no PEP
+ion.layers.name("pep")             # MaxQuant 'PEP', Spectronaut 'EG_PEP', DIA-NN 'PEP'
 ```
+
+With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence")`; see [pandas](https://anndata-omics-bridge.github.io/apb-catalog/api/#pandas).
 
 ```bash
 apb-catalog                       # every set

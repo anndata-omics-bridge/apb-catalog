@@ -20,7 +20,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Mapping
 from importlib import metadata, resources
 from importlib.resources.abc import Traversable
 from pathlib import Path
@@ -41,9 +41,9 @@ from apb_catalog.catalog import (
     DataCatalog,
     Enforce,
     MissingRequiredField,
-    Reference,
 )
 from apb_catalog.coverage import CATALOGUES_SCHEMA, coverage_of
+from apb_catalog.levels import Level, LevelNames, Slot
 from apb_catalog.resolver import UnresolvedField
 from apb_catalog.rules import ANY, Location
 from apb_catalog.source import (
@@ -59,7 +59,6 @@ TEST_NAME = "apb-catalog-test-bundle"
 BUNDLE_FORMAT = 3
 """Raised when a reader of the previous format could not read the bundle."""
 
-LEVELS = ("protein", "peptide", "peptidoform", "peptidoform_ion", "peptidoform_fragment")
 
 SAMPLE_VERSIONS: dict[str, str] = {
     "^2\\.": "2.2.0",
@@ -328,17 +327,8 @@ class _Warnings(logging.Handler):
         self.records.append(record)
 
 
-def _reference(found: Reference) -> dict[str, JsonValue]:
-    return {
-        "level": found.level,
-        "location": found.location,
-        "table": found.table,
-        "name": found.name,
-    }
-
-
-def _outcome(answer: Callable[[], Reference | None]) -> dict[str, JsonValue]:
-    """What one lookup gives: a reference, ``null``, or the class of the error it raises."""
+def _outcome(answer: Callable[[], str | None]) -> dict[str, JsonValue]:
+    """What one lookup gives: the field's name, ``null``, or the class of the error it raises."""
     handler = _Warnings()
     logger = logging.getLogger("apb_catalog")
     logger.addHandler(handler)
@@ -350,7 +340,7 @@ def _outcome(answer: Callable[[], Reference | None]) -> dict[str, JsonValue]:
         return {"error": type(error).__name__}
     finally:
         logger.removeHandler(handler)
-    outcome: dict[str, JsonValue] = {"reference": None if found is None else _reference(found)}
+    outcome: dict[str, JsonValue] = {"name": found}
     if handler.records:
         outcome["warning"] = "MissingRequiredField"
     return outcome
@@ -409,11 +399,6 @@ def _records(frame: pl.DataFrame) -> list[JsonValue]:
     return cast(list[JsonValue], frame.to_dicts())
 
 
-def _absent_level(present: Iterator[str] | list[str]) -> str:
-    held = set(present)
-    return next(level for level in LEVELS if level not in held)
-
-
 def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
     """``Catalog`` answers for every set, software and version pattern of the packaged rules."""
     versions: dict[tuple[str, str], str] = {}
@@ -433,18 +418,16 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
             asked = [
                 request for level in dict.fromkeys(levels) for request in requests(sources, level)
             ]
-            absent = _absent_level(levels)
-            asked.append((absent, "layers", sources.keys[0].key, {}))
             cases.append(
                 {
                     "catalogue": name,
                     "software": software,
                     "version": version,
                     "requests": [
-                        _request_case(request, _outcome(_catalog_answer(catalog, request)))
+                        _request_case(request, _outcome(_named(catalog.levels, request)))
                         for request in asked
                     ],
-                    "keys": _keys_cases(catalog, [*dict.fromkeys(levels), absent]),
+                    "keys": _keys_cases(catalog.levels),
                     "fields": _records(catalog.fields()),
                 }
             )
@@ -459,24 +442,36 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
     return cases
 
 
-def _catalog_answer(catalog: Catalog, request: Request) -> Callable[[], Reference | None]:
-    level, location, key, qualifiers = request
+def _slot(level: Level | LevelNames, location: Location) -> Slot[object]:
     if location == "layers":
-        return lambda: catalog.layer(level, key, **qualifiers)
-    if location == "obs":
-        return lambda: catalog.obs(level, key, **qualifiers)
-    return lambda: catalog.var(level, key, **qualifiers)
+        return level.layers
+    return level.obs if location == "obs" else level.var
 
 
-def _keys_cases(catalog: Catalog | DataCatalog, levels: list[str]) -> list[JsonValue]:
+def _named(levels: Mapping[str, Level | LevelNames], request: Request) -> Callable[[], str | None]:
+    """The name of the field one request reads through a level's slot, ``None`` for none."""
+    level, location, key, qualifiers = request
+
+    def answer() -> str | None:
+        try:
+            return _slot(levels[level], location).name(key, **qualifiers)
+        except KeyError:
+            return None
+
+    return answer
+
+
+def _keys_cases(levels: Mapping[str, Level | LevelNames]) -> list[JsonValue]:
     locations: tuple[Location, ...] = ("obs", "layers", "var")
     return [
         {
-            "level": level,
+            "level": name,
             "location": location,
-            "outcome": _keys(lambda level=level, location=location: catalog.keys(level, location)),
+            "outcome": _keys(
+                lambda level=level, location=location: tuple(sorted(_slot(level, location).keys()))
+            ),
         }
-        for level in levels
+        for name, level in levels.items()
         for location in locations
     ]
 
@@ -488,7 +483,6 @@ def data_catalog_cases(
     cases: list[JsonValue] = []
     for result, parsed in results.items():
         levels = list(parsed.levels)
-        absent = _absent_level(levels)
         for name, sources in sets.items():
             enforced: tuple[Enforce, ...] = (
                 (None, "MUST", "SHOULD") if sources.requirements else (None,)
@@ -504,31 +498,20 @@ def data_catalog_cases(
                         for row in sources.requirements
                         if row.level in parsed.levels
                     ]
-                asked.append((absent, "layers", sources.keys[0].key, {}))
                 case: dict[str, JsonValue] = {
                     "result": result,
                     "catalogue": name,
                     "enforce": enforce,
                     "requests": [
-                        _request_case(request, _outcome(_data_answer(catalog, request)))
+                        _request_case(request, _outcome(_named(catalog.levels, request)))
                         for request in asked
                     ],
                 }
                 if enforce is None:
-                    case["keys"] = _keys_cases(catalog, [*levels, absent])
+                    case["keys"] = _keys_cases(catalog.levels)
                     case["fields"] = _records(catalog.fields())
                 cases.append(case)
     return cases
-
-
-def _data_answer(catalog: DataCatalog, request: Request) -> Callable[[], Reference | None]:
-    level, location, key, qualifiers = request
-
-    def answer() -> Reference | None:
-        found = catalog._find(level, location, key, qualifiers)  # pyright: ignore[reportPrivateUsage]
-        return None if found is None else Reference.of(found)
-
-    return answer
 
 
 def table_cases(sets: Mapping[str, SourceCatalogues]) -> dict[str, JsonValue]:

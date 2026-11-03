@@ -15,7 +15,6 @@ from apb_catalog.catalog import (
     Catalog,
     DataCatalog,
     MissingRequiredField,
-    Reference,
     attach_snapshot,
 )
 from apb_catalog.resolver import UnresolvedField
@@ -62,19 +61,15 @@ def _result(
 def test_catalog_answers_names_from_software_and_version() -> None:
     """The packaged rule whose version pattern admits the version decides the columns."""
     abundance = Catalog("DIA-NN", "2.6.0", "abundance")
-    assert abundance.layer("peptidoform_ion", key="intensity") == Reference(
-        level="peptidoform_ion", location="layers", name="Precursor_Quantity"
-    )
-    assert abundance.keys("peptidoform_ion", "layers") == (
+    assert abundance.levels["peptidoform_ion"].layers.get("intensity") == "Precursor_Quantity"
+    assert abundance.levels["peptidoform_ion"].layers.keys() == {
         "intensity",
         "ms1_intensity",
         "normalized_intensity",
         "normalized_ms1_intensity",
-    )
+    }
     older = Catalog("DIA-NN", "1.8.1", "confidence")
-    assert older.var("peptidoform_ion", key="library_q_value") == Reference(
-        level="peptidoform_ion", location="var", name="Lib_Q_Value"
-    )
+    assert older.levels["peptidoform_ion"].var.get("library_q_value") == "Lib_Q_Value"
     with pytest.raises(ValueError, match=r"no packaged DIA-NN rule admits version '9.0'"):
         Catalog("DIA-NN", "9.0", "abundance")
 
@@ -82,13 +77,9 @@ def test_catalog_answers_names_from_software_and_version() -> None:
 def test_catalog_names_roles_and_fixed_columns_of_the_apb_set() -> None:
     """A role's entry names the column the version's rule marks; a fixed name is that name."""
     apb = Catalog("DIA-NN", "2.6.0", "apb")
-    assert apb.var("peptidoform_ion", key="protein_assignment") == Reference(
-        level="peptidoform_ion", location="var", name="Protein_Group"
-    )
-    assert apb.var("peptidoform_ion", key="peptidoform_ion") == Reference(
-        level="peptidoform_ion", location="var", name="ProForma_ion"
-    )
-    assert apb.var("protein", key="peptide") is None
+    assert apb.levels["peptidoform_ion"].var.get("protein_assignment") == "Protein_Group"
+    assert apb.levels["peptidoform_ion"].var.get("peptidoform_ion") == "ProForma_ion"
+    assert apb.levels["protein"].var.get("peptide") is None
     fields = apb.fields()
     assert fields.get_column("present").all()
     assert "concept" not in fields.columns
@@ -102,7 +93,7 @@ def test_data_catalog_finds_the_role_column_of_the_result() -> None:
         {"Protein_Group": ["P1", "P2"]},
         roles={"protein_assignment": "Protein_Group"},
     )
-    found = DataCatalog(parsed, "apb").var("peptidoform_ion", key="protein_assignment")
+    found = DataCatalog(parsed, "apb").levels["peptidoform_ion"].var.get("protein_assignment")
     assert found is not None and found.to_list() == ["P1", "P2"]
 
 
@@ -116,12 +107,12 @@ def test_an_annotation_column_is_found_by_its_convention_prefix() -> None:
         metadata={"prolfquapp": {"schema_version": "4"}},
     )
     catalog = DataCatalog(annotated, "apb")
-    condition = catalog.obs("peptidoform_ion", key="group")
+    condition = catalog.levels["peptidoform_ion"].obs.get("group")
     assert condition is not None and condition.to_list() == ["A", "A", "B"]
-    replicate = catalog.obs("peptidoform_ion", key="subject")
+    replicate = catalog.levels["peptidoform_ion"].obs.get("subject")
     assert replicate is not None and replicate.to_list() == ["s1", "s2", "s1"]
     plain = DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"], obs=obs), "apb")
-    assert plain.obs("peptidoform_ion", key="group") is None, "no convention recorded"
+    assert plain.levels["peptidoform_ion"].obs.get("group") is None, "no convention recorded"
 
 
 def test_an_annotation_entry_of_every_level_is_one_table_row_and_a_column_per_level() -> None:
@@ -176,6 +167,8 @@ def test_catalog_levels_hold_names() -> None:
     }
     with pytest.raises(KeyError, match="Precursor_Quantity"):
         ion.layers["Precursor_Quantity"]
+    assert ion.layers.get("intensity") == ion.layers.name("intensity") == "Precursor_Quantity"
+    assert ion.layers.get("Precursor_Quantity") is None
     apb = Catalog("DIA-NN", "2.6.0", "apb").levels["peptidoform_ion"]
     assert apb.var[["peptidoform_ion", "protein_assignment"]] == ("ProForma_ion", "Protein_Group")
     with pytest.raises(KeyError, match="peptide"):
@@ -187,7 +180,7 @@ def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCapture
     parsed = _result("peaks/rules.json", ["Normalized_Area"])
     catalog = DataCatalog(parsed, "abundance", enforce="MUST")
     with caplog.at_level(logging.WARNING, logger="apb_catalog"):
-        found = catalog.layer("peptidoform_ion", key="intensity")
+        found = catalog.levels["peptidoform_ion"].layers.get("intensity")
     assert found is None
     assert "SHOULD field intensity (kind=intensity, normalization=none) on peptidoform_ion" in (
         caplog.text
@@ -210,7 +203,7 @@ def test_enforce_should_raises_for_a_missing_should_field() -> None:
         _result("peaks/rules.json", ["Normalized_Area"]), "abundance", enforce="SHOULD"
     )
     with pytest.raises(MissingRequiredField, match="SHOULD field"):
-        catalog.layer("peptidoform_ion", key="intensity")
+        catalog.levels["peptidoform_ion"].layers.get("intensity")
 
 
 def test_enforce_raises_for_a_missing_must_field() -> None:
@@ -219,11 +212,11 @@ def test_enforce_raises_for_a_missing_must_field() -> None:
         _result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb", enforce="MUST"
     )
     with pytest.raises(MissingRequiredField, match=r"MUST field peptide \(kind=peptide\)"):
-        catalog.var("peptidoform_ion", key="peptide")
+        catalog.levels["peptidoform_ion"].var.get("peptide")
     assert (
-        DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb").var(
-            "peptidoform_ion", key="peptide"
-        )
+        DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb")
+        .levels["peptidoform_ion"]
+        .var.get("peptide")
         is None
     ), "without enforce, absence is None"
 
@@ -236,7 +229,7 @@ def test_enforce_needs_requirements() -> None:
         _result("peaks/rules.json", ["Normalized_Area"]), "confidence", enforce="MUST"
     )
     with pytest.raises(MissingRequiredField, match="MUST field peptide"):
-        composed.var("peptidoform_ion", "peptide")
+        composed.levels["peptidoform_ion"].var.get("peptide")
 
 
 def test_fields_lists_absent_fields_with_their_constant() -> None:

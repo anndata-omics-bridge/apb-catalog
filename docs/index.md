@@ -5,10 +5,12 @@ APB Catalog finds a field of an [APB2](https://github.com/anndata-omics-bridge/a
 ```python
 from apb_catalog.api import DataCatalog
 
-pep = DataCatalog(result, "confidence").layer("peptidoform_ion", "pep")
+pep = DataCatalog(result, "confidence").levels["peptidoform_ion"].layers.get("pep")
 ```
 
-`pep` is the apb2 layer table itself, the same ions × runs as the abundance layer, or `None` when the vendor reports no PEP.
+`pep` is a numpy matrix, runs × ions as AnnData's layers, or `None` when the vendor reports no PEP; `layers.name("pep")` names the vendor's column.
+
+With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence")`; see [pandas](api.md#pandas).
 
 | Page | For |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Python API
 
-Everything is imported from `apb_catalog.api`. [Get started](getting-started.md) shows each call on real results.
+Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, which `apb_catalog.api_pandas` holds ([pandas](#pandas)). [Get started](getting-started.md) shows each call on real results.
 
 ## Catalogs
 
@@ -9,39 +9,36 @@ Everything is imported from `apb_catalog.api`. [Get started](getting-started.md)
 | `DataCatalog(result, *catalogs, enforce=None)` | An apb2 `ParsedLevels` result: the rule each level was converted with; the named sets composed with `apb`, always in |
 | `Catalog(software, version, catalog, enforce=None)` | The packaged APB2 rule whose version pattern admits `version`; no data |
 
-| Method | `DataCatalog` returns | `Catalog` returns |
+| Member | `DataCatalog` | `Catalog` |
 | --- | --- | --- |
-| `layer(level, key, **qualifiers)` | apb2 `FinalLayerTable` or `None` | `Reference` or `None` |
-| `var(level, key, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
-| `obs(level, key, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
-| `keys(level, location, **qualifiers)` | keys a field the level holds answers at `"layers"`, `"var"` or `"obs"`; `()` for none; an app's keys once it has run | same |
-| `fields()` | Polars `DataFrame`: the [long table](#the-long-table)'s columns plus `present`, `constant` | same |
 | `levels[name]` | one result level with AnnData's slots, looked up by key; see [Levels](#levels) | one rule level with the same slots, holding names |
+| `fields()` | Polars `DataFrame`: the [long table](#the-long-table)'s columns plus `present`, `constant` | same |
 | `snapshot(catalog=None)` | `ResolutionSnapshot` of one set's lookups so far; the first set named by default | — |
 | `resolve(request)` | `Resolution` of one explicit request, recorded for the snapshot: status `resolved`, `missing`, `ambiguous` or `unknown`, with candidates and reasons; an undecided answer is a status, not an `UnresolvedField` | — |
 | `description` | the first set's `purpose` and `used_by` | same |
 
 - A key is one of the set's keys, listed per set in [Catalogues](catalogues.md): a kind with the qualifier values it fixes, such as `normalized_intensity` (kind `intensity`, normalization `run_setting`)
-- `**qualifiers` narrow by a qualifier the key leaves open, such as `unit`; `kind`, or a qualifier the key fixes, raises `ValueError`
-- A `Reference` has `level`, `location`, `name` and `table`
+- A slot's `get` and `name` take `**qualifiers`, a qualifier the key leaves open, such as `unit`; `kind`, or a qualifier the key fixes, raises `ValueError`
 - `resolve` takes a request naming a level, optionally a location and a key, and the accepted values of each qualifier; `apb_catalog.api` exports neither its type, `FieldRequest`, nor `Resolution`
-- `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which only plugin sets catalogue
+- A level's `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which only plugin sets catalogue
 - `fields()` lists a field APB2 left out because it held one value with `present` false and that value as `constant`
 - A level answers only for its own entity: `peptidoform_ion` for precursors, `protein` for protein groups
-- Composed sets: a key routes to the sets that define it; two sets naming different fields for one key on one level raise `ValueError` when the catalog is built; `keys()` and `fields()` cover every set; `enforce` applies each set's requirements
+- Composed sets: a key routes to the sets that define it; two sets naming different fields for one key on one level raise `ValueError` when the catalog is built; a slot's `keys()` and `fields()` cover every set; `enforce` applies each set's requirements
 
 ## Levels
 
-`DataCatalog(result, "abundance", "confidence").levels["protein"]` has AnnData's slots and returns what AnnData returns, with polars in place of pandas:
+`DataCatalog(result, "abundance", "confidence").levels["protein"]` has AnnData's slots and returns what AnnData returns, with polars in place of pandas; the pandas `DataCatalog` returns AnnData's own values, and `Catalog`'s levels hold names:
 
-| Slot | Returns |
-| --- | --- |
-| `X` | numpy matrix, observations by variables: the level's primary layer |
-| `layers[name]` | numpy matrix, observations by variables |
-| `var[name]`, `obs[name]` | polars `Series`; `var` also reads `varm` tables |
-| `var[[name, …]]`, `obs[[name, …]]` | polars `DataFrame` of every column the names name, in order; a `varm` column is named `table/column` |
-| `obs_names`, `var_names` | polars `Series` of strings: the key columns, joined by `\|` |
-| `layers.keys()`, `var.keys()`, `obs.keys()` | the keys the level offers there, a `set` |
+| Slot | `DataCatalog` | pandas `DataCatalog` | `Catalog` |
+| --- | --- | --- | --- |
+| `X` | numpy matrix, runs × features: the level's primary layer | AnnData's `X` | — |
+| `layers[key]` | numpy matrix, runs × features | the matrix AnnData holds | `str`, the layer's name |
+| `var[key]`, `obs[key]` | polars `Series`; `var` also reads `varm` tables | pandas `Series` | `str` |
+| `var[[key, …]]`, `obs[[key, …]]` | polars `DataFrame` of every column the keys name, in order; a `varm` column is named `table/column` | pandas `DataFrame` | `tuple[str, ...]` |
+| `get(key, **qualifiers)` on a slot | the value, or `None` where `[key]` raises `KeyError`; qualifiers the key leaves open narrow it, such as `unit="minute"` | same | `str` or `None` |
+| `name(key, **qualifiers)` on a slot | `str`: the name of the field `get` reads, such as `'PEP'`; a `varm` field `table/column`; `KeyError` when there is none | same | same |
+| `obs_names`, `var_names` | polars `Series` of strings: the key columns, joined by `\|` | AnnData's own index | — |
+| `keys()` on a slot | `set[str]`: the keys the level offers there | same | same |
 
 - Lookup follows cf_xarray: a key first, then the level's own name in that slot, else `KeyError`; `UnresolvedField` when the key names several fields or one the catalogue cannot decide
 - A list reads every field a key names, as cf_xarray's `ds.cf[["name"]]`: both contaminant flags where the vendor and apb-fasta each set one, every prolfquapp `group` column; it still raises `UnresolvedField` for a field the catalogue cannot decide
@@ -50,16 +47,26 @@ Everything is imported from `apb_catalog.api`. [Get started](getting-started.md)
 - A key may name the primary layer and then answers `X`; `layers` holds the other layers, as in AnnData
 - A matrix is built once per level and shared by every later answer
 
-`Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"]` has the same `layers`, `var` and `obs`, holding names: `layers["intensity"]` is `'Precursor_Quantity'`, a list returns a tuple of names, and a `varm` field is `table/column`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`.
+`Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"].layers["intensity"]` is `'Precursor_Quantity'`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`.
+
+## pandas
+
+`from apb_catalog.api_pandas import DataCatalog` is the one module beside `apb_catalog.api`, for the AnnData or MuData object APB2 wrote:
+
+- `DataCatalog(data, *catalogs, enforce=None)`: `data` read with `mudata.read_h5mu` or, for one level, `anndata.read_h5ad`; `ValueError` for an object without `uns["apb"]`
+- The lookup is `api.DataCatalog`'s: the same keys, names, `None`, `KeyError` and `UnresolvedField`; only the values are AnnData's
+- Own names are APB2's: `layers["a/b"]` reads the layer AnnData stores as `a_b`
+- Levels only: `fields()`, `snapshot()`, `resolve()` and `description` stay on `api.DataCatalog`
 
 ## Answers
 
 | Answer | Means |
 | --- | --- |
 | a field | Exactly one catalogued field matches |
-| `None` | The level is absent, or its software version was reviewed and has no such field |
+| `None` | From `get`: the level's software version was reviewed and has no such field, or the name is neither a key nor the level's own; an absent level is not in `levels` |
+| `KeyError` | From `[...]` and `name` where `get` returns `None` |
 | `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or a plugin set's later producer, such as `apb-fasta verify-peptides`, has not run; names the reason and candidates |
-| `ValueError` | A misspelled set, key or qualifier, a qualifier the key fixes, or a version no packaged rule admits |
+| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, or a version no packaged rule admits |
 
 ## Requirements and `enforce`
 
@@ -77,11 +84,7 @@ A set's requirement rows say how strongly a consumer needs a kind on a level. `e
 
 ## Snapshots
 
-| Function | Does |
-| --- | --- |
-| `attach_snapshot(parsed, snapshot)` | Returns a new result holding the snapshot; data is shared, not copied |
-| `stored_snapshot(parsed, catalogue)` | Reads a stored snapshot back, or `None` |
-| `stale_levels(parsed, snapshot)` | Levels whose software name or version changed since the snapshot |
+`attach_snapshot(parsed, snapshot)` returns a new result holding the snapshot; data is shared, not copied. `ResolutionSnapshot.model_validate(metadata["catalog"][<set>]["result"])` reads it back.
 
 - Stored as JSON at `metadata["catalog"][<set>]["result"]`, beside other sets' snapshots
 - Each level's request counts sit at that level's `metadata["catalog"][<set>]["summary"]`
