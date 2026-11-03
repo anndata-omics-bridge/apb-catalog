@@ -1,0 +1,22 @@
+software,version,software_version_pattern
+AlphaDIA,1.10,^1\.10(?:\.|-|$)
+AlphaDIA,1.12,^1\.12(?:\.|-|$)
+AlphaDIA,2.x,^2\.
+AlphaPept,0.5,^0\.5\.
+DIA-NN,1.0–1.7,^1\.[0-7](\.|$)
+DIA-NN,1.8–1.9,^1\.[89](\.|$)
+DIA-NN,2.x,^2\..*
+FragPipe,22–23,^2[23]\.
+i2MassChroQ,1.x,^1\..*
+MaxQuant,"1.5, 1.6, 2.x",^(1\.5|1\.6|2\.)
+MetaMorpheus,1.x,^1\.
+MSAngel,2.x,^2\..*
+pb_custom,any,^.*$
+PEAKS,13,^13(?:\.|\s|$)
+ProlineStudio,2.x,^2\..*
+quantms,1.x,^v?1\..*
+Sage,0.x,^0\.
+Spectronaut,19–20,^(19|20)\..*
+Spectronaut,15,^15\..*
+Spectronaut,21,^21\..*
+WOMBAT-P,0.9.11,^0\.9\.11$

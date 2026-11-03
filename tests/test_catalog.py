@@ -651,3 +651,54 @@ def test_apb_is_always_in() -> None:
     )
     assert catalog.snapshot().catalogue == "abundance", "the first set named"
     assert catalog.snapshot("apb").catalogue == "apb"
+
+
+def test_an_apps_keys_are_listed_once_it_has_run() -> None:
+    """As AnnData's keys(): every key listed reads; apb-fasta's wait for its run, and a lookup
+    says what to run."""
+    before = DataCatalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "apb")
+    level = before.levels["peptidoform_ion"]
+    assert "fasta_matches_contaminant" not in level.var
+    with pytest.raises(UnresolvedField, match="apb-fasta verify-peptides"):
+        level.var["fasta_matches_contaminant"]
+    ran = _result(
+        "diann/v2/rules.json",
+        ["Ms1_Normalised"],
+        DIANN_ION,
+        varm=FASTA_CONTAMINANTS,
+        metadata=FASTA_RAN,
+    )
+    level = DataCatalog(ran, "apb").levels["peptidoform_ion"]
+    assert "fasta_matches_contaminant" in level.var
+    assert level.var["fasta_matches_contaminant"].to_list() == [True, False]
+
+
+def test_a_list_of_names_reads_every_column_a_key_names(toy_set: str) -> None:
+    """As cf_xarray: one key, two columns; the list reads both, a varm column as table/column."""
+    parsed = _result(
+        "fragpipe/rules.json",
+        ["Intensity"],
+        {"apb_Contaminant": [False, True]},
+        varm=FASTA_CONTAMINANTS,
+        metadata=FASTA_RAN,
+    )
+    level = DataCatalog(parsed, toy_set).levels["peptidoform_ion"]
+    with pytest.raises(UnresolvedField, match="ambiguous"):
+        level.var["contaminant"]
+    both = level.var[["contaminant", "ProForma_ion"]]
+    assert both.columns == [
+        "apb_Contaminant",
+        "fasta_validation/fasta_matches_contaminant",
+        "ProForma_ion",
+    ]
+    assert both.get_column("apb_Contaminant").to_list() == [False, True]
+    with pytest.raises(KeyError, match="nonsense"):
+        level.var[["contaminant", "nonsense"]]
+
+
+def test_a_list_of_names_raises_while_a_producer_has_not_run(toy_set: str) -> None:
+    """Before apb-fasta runs, the list cannot say which columns the key names."""
+    parsed = _result("fragpipe/rules.json", ["Intensity"], {"apb_Contaminant": [False, True]})
+    level = DataCatalog(parsed, toy_set).levels["peptidoform_ion"]
+    with pytest.raises(UnresolvedField, match="apb-fasta has not run"):
+        level.var[["contaminant"]]

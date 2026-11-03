@@ -6,11 +6,11 @@ Every packaged catalogue set, generated from `src/apb_catalog/data/` by `make do
 
 | Set | Holds | Used by | Entries |
 | --- | --- | --- | --- |
-| [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 40 |
-| [`apb`](#apb) | The fields APB writes itself for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns and sample annotations. | apb-export: export rules ask for APB's own columns by kind | 204 |
-| [`chromatography`](#chromatography) | Retention times, elution-peak bounds and peak widths, with the unit the software reports them in. | apb-export: QPX feature retention times in seconds for pMultiQC | 54 |
-| [`confidence`](#confidence) | How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature. | apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision<br>apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers | 21 |
-| [`proteobench_entrapment`](#proteobench_entrapment) | The precursor q-values ProteoBench's entrapment scoring ranks by, each key in each location its own score. | apb-proteobench: EntrapmentAnalyzer and run entrapment<br>apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback | 6 |
+| [`abundance`](#abundance) | What each layer an APB2 rule marks abundance measures, and whether the software normalizes it across runs. | apb-proteobench: modules that ask for an abundance normalization, such as dia_plasma | 45 |
+| [`apb`](#apb) | The fields APB and its apps write for every vendor, asked for by kind: ProForma identifiers, decoy and contaminant flags, role columns, sample annotations, and apb-fasta's peptide verification once it has run. | apb-export: export rules ask for APB's own columns by kind | 268 |
+| [`chromatography`](#chromatography) | Retention times, elution-peak bounds and peak widths, with the unit the software reports them in. | apb-export: QPX feature retention times in seconds for pMultiQC | 58 |
+| [`confidence`](#confidence) | How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature. | apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision<br>apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers | 26 |
+| [`proteobench_entrapment`](#proteobench_entrapment) | The precursor q-values ProteoBench's entrapment scoring ranks by, each key in each location its own score. | apb-proteobench: EntrapmentAnalyzer and run entrapment<br>apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback | 7 |
 
 <!-- end of generated block: sets -->
 
@@ -68,7 +68,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | `maxlfq` | `maxlfq` |  | MS:1001902 |
 | `directlfq` | `directlfq` |  |  |
 | `ibaq` | `ibaq` |  |  |
-| `unknown` | `unknown` |  |  |
+| `unknown` | `unknown` | `none` |  |
+| `normalized_unknown` | `unknown` | `run_setting` |  |
 
 ### Requirements
 
@@ -82,7 +83,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 <div class="coverage-matrix" markdown>
 
-| Software | Version | `intensity` | `normalized_intensity` | `maxlfq`, run_setting | `directlfq`, run_setting | `ibaq`, none | `unknown`, none | `unknown`, run_setting |
+| Software | Version | `intensity` | `normalized_intensity` | `maxlfq`, run_setting | `directlfq`, run_setting | `ibaq`, none | `unknown` | `normalized_unknown` |
 | --- | --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
 | AlphaDIA | 2.x | · | · | · | ✓ | · | · | · |
 | DIA-NN | 1.0–1.7 | ✓ | ✓ | ✓ | · | · | · | · |
@@ -169,9 +170,11 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `none` | AlphaPept | 0.5 | `MS1_Int_Sum_Area` | peptidoform_ion |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Fragment_Quant_Raw` | peptidoform_fragment |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9 | `PG_Quantity` | protein |
+|  |  | DIA-NN | 1.0–1.7 | `Fragment_Quant_Raw` | peptidoform_fragment |
+|  |  | DIA-NN | 1.0–1.7 | `PG_Quantity` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Quantity` | peptidoform_ion |
+|  |  | DIA-NN | 1.8–1.9 | `Fragment_Quant_Raw` | peptidoform_fragment |
+|  |  | DIA-NN | 1.8–1.9 | `PG_Quantity` | protein |
 |  |  | MaxQuant | 1.5, 1.6, 2.x | `Intensity` | protein, peptide, peptidoform, peptidoform_ion |
 |  |  | MSAngel | 2.x | `Raw_Abundance` | peptidoform_ion |
 |  |  | Spectronaut | 15 | `FG_MS2RawQuantity` | peptidoform_ion |
@@ -182,8 +185,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `run_setting` | AlphaPept | 0.5 | `Intensity` | peptidoform_ion |
-|  |  | DIA-NN | 1.0–1.7, 1.8–1.9 | `PG_Normalised` | protein |
+|  |  | DIA-NN | 1.0–1.7 | `PG_Normalised` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Normalised` | peptidoform_ion |
+|  |  | DIA-NN | 1.8–1.9 | `PG_Normalised` | protein |
 |  |  | MSAngel | 2.x | `Abundance` | peptidoform_ion |
 |  |  | PEAKS | 13 | `Normalized_Area` | peptidoform_ion |
 |  |  | ProlineStudio | 2.x | `Abundance` | peptidoform_ion |
@@ -212,7 +216,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | DIA-NN | 1.8–1.9, 2.x | `Ms1_Normalised` | peptidoform_ion |
+| layers | `run_setting` | DIA-NN | 1.8–1.9 | `Ms1_Normalised` | peptidoform_ion |
+|  |  | DIA-NN | 2.x | `Ms1_Normalised` | peptidoform_ion |
 
 **`maxlfq`**
 
@@ -225,7 +230,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | AlphaDIA | 1.10, 1.12 | `Intensity` | peptidoform_ion |
+| layers | `run_setting` | AlphaDIA | 1.10 | `Intensity` | peptidoform_ion |
+|  |  | AlphaDIA | 1.12 | `Intensity` | peptidoform_ion |
 |  |  | AlphaDIA | 2.x | `PG_Intensity` | protein |
 |  |  | AlphaDIA | 2.x | `Precursor_Intensity` | peptidoform_ion |
 
@@ -240,7 +246,12 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `none` | MSAngel | 2.x | `Raw_Abundance` | protein |
-|  | `run_setting` | MSAngel | 2.x | `Abundance` | protein |
+
+**`normalized_unknown`**
+
+| Location | Normalization | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- | --- |
+| layers | `run_setting` | MSAngel | 2.x | `Abundance` | protein |
 |  |  | Spectronaut | 15, 19–20, 21 | `PG_Quantity` | protein |
 
 <!-- end of generated block: abundance -->
@@ -267,8 +278,28 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | `kind` | `contaminant` | Whether the vendor marks the feature as a contaminant it flags or adds itself: apb_Contaminant. |
 | `kind` | `protein_assignment` | The protein or protein group the vendor assigns the feature to: the var column the level's rule marks with the role protein_assignment. |
 | `kind` | `fasta_accessions` | The FASTA accessions the vendor lists for the feature: the var column the level's rule marks with the role fasta_accessions. |
-| `kind` | `condition` | The experimental group a sample belongs to, as MSstats' Condition. |
-| `kind` | `bioreplicate` | The biological replicate a sample comes from; one value across conditions marks a repeated subject, as MSstats' BioReplicate. |
+| `kind` | `group` | The experimental group a sample belongs to: prolfqua's group, MSstats' Condition. |
+| `kind` | `subject` | The biological subject a sample comes from; one value across groups marks a repeated subject: prolfqua's subject, MSstats' BioReplicate. |
+| `kind` | `peptide_in_fasta` | apb-fasta's peptide verification: The stripped sequence occurs in at least one FASTA protein. |
+| `kind` | `fasta_match_site_count` | apb-fasta's peptide verification: Total match sites of the sequence across the FASTA. |
+| `kind` | `fasta_matching_protein_count` | apb-fasta's peptide verification: Distinct FASTA proteins containing the sequence. |
+| `kind` | `fasta_matching_protein_ids` | apb-fasta's peptide verification: The ';'-joined FASTA ids of the matching proteins. |
+| `kind` | `fasta_matching_organisms` | apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the matching proteins, e.g. HUMAN;YEAST. |
+| `kind` | `fasta_matches_contaminant` | apb-fasta's peptide verification: A matching FASTA protein is a contaminant. |
+| `kind` | `reported_member_count` | apb-fasta's peptide verification: Protein-group members the result reported; null when the level reports no protein group. |
+| `kind` | `reported_members_in_fasta_count` | apb-fasta's peptide verification: Reported members found in the FASTA; null when the level reports no protein group. |
+| `kind` | `reported_member_organisms` | apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the reported members found; null when the level reports no protein group. |
+| `kind` | `reported_members_contaminant` | apb-fasta's peptide verification: A reported member found in the FASTA is a contaminant; null when the level reports no protein group. |
+| `kind` | `peptide_in_reported_protein` | apb-fasta's peptide verification: The sequence occurs in a reported member; null when the level reports no protein group. |
+| `kind` | `fasta_il_only` | apb-fasta's peptide verification: peptide_in_fasta or peptide_in_reported_protein holds only for another I/L spelling. |
+| `kind` | `is_protein_group_specific` | apb-fasta's peptide verification: Every FASTA protein the peptide matches is a member of its own protein group (protein_assignment). |
+| `kind` | `is_proteotypic` | apb-fasta's peptide verification: The peptide matches exactly one FASTA protein. |
+| `kind` | `reported_leading_id` | apb-fasta's peptide verification: FASTA id of the leading protein, the first member of protein_assignment. |
+| `kind` | `reported_leading_accession` | apb-fasta's peptide verification: The leading protein's accession. |
+| `kind` | `reported_leading_description` | apb-fasta's peptide verification: The leading protein's header text after the id. |
+| `kind` | `reported_leading_gene_name` | apb-fasta's peptide verification: The leading protein's gene name. |
+| `kind` | `reported_leading_protein_length` | apb-fasta's peptide verification: The leading protein's sequence length. |
+| `kind` | `reported_leading_tryptic_peptides` | apb-fasta's peptide verification: The leading protein's tryptic peptides of 7 to 29 residues, cleaved after K or R unless P follows. |
 
 ### Keys
 
@@ -283,8 +314,28 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | `contaminant` | `contaminant` |  |
 | `protein_assignment` | `protein_assignment` |  |
 | `fasta_accessions` | `fasta_accessions` |  |
-| `condition` | `condition` |  |
-| `bioreplicate` | `bioreplicate` |  |
+| `group` | `group` |  |
+| `subject` | `subject` |  |
+| `peptide_in_fasta` | `peptide_in_fasta` |  |
+| `fasta_match_site_count` | `fasta_match_site_count` |  |
+| `fasta_matching_protein_count` | `fasta_matching_protein_count` |  |
+| `fasta_matching_protein_ids` | `fasta_matching_protein_ids` |  |
+| `fasta_matching_organisms` | `fasta_matching_organisms` |  |
+| `fasta_matches_contaminant` | `fasta_matches_contaminant` |  |
+| `reported_member_count` | `reported_member_count` |  |
+| `reported_members_in_fasta_count` | `reported_members_in_fasta_count` |  |
+| `reported_member_organisms` | `reported_member_organisms` |  |
+| `reported_members_contaminant` | `reported_members_contaminant` |  |
+| `peptide_in_reported_protein` | `peptide_in_reported_protein` |  |
+| `fasta_il_only` | `fasta_il_only` |  |
+| `is_protein_group_specific` | `is_protein_group_specific` |  |
+| `is_proteotypic` | `is_proteotypic` |  |
+| `reported_leading_id` | `reported_leading_id` |  |
+| `reported_leading_accession` | `reported_leading_accession` |  |
+| `reported_leading_description` | `reported_leading_description` |  |
+| `reported_leading_gene_name` | `reported_leading_gene_name` |  |
+| `reported_leading_protein_length` | `reported_leading_protein_length` |  |
+| `reported_leading_tryptic_peptides` | `reported_leading_tryptic_peptides` |  |
 
 ### Requirements
 
@@ -394,8 +445,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | --- | --- | --- | --- | --- |
 | var | AlphaDIA | 1.10, 1.12, 2.x | `ProForma_peptide` | peptidoform_ion |
 |  | AlphaPept | 0.5 | `ProForma_peptide` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_peptide` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `ProForma_peptide` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `ProForma_peptide` | peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `ProForma_peptide` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `ProForma_peptide` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `ProForma_peptide` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `ProForma_peptide` | peptide, peptidoform, peptidoform_ion |
@@ -415,8 +467,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | --- | --- | --- | --- | --- |
 | var | AlphaDIA | 1.10, 1.12, 2.x | `ProForma_peptidoform` | peptidoform_ion |
 |  | AlphaPept | 0.5 | `ProForma_peptidoform` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_peptidoform` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `ProForma_peptidoform` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `ProForma_peptidoform` | peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `ProForma_peptidoform` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `ProForma_peptidoform` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `ProForma_peptidoform` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `ProForma_peptidoform` | peptidoform_ion |
@@ -442,8 +495,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | --- | --- | --- | --- | --- |
 | var | AlphaDIA | 1.10, 1.12, 2.x | `ProForma_ion` | peptidoform_ion |
 |  | AlphaPept | 0.5 | `ProForma_ion` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_ion` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `ProForma_ion` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `ProForma_ion` | peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `ProForma_ion` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `ProForma_ion` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `ProForma_ion` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `ProForma_ion` | peptidoform_ion |
@@ -461,7 +515,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- |
-| var | DIA-NN | 1.0–1.7, 1.8–1.9 | `ProForma_fragment` | peptidoform_fragment |
+| var | DIA-NN | 1.0–1.7 | `ProForma_fragment` | peptidoform_fragment |
+|  | DIA-NN | 1.8–1.9 | `ProForma_fragment` | peptidoform_fragment |
 
 **`decoy`**
 
@@ -470,8 +525,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | var | AlphaDIA | 1.10, 1.12, 2.x | `apb_Decoy` | peptidoform_ion |
 |  | AlphaDIA | 2.x | `apb_Decoy` | protein |
 |  | AlphaPept | 0.5 | `apb_Decoy` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `apb_Decoy` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `apb_Decoy` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `apb_Decoy` | protein, peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `apb_Decoy` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `apb_Decoy` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `apb_Decoy` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `apb_Decoy` | protein, peptide, peptidoform, peptidoform_ion |
@@ -492,8 +548,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | var | AlphaDIA | 1.10, 1.12, 2.x | `apb_Contaminant` | peptidoform_ion |
 |  | AlphaDIA | 2.x | `apb_Contaminant` | protein |
 |  | AlphaPept | 0.5 | `apb_Contaminant` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `apb_Contaminant` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `apb_Contaminant` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `apb_Contaminant` | protein, peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `apb_Contaminant` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `apb_Contaminant` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `apb_Contaminant` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `apb_Contaminant` | protein, peptide, peptidoform, peptidoform_ion |
@@ -515,8 +572,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 |  | AlphaDIA | 1.12 | `Proteins` | peptidoform_ion |
 |  | AlphaDIA | 2.x | `Protein_Group` | protein, peptidoform_ion |
 |  | AlphaPept | 0.5 | `Protein_Group` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `Protein_Group` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Group` | protein, peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `Protein` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `Proteins` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `Protein_IDs` | protein, peptide, peptidoform_ion |
@@ -536,12 +594,14 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- |
 | var | AlphaDIA | 1.10 | `Genes` | peptidoform_ion |
-|  | AlphaDIA | 1.12, 2.x | `Proteins` | peptidoform_ion |
+|  | AlphaDIA | 1.12 | `Proteins` | peptidoform_ion |
 |  | AlphaDIA | 2.x | `Protein_Group` | protein |
+|  | AlphaDIA | 2.x | `Proteins` | peptidoform_ion |
 |  | AlphaPept | 0.5 | `Protein_Group` | peptidoform_ion |
-|  | DIA-NN | 1.0–1.7, 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
+|  | DIA-NN | 1.0–1.7 | `Protein_Group` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Group` | protein |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Ids` | peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `Protein` | peptidoform_ion |
 |  | i2MassChroQ | 1.x | `Proteins` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `Protein_IDs` | protein |
@@ -554,10 +614,11 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 |  | quantms | 1.x | `Protein` | peptidoform_ion |
 |  | Sage | 0.x | `Proteins` | peptidoform, peptidoform_ion |
 |  | Spectronaut | 15 | `PG_ProteinGroups` | protein, peptidoform_ion, peptidoform_fragment |
-|  | Spectronaut | 19–20, 21 | `PG_ProteinAccessions` | protein, peptidoform_ion, peptidoform_fragment |
+|  | Spectronaut | 19–20 | `PG_ProteinAccessions` | protein, peptidoform_ion, peptidoform_fragment |
+|  | Spectronaut | 21 | `PG_ProteinAccessions` | protein, peptidoform_ion, peptidoform_fragment |
 |  | WOMBAT-P | 0.9.11 | `protein_group` | peptidoform, peptidoform_ion |
 
-**`condition`**
+**`group`**
 
 | Location | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- |
@@ -566,13 +627,133 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 |  | APB2 annotate | sdrf annotation | `factor_value_`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
 |  | APB2 annotate | prolfquapp annotation | `group`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
 
-**`bioreplicate`**
+**`subject`**
 
 | Location | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- |
 | obs | APB2 annotate | prolfquapp annotation | `BioReplicate`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
 |  | APB2 annotate | sdrf annotation | `characteristics_biological_replicate`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
 |  | APB2 annotate | prolfquapp annotation | `subject`… | protein, peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`peptide_in_fasta`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.peptide_in_fasta` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`fasta_match_site_count`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.fasta_match_site_count` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`fasta_matching_protein_count`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.fasta_matching_protein_count` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`fasta_matching_protein_ids`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.fasta_matching_protein_ids` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`fasta_matching_organisms`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.fasta_matching_organisms` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`fasta_matches_contaminant`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.fasta_matches_contaminant` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_member_count`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_member_count` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_members_in_fasta_count`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_members_in_fasta_count` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_member_organisms`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_member_organisms` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_members_contaminant`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_members_contaminant` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`peptide_in_reported_protein`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.peptide_in_reported_protein` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`fasta_il_only`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.fasta_il_only` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`is_protein_group_specific`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.is_protein_group_specific` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`is_proteotypic`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.is_proteotypic` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_leading_id`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_leading_id` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_leading_accession`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_leading_accession` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_leading_description`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_leading_description` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_leading_gene_name`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_leading_gene_name` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_leading_protein_length`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_leading_protein_length` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
+
+**`reported_leading_tryptic_peptides`**
+
+| Location | Software | Versions | APB field | Levels |
+| --- | --- | --- | --- | --- |
+| varm | apb-fasta | after `apb-fasta verify-peptides` | `fasta_validation.reported_leading_tryptic_peptides` | peptide, peptidoform, peptidoform_ion, peptidoform_fragment |
 
 <!-- end of generated block: apb -->
 
@@ -678,7 +859,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12, 2.x | `RT_Observed` | `second` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `RT_Observed` | `second` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `RT_Observed` | `second` | peptidoform_ion |
 |  | AlphaPept | 0.5 | `Retention_Time` | `unknown` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `RT` | `minute` | peptidoform_ion |
 |  | FragPipe | 22–23 | `Apex_Retention_Time` | `unknown` | peptidoform_ion |
@@ -711,7 +893,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12, 2.x | `RT_Calibrated` | `second` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `RT_Calibrated` | `second` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `RT_Calibrated` | `second` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Predicted_RT` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_RTPredicted` | `minute` | peptidoform_ion |
 
@@ -719,7 +902,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12, 2.x | `RT_Library` | `unknown` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `RT_Library` | `unknown` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `RT_Library` | `unknown` | peptidoform_ion |
 | var | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `iRT` | `irt` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_iRTPredicted` | `irt` | peptidoform_ion |
 
@@ -776,7 +960,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | layers | AlphaDIA | 1.12 | `Cycle_FWHM` | `unknown` | peptidoform_ion |
 |  | AlphaDIA | 2.x | `RT_FWHM` | `unknown` | peptidoform_ion |
 |  | AlphaPept | 0.5 | `FWHM` | `unknown` | peptidoform_ion |
-|  | DIA-NN | 1.8–1.9, 2.x | `FWHM` | `minute` | peptidoform_ion |
+|  | DIA-NN | 1.8–1.9 | `FWHM` | `minute` | peptidoform_ion |
+|  | DIA-NN | 2.x | `FWHM` | `minute` | peptidoform_ion |
 |  | FragPipe | 22–23 | `Retention_Time_FWHM` | `unknown` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_FWHM` | `minute` | peptidoform_ion |
 
@@ -900,7 +1085,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `identification` | DIA-NN | 1.8–1.9, 2.x | `PEP` | peptidoform_ion |
+| layers | `identification` | DIA-NN | 1.8–1.9 | `PEP` | peptidoform_ion |
+|  |  | DIA-NN | 2.x | `PEP` | peptidoform_ion |
 |  |  | MaxQuant | 1.5, 1.6, 2.x | `PEP` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `EG_PEP` | peptidoform_ion |
 | var | `identification` | MaxQuant | 1.5, 1.6, 2.x | `PEP` | peptide, peptidoform |
@@ -909,16 +1095,19 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `identification` | AlphaDIA | 1.12, 2.x | `QValue` | peptidoform_ion |
+| layers | `identification` | AlphaDIA | 1.12 | `QValue` | peptidoform_ion |
+|  |  | AlphaDIA | 2.x | `QValue` | peptidoform_ion |
 |  |  | AlphaPept | 0.5 | `Q_Value` | peptidoform_ion |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `PG_Q_Value` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Q_Value` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `EG_Qvalue` | peptidoform_ion |
-|  |  | Spectronaut | 19–20, 21 | `PG_QValue_Run_Wise` | protein |
+|  |  | Spectronaut | 19–20 | `PG_QValue_Run_Wise` | protein |
+|  |  | Spectronaut | 21 | `PG_QValue_Run_Wise` | protein |
 | var | `identification` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Global_PG_Q_Value` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Global_Q_Value` | peptidoform_ion |
 |  |  | MaxQuant | 1.5, 1.6, 2.x | `Q_Value` | protein |
-|  |  | Spectronaut | 19–20, 21 | `PG_Qvalue` | protein |
+|  |  | Spectronaut | 19–20 | `PG_Qvalue` | protein |
+|  |  | Spectronaut | 21 | `PG_Qvalue` | protein |
 
 **`quantification_q_value`**
 
@@ -931,7 +1120,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | var | `identification` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Lib_Q_Value` | peptidoform_ion |
-|  |  | DIA-NN | 1.8–1.9, 2.x | `Lib_PG_Q_Value` | protein |
+|  |  | DIA-NN | 1.8–1.9 | `Lib_PG_Q_Value` | protein |
+|  |  | DIA-NN | 2.x | `Lib_PG_Q_Value` | protein |
 |  |  | Spectronaut | 21 | `EG_LibraryQvalue` | peptidoform_ion |
 |  |  | Spectronaut | 21 | `PG_LibraryQvalue` | protein |
 
@@ -998,7 +1188,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `identification` | AlphaDIA | 1.12, 2.x | `QValue` | peptidoform_ion |
+| layers | `identification` | AlphaDIA | 1.12 | `QValue` | peptidoform_ion |
+|  |  | AlphaDIA | 2.x | `QValue` | peptidoform_ion |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Q_Value` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `EG_Qvalue` | peptidoform_ion |
 | var | `identification` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Global_Q_Value` | peptidoform_ion |

@@ -16,7 +16,7 @@ from typing import cast
 import polars as pl
 
 from apb_catalog.api import catalogues, rule_coverage
-from apb_catalog.rules import version_label
+from apb_catalog.rules import ANY, version_label
 from apb_catalog.source import (
     SourceCatalogues,
     SourceEntry,
@@ -348,7 +348,8 @@ def _fields(sources: SourceCatalogues, vocabulary: Vocabulary) -> list[str]:
             field=_field(entry),
             values=tuple(entry.qualifiers[name] for name in values),
         )
-        levels.setdefault(row, set()).add(entry.reference.level)
+        level = entry.reference.level
+        levels.setdefault(row, set()).update(LEVELS if level == ANY else (level,))
     header = [
         "Location",
         *(name.capitalize() for name in meaning),

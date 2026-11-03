@@ -1,7 +1,7 @@
 {
   "name": "apb-catalog",
   "title": "APB catalogue sets",
-  "version": "0.14",
+  "version": "0.16",
   "resources": [
     {
       "name": "entries",
@@ -10,19 +10,12 @@
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "entry_id", "type": "string", "description": "The entry's identifier within its set."},
-          {"name": "source", "type": "string", "description": "Who writes the field: the conversion software (its own columns and those APB2's rule computes for it), an app named in producers, or annotation:<convention>."},
-          {"name": "software_version_pattern", "type": "string", "description": "The version patterns of APB2's rules for the source software the entry was reviewed for, separated by ';'; empty for app and annotation entries, which apply to every software version."},
-          {"name": "level", "type": "string", "description": "The quantification level."},
-          {"name": "location", "type": "string", "description": "obs, layers, var or varm."},
-          {"name": "table", "type": "string", "description": "The feature-aligned table of a varm field; empty otherwise."},
-          {"name": "reference_by", "type": "string", "description": "How reference names the field: name or prefix."},
-          {"name": "reference", "type": "string", "description": "The field's APB output name, or the prefix of its column name."},
+          {"name": "entry_id", "type": "string", "description": "Where the field lives, as six fields separated by /: <source>/<version>/<level>/<attribute>/<key>/<column>. Read apb-fasta/*/peptidoform_ion/varm/fasta_validation/is_proteotypic as: apb-fasta writes it, for every software version, on the peptidoform_ion level, in varm, in the table fasta_validation, column is_proteotypic. source: the conversion software, an app named in producers, or annotation:<convention>. version: one versions.csv label, or * for every version. level: the quantification level, or * for every level, which only annotation and app entries use. attribute: obs, var, layers or varm. key: the name of a layer or varm table; - for obs and var, which have none. column: a column of obs, var or a varm table; - for a layer, which has none; a trailing * matches every obs column starting with it, as in annotation:sdrf/*/protein/obs/-/factor_value_*.", "constraints": {"pattern": "^[^/]+/[^/]+/[^/]+/(obs|var|layers|varm)/[^/]+/[^/]+$"}},
           {"name": "kind", "type": "string", "description": "What the field measures; a value of the set's kind qualifier."},
           {"name": "basis", "type": "string", "description": "Why the reviewer assigned this meaning."},
           {"name": "evidence_url", "type": "string", "description": "Where the basis can be checked; may be empty."}
         ],
-        "primaryKey": ["set", "entry_id"]
+        "primaryKey": ["set", "entry_id", "kind"]
       }
     },
     {
@@ -33,12 +26,13 @@
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
           {"name": "entry_id", "type": "string", "description": "The entry qualified."},
+          {"name": "kind", "type": "string", "description": "The qualified entry's kind; with entry_id it names one entry."},
           {"name": "qualifier", "type": "string", "description": "A qualifier of the set's vocabulary."},
           {"name": "value", "type": "string", "description": "One of the qualifier's values."}
         ],
-        "primaryKey": ["set", "entry_id", "qualifier"],
+        "primaryKey": ["set", "entry_id", "kind", "qualifier"],
         "foreignKeys": [
-          {"fields": ["set", "entry_id"], "reference": {"resource": "entries", "fields": ["set", "entry_id"]}},
+          {"fields": ["set", "entry_id", "kind"], "reference": {"resource": "entries", "fields": ["set", "entry_id", "kind"]}},
           {"fields": ["set", "qualifier", "value"], "reference": {"resource": "vocabulary", "fields": ["set", "qualifier", "value"]}}
         ]
       }
@@ -105,17 +99,16 @@
       }
     },
     {
-      "name": "rule_levels",
-      "path": "rule_levels.csv",
-      "description": "The levels APB2 converts for each software version range, written from APB2's packaged rules when the catalog is written; the only APB2 fact the catalog keeps.",
+      "name": "versions",
+      "path": "versions.csv",
+      "description": "The software versions APB2 has a rule for, written from APB2's packaged rules when the catalog is written: each version's label, which entries name, and the rule's version pattern, which a converted result stores. A version's levels are the levels its entries name.",
       "schema": {
         "fields": [
           {"name": "software", "type": "string", "description": "The software name APB2's rule declares."},
-          {"name": "software_version_pattern", "type": "string", "description": "The rule's software version pattern, as a converted result stores it."},
-          {"name": "version", "type": "string", "description": "The pattern's concise label."},
-          {"name": "level", "type": "string", "description": "A quantification level the rule converts."}
+          {"name": "version", "type": "string", "description": "The version range's label, as entries name it."},
+          {"name": "software_version_pattern", "type": "string", "description": "The rule's software version pattern, as a converted result stores it."}
         ],
-        "primaryKey": ["software", "software_version_pattern", "level"]
+        "primaryKey": ["software", "version"]
       }
     }
   ]

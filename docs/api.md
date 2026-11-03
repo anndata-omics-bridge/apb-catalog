@@ -14,9 +14,9 @@ Everything is imported from `apb_catalog.api`. [Get started](getting-started.md)
 | `layer(level, key, **qualifiers)` | apb2 `FinalLayerTable` or `None` | `Reference` or `None` |
 | `var(level, key, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
 | `obs(level, key, **qualifiers)` | Polars `Series` or `None` | `Reference` or `None` |
-| `keys(level, location, **qualifiers)` | keys offered at `"layers"`, `"var"` or `"obs"`; `()` for none | same |
+| `keys(level, location, **qualifiers)` | keys a field the level holds answers at `"layers"`, `"var"` or `"obs"`; `()` for none; an app's keys once it has run | same |
 | `fields()` | Polars `DataFrame`: the [long table](#the-long-table)'s columns plus `present`, `constant` | same |
-| `levels[name]` | one result level with AnnData's slots, looked up by key; see [Levels](#levels) | — |
+| `levels[name]` | one result level with AnnData's slots, looked up by key; see [Levels](#levels) | one rule level with the same slots, holding names |
 | `snapshot(catalog=None)` | `ResolutionSnapshot` of one set's lookups so far; the first set named by default | — |
 | `resolve(request)` | `Resolution` of one explicit request, recorded for the snapshot: status `resolved`, `missing`, `ambiguous` or `unknown`, with candidates and reasons; an undecided answer is a status, not an `UnresolvedField` | — |
 | `description` | the first set's `purpose` and `used_by` | same |
@@ -39,13 +39,18 @@ Everything is imported from `apb_catalog.api`. [Get started](getting-started.md)
 | `X` | numpy matrix, observations by variables: the level's primary layer |
 | `layers[name]` | numpy matrix, observations by variables |
 | `var[name]`, `obs[name]` | polars `Series`; `var` also reads `varm` tables |
+| `var[[name, …]]`, `obs[[name, …]]` | polars `DataFrame` of every column the names name, in order; a `varm` column is named `table/column` |
 | `obs_names`, `var_names` | polars `Series` of strings: the key columns, joined by `\|` |
 | `layers.keys()`, `var.keys()`, `obs.keys()` | the keys the level offers there, a `set` |
 
 - Lookup follows cf_xarray: a key first, then the level's own name in that slot, else `KeyError`; `UnresolvedField` when the key names several fields or one the catalogue cannot decide
+- A list reads every field a key names, as cf_xarray's `ds.cf[["name"]]`: both contaminant flags where the vendor and apb-fasta each set one, every prolfquapp `group` column; it still raises `UnresolvedField` for a field the catalogue cannot decide
 - `keys()` and `in` know keys only; vendor names are read, not listed
+- Every key `keys()` lists reads: an app's keys, such as apb-fasta's `fasta_matches_contaminant`, appear once the app has run; before, asking for one raises `UnresolvedField` naming what to run
 - A key may name the primary layer and then answers `X`; `layers` holds the other layers, as in AnnData
 - A matrix is built once per level and shared by every later answer
+
+`Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"]` has the same `layers`, `var` and `obs`, holding names: `layers["intensity"]` is `'Precursor_Quantity'`, a list returns a tuple of names, and a `varm` field is `table/column`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`.
 
 ## Answers
 
@@ -97,7 +102,7 @@ A set's requirement rows say how strongly a consumer needs a kind on a level. `e
 | `name` | The APB column, or `prefix:<prefix>` |
 | `qualifier.<name>` | One column per qualifier of any set |
 | `requirement` | `MUST`, `SHOULD` or `MAY` where the set requires the field |
-| `entry_id` | The entry; `set`, `entry_id` and `software_version_pattern` identify a row |
+| `entry_id` | The entry, `<source>/<version>/<level>/<attribute>/<key>/<column>`; `set`, `entry_id`, `kind` and `software_version_pattern` identify a row |
 
 ## Rule check
 
@@ -105,7 +110,7 @@ A set's requirement rows say how strongly a consumer needs a kind on a level. `e
 
 | Column | Holds |
 | --- | --- |
-| `software`, `version`, `software_version_pattern`, `level` | The packaged rule level from `rule_levels.csv`; `version` is a short reading of its version pattern |
+| `software`, `version`, `software_version_pattern`, `level` | The packaged rule level: a software version from `versions.csv` and a level its entries name; `version` is the label entries use |
 | `kind`, `qualifiers`, `origin` | The meaning; `qualifiers` as `key=value` pairs |
 | `producer` | An app such as `apb-fasta`; null for the conversion software's fields, APB2-computed ones included |
 | `requirement` | `MUST`, `SHOULD` or `MAY` where the set has requirements |

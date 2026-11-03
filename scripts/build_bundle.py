@@ -5,7 +5,7 @@ with its ``.tar.gz``. The release workflow attaches both archives to the GitHub 
 both folders into apbCatalogR.
 
 The bundle is what a reader looks fields up with: the packaged catalogue tables, CSV files
-described by their ``datapackage.json``, ``rule_levels.csv`` among them. The test bundle holds
+described by their ``datapackage.json``, ``versions.csv`` among them. The test bundle holds
 synthetic Parquet results built from APB2's effective rule declarations (packed in
 ``results.tar.gz``) and the answers this package gives on them.
 Only packaged sets enter; an installed plugin set never does.
@@ -45,7 +45,7 @@ from apb_catalog.catalog import (
 )
 from apb_catalog.coverage import CATALOGUES_SCHEMA, coverage_of
 from apb_catalog.resolver import UnresolvedField
-from apb_catalog.rules import Location
+from apb_catalog.rules import ANY, Location
 from apb_catalog.source import (
     TABLES,
     SourceCatalogues,
@@ -56,7 +56,7 @@ from apb_catalog.table import KEY_COLUMNS, schema, set_rows
 
 NAME = "apb-catalog-bundle"
 TEST_NAME = "apb-catalog-test-bundle"
-BUNDLE_FORMAT = 2
+BUNDLE_FORMAT = 3
 """Raised when a reader of the previous format could not read the bundle."""
 
 LEVELS = ("protein", "peptide", "peptidoform", "peptidoform_ion", "peptidoform_fragment")
@@ -159,7 +159,7 @@ def _write_catalogues(folder: Path, names: list[str]) -> None:
     for name in names:
         packaged_catalogues(name)
     data = resources.files("apb_catalog").joinpath("data")
-    for name in ("datapackage.json", "rule_levels.csv", *(f"{table}.csv" for table in TABLES)):
+    for name in ("datapackage.json", "versions.csv", *(f"{table}.csv" for table in TABLES)):
         _copy(data.joinpath(name), folder / name)
 
 
@@ -376,7 +376,7 @@ def requests(sources: SourceCatalogues, level: str) -> list[Request]:
 
     for source in sources.sources():
         for entry in source.entries:
-            if entry.reference.level != level:
+            if entry.reference.level not in (level, ANY):
                 continue
             location: Location = (
                 "var" if entry.reference.location == "varm" else entry.reference.location

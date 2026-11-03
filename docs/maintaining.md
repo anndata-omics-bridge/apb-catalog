@@ -10,24 +10,24 @@ The CSV tables under `src/apb_catalog/data/` are the source of truth, one file p
 | `keys.csv` | Each set's keys: the name callers ask by, the kind and the `normalization` or `stage` it fixes, empty where it leaves one open, and its PSI-MS terms |
 | `requirements.csv` | Each set's requirement rows by key, if it has any |
 | `producers.csv` | Apps whose fields exist only once they have run: the metadata path recording the run, and what to run |
-| `rule_levels.csv` | The levels APB2 converts for each software version pattern, with the pattern's label; written by `make rule-levels` from APB2's packaged rules |
+| `versions.csv` | The software versions APB2 has a rule for: the label entries name, and the rule's version pattern a converted result stores; written by `make versions` from APB2's packaged rules |
 | `datapackage.json` | Each table's columns and keys, and the catalog version |
 
-A set with vendor entries reviews every rule level of `rule_levels.csv`. Nothing reads APB2's parse rules at runtime: `make rule-levels` and the tests read them when the catalog is written.
+A version's levels are the levels its packaged entries name; a set with vendor entries reviews every one. Nothing reads APB2's parse rules at runtime: `make versions` and the tests read them when the catalog is written.
 
 ## After an APB2 rule change
 
-A level binds to a catalogue variant by its rule's software name, version pattern and level, so editing a rule within one version keeps its entries. Run `make rule-levels` first; `test_rule_levels_match_apb2s_packaged_rules` fails until then.
+A level binds to a catalogue variant by its rule's software name, version pattern and level, so editing a rule within one version keeps its entries. Run `make versions` first; `test_versions_match_apb2s_packaged_rules` fails until then, and `test_the_entries_name_every_level_apb2_converts` until the entries name every level APB2 converts.
 
 | Change | Do |
 | --- | --- |
 | A catalogued field's meaning changes | Update or remove its entries |
-| A field is renamed, dropped or moved between `layers` and `var` | Fix the entries the entries test names; a move changes `location` |
-| New rule version | Add its version pattern to each entry that still holds, in `apb` too; the coverage report and the apb completeness test list what is missing |
-| A version pattern changes | Rewrite it in every entry that names it; the load fails until then |
-| Software name changes | Rename the `source` of the vendor's entries; the load fails until then |
+| A field is renamed, dropped or moved between `layers` and `var` | Fix the entries the entries test names; a move changes the id's attribute, key and column |
+| New rule version | Add a row with its label for each entry that still holds, in `apb` too; a `*` entry holds already; the coverage report and the apb completeness test list what is missing |
+| A version pattern changes | Rewrite it in `versions.csv`; entries name the label |
+| Software name changes | Rename the source field of the vendor's entry ids; the load fails until then |
 | New vendor | Name APB2's columns for it in `apb`; other sets review it with no entries until they need its fields |
-| A new version pattern | Give it a short label in `VERSION_LABELS` in `scripts/rule_levels.py` |
+| A new version pattern | Give it a short label in `VERSION_LABELS` in `scripts/versions.py`; entries name that label |
 
 Then run `make docs-tables`.
 
@@ -36,23 +36,28 @@ Then run `make docs-tables`.
 One row in `entries.csv`, and its other qualifiers in `entry_qualifiers.csv`:
 
 ```csv
-set,entry_id,source,software_version_pattern,level,location,table,reference_by,reference,kind,basis,evidence_url
-confidence,diann.peptidoform_ion.layers.PEP,DIA-NN,^2\..*,peptidoform_ion,layers,,name,PEP,pep,"DIA-NN README: 'run-specific posterior error probability for the precursor'.",https://github.com/vdemichev/DiaNN#main-output-reference
+set,entry_id,kind,basis,evidence_url
+confidence,DIA-NN/2.x/peptidoform_ion/layers/PEP/-,pep,"DIA-NN README: 'run-specific posterior error probability for the precursor'.",https://github.com/vdemichev/DiaNN#main-output-reference
 ```
 
 ```csv
-set,entry_id,qualifier,value
-confidence,diann.peptidoform_ion.layers.PEP,stage,identification
+set,entry_id,kind,qualifier,value
+confidence,DIA-NN/2.x/peptidoform_ion/layers/PEP/-,pep,stage,identification
 ```
 
 | Column | Holds |
 | --- | --- |
-| `entry_id` | Where the field lives: `<software>.<level>.<location>.<column>`, a `varm` table before its column; a column holding two kinds in one set adds the kind, as in `diann.peptidoform_fragment.var.Protein_Group.fasta_accessions`. `test_an_entry_id_names_its_software_level_location_and_column` checks it |
-| `software_version_pattern` | The version patterns of the software's APB2 rules the entry holds for, as `rule_levels.csv` and a converted result write them, separated by `;`; empty for an app's or an annotation's entry |
-| `reference_by`, `reference` | `name` and the APB output name, not the vendor column: `Q_Value`, not `Q.Value`; or `prefix` and an obs column prefix |
-| `table` | The feature-aligned table of a `varm` field |
-| `kind` and `entry_qualifiers.csv` | Every qualifier the set's vocabulary declares; `unknown` where the evidence does not establish one |
+| `entry_id` | Where the field lives, built as CPE names are: `<source>/<version>/<level>/<attribute>/<key>/<column>`, six fields of one value each. `test_an_entry_id_names_where_its_field_lives` checks the grammar |
+| `kind` and `entry_qualifiers.csv` | Every qualifier the set's vocabulary declares; `unknown` where the evidence does not establish one. One id with two kinds, such as a protein column APB2 marks `protein_assignment` and `fasta_accessions`, is two rows; qualifiers join on `entry_id` and `kind` |
 | `basis`, `evidence_url` | Why the meaning holds, and where it is stated |
+
+| Id field | Holds |
+| --- | --- |
+| `source` | The conversion software, an app named in `producers.csv`, or `annotation:<convention>` |
+| `version` | One `versions.csv` label (`1.8–1.9`, `2.x`), or `*` for every version, later ones included; an entry holding for several, not all, versions is one row per version |
+| `level`, `attribute` | The quantification level, or `*` for every level in an app's or annotation convention's entry, and `obs`, `var`, `layers` or `varm` |
+| `key` | A layer's or `varm` table's name; `-` for obs and var |
+| `column` | The APB output name of an obs, var or `varm` column, not the vendor column: `Q_Value`, not `Q.Value`; `-` for a layer; a trailing `*` matches obs columns by prefix |
 
 Each entry has exactly one key: the one whose kind and fixed values it carries; the load fails otherwise. `test_a_key_has_at_most_one_vendor_entry_per_rule_level` fails when two fields of one level and location share a key in a vendor set; give each its own kind, as `confidence` does with `library_q_value`, or its own key.
 
@@ -85,9 +90,10 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 | Test | Fails when |
 | --- | --- |
 | `test_every_packaged_rule_level_is_reviewed` | A set has no variant for a software name, version pattern and level APB2 packages |
-| `test_rule_levels_match_apb2s_packaged_rules` | `rule_levels.csv` differs from APB2's packaged rules; run `make rule-levels` |
+| `test_versions_match_apb2s_packaged_rules` | `versions.csv` differs from APB2's packaged rules; run `make versions` |
+| `test_the_entries_name_every_level_apb2_converts` | The entries name a level APB2 does not convert, or miss one it does |
 | `test_entries_name_fields_the_rules_retain` | An entry names a field the rule of one of its version patterns does not keep |
-| `test_packaged_catalogues_load_against_the_vocabulary` | A qualifier is missing or not admitted, a table's columns differ from `datapackage.json`, a key repeats, or an entry names a software, version pattern or level `rule_levels.csv` does not list |
+| `test_packaged_catalogues_load_against_the_vocabulary` | A qualifier is missing or not admitted, a table's columns differ from `datapackage.json`, a key repeats, or an entry names a software or version `versions.csv` does not list |
 | `test_every_packaged_set_states_its_purpose_and_users` | `entries.csv` and the set rows of `vocabulary.csv` disagree |
 | `test_domain_sets_hold_no_apb2_columns` | A set other than `apb` names an APB2 `ProForma_*` column |
 | `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | A vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
@@ -106,7 +112,7 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 | `.venv/bin/pytest tests/test_source.py tests/test_catalog.py tests/test_coverage.py tests/test_docs.py` | The catalogue checks but the bundle's, while editing |
 | `make docs-tables` | Regenerates the tables of `docs/catalogues.md` |
 | `make schema` | Regenerates the snapshot JSON Schema after a snapshot model change |
-| `make rule-levels` | Rewrites `rule_levels.csv` from APB2's packaged rules |
+| `make versions` | Rewrites `versions.csv` from APB2's packaged rules |
 | `make bundle` | Builds the language bundle (catalogue tables) and its test bundle (expected answers, synthetic results) into `build/`; a release attaches both and opens the apbCatalogR update pull request |
 | `make check` | Format, lint, types, dependencies, tests, build and documentation |
 | `apb-catalog check SET` | Every packaged rule level against one set's requirements |

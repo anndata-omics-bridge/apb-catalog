@@ -91,8 +91,8 @@ def catalogue_table(catalogue: str | None = None) -> pl.DataFrame:
     ``annotation:<convention>``), ``software_version_pattern`` (null for an entry of every
     software version), ``level``, ``location``, ``table``, ``name`` (``prefix:<prefix>`` for a
     field found by column-name prefix), ``key``, ``kind``, one ``qualifier.<name>`` column per
-    other qualifier, ``requirement`` and ``entry_id``. A row is identified by ``set``, ``entry_id`` and
-    ``software_version_pattern``.
+    other qualifier, ``requirement`` and ``entry_id``. A row is identified by ``set``, ``entry_id``,
+    ``kind`` and ``software_version_pattern``.
 
     Raises:
         ValueError: The catalogue set is neither packaged nor installed by a plugin.

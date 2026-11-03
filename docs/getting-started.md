@@ -103,9 +103,10 @@ ion.layers["q_value"].shape        # (6, 18182): runs by precursors, numpy, as A
 ion.var["peptidoform_ion"].name    # 'ProForma_ion', a polars Series
 ion.layers["Q_Value"]              # not a key: the level's own layer of that name
 ion.layers.keys()                  # the keys it offers: {'intensity', 'normalized_intensity', 'q_value', ...}
+ion.obs[["group", "Run"]]          # a polars DataFrame: every group column, then Run
 ```
 
-A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray's `ds.cf[...]` does.
+A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray's `ds.cf[...]` does. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns, `obs["group"]` raises `UnresolvedField` and the list `obs[["group"]]` reads them all.
 
 ## Keys stand for a kind and its qualifiers
 
@@ -137,16 +138,18 @@ A qualifier the key leaves open is a keyword; [Catalogues](catalogues.md) lists 
 
 ## Names without data
 
-`Catalog` takes a software name and version instead of a result, and returns a `Reference`:
+`Catalog` takes a software name and version instead of a result; its levels have the same slots, holding names:
 
 ```python
 from apb_catalog.api import Catalog
 
-Catalog("DIA-NN", "2.6.0", "abundance").layer("peptidoform_ion", "intensity").name
-# 'Precursor_Quantity'
-Catalog("DIA-NN", "2.6.0", "apb").var("peptidoform_ion", "protein_assignment").name
-# 'Protein_Group'
+ion = Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"]
+ion.layers["intensity"]            # 'Precursor_Quantity'
+apb = Catalog("DIA-NN", "2.6.0", "apb").levels["peptidoform_ion"]
+apb.var[["peptidoform_ion", "protein_assignment"]]  # ('ProForma_ion', 'Protein_Group')
 ```
+
+Its methods take qualifiers and return a `Reference`: `Catalog("DIA-NN", "2.6.0", "chromatography").layer("peptidoform_ion", "retention_time", unit="minute").name` is `'RT'`.
 
 ## When there is no single answer
 

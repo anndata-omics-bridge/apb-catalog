@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import csv
-import io
-from collections import Counter
-from importlib import resources
-
 import pytest
 from apb2.api import FIXED_COLUMNS, VAR_ROLES
 
+from apb_catalog.rules import EntryId, entry_id
 from apb_catalog.source import (
     CatalogueDescription,
     Evidence,
@@ -153,14 +149,11 @@ def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
     "name", ("abundance", "confidence", "proteobench_entrapment", "chromatography")
 )
 def test_a_key_has_at_most_one_vendor_entry_per_rule_level(name: str) -> None:
-    """The catalog picks one field per key, location and software version; a kind it cannot
-    name, ``unknown``, may repeat."""
+    """The catalog picks one field per key, location and software version."""
     seen: dict[tuple[str, str, str, str, str], str | None] = {}
     repeated: list[tuple[str, str, str, str, str, str | None, str | None]] = []
     for catalogue in _catalogues(name):
         for entry in catalogue.entries:
-            if entry.key == "unknown":
-                continue
             for pattern in entry.software_version_pattern:
                 reference = entry.reference
                 slot = (
@@ -264,26 +257,96 @@ def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
         SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
 
 
-def _built_id(row: dict[str, str], *, repeated: bool) -> str:
-    """The id a row's own columns spell: software, level, location, a ``varm`` table, column."""
-    table = [row["table"]] if row["table"] else []
-    parts = [row["entry_id"].split(".")[0], row["level"], row["location"], *table, row["reference"]]
-    return ".".join([*parts, row["kind"]] if repeated else parts)
+def test_an_entry_id_names_where_its_field_lives() -> None:
+    """``<source>/<version>/<level>/<attribute>/<key>/<column>``: a layer by its key, a varm
+    column by table and column, obs columns by a prefix ending in ``*``."""
+    assert entry_id("AlphaDIA/2.x/peptidoform_ion/layers/Precursor_Intensity/-") == EntryId(
+        "AlphaDIA", "2.x", "peptidoform_ion", "layers", None, "Precursor_Intensity"
+    )
+    assert entry_id(
+        "apb-fasta/*/peptidoform_ion/varm/fasta_validation/fasta_matches_contaminant"
+    ) == EntryId(
+        "apb-fasta", "*", "peptidoform_ion", "varm", "fasta_validation", "fasta_matches_contaminant"
+    )
+    assert entry_id("DIA-NN/2.x/peptidoform_fragment/var/-/Protein_Group").name == ("Protein_Group")
+    assert entry_id("annotation:sdrf/*/peptidoform_ion/obs/-/factor_value_*").name == (
+        "factor_value_*"
+    )
 
 
-def test_an_entry_id_names_its_software_level_location_and_column() -> None:
-    """``<software>.<level>.<location>.<column>``, so the id says where the field lives; a column
-    holding two kinds in one set adds the kind. Each source keeps one software token."""
-    text = resources.files("apb_catalog").joinpath("data", "entries.csv").read_text("utf-8")
-    rows: list[dict[str, str]] = list(csv.DictReader(io.StringIO(text)))
-    places = Counter((row["set"], _built_id(row, repeated=False)) for row in rows)
-    for row in rows:
-        repeated = places[(row["set"], _built_id(row, repeated=False))] > 1
-        assert row["entry_id"] == _built_id(row, repeated=repeated)
-    tokens: dict[str, set[str]] = {}
-    for row in rows:
-        tokens.setdefault(row["source"], set()).add(row["entry_id"].split(".")[0])
-    assert all(len(found) == 1 for found in tokens.values()), tokens
+@pytest.mark.parametrize(
+    "text",
+    [
+        "DIA-NN/2.x/peptidoform_ion/layers/PEP",
+        "DIA-NN/2.x/peptidoform_ion/obsm/X_pca/-",
+        "DIA-NN/-/peptidoform_ion/layers/PEP/-",
+        "*/2.x/peptidoform_ion/layers/PEP/-",
+        "DIA-NN/2.x/peptidoform_ion/layers/-/PEP",
+        "DIA-NN/2.x/peptidoform_ion/var/Q/Q_Value",
+        "DIA-NN/2.x/peptidoform_ion/var/-/*",
+    ],
+)
+def test_a_malformed_entry_id_is_refused(text: str) -> None:
+    """Six fields, an AnnData attribute, a named source, version and level, and a key and column
+    exactly where the attribute has them."""
+    with pytest.raises(ValueError, match="entry id"):
+        entry_id(text)
+
+
+@pytest.mark.parametrize("name", sorted(packaged_descriptions()))
+def test_every_packaged_entry_id_names_its_source_and_field(name: str) -> None:
+    """A packaged entry's id names the catalogue it belongs to and the field it reads."""
+    for source in packaged_catalogues(name).sources():
+        for entry in source.entries:
+            named = entry_id(entry.entry_id)
+            assert (named.source, entry.source) == (source.label, source.label)
+            assert (named.level, named.attribute, named.table) == (
+                entry.reference.level,
+                entry.reference.location,
+                entry.reference.table,
+            )
+
+
+def test_a_bound_prefix_entry_takes_its_columns_id() -> None:
+    """A prolfquapp ``group*`` entry bound to the column ``group_x`` names that column."""
+    prefixed = next(
+        entry
+        for annotation in packaged_catalogues("apb").annotations
+        for entry in annotation.entries
+        if entry.reference.prefix == "group"
+    )
+    bound = prefixed.bound("group_x")
+    assert bound.entry_id == prefixed.entry_id.removesuffix("group*") + "group_x"
+    assert bound.reference.name == "group_x"
+    assert bound.source == prefixed.source == "annotation:prolfquapp"
+
+
+def test_an_entry_of_every_level_takes_the_level_it_answers_on() -> None:
+    """``annotation:prolfquapp/*/*/obs/-/group*`` is one entry for all five levels; on the
+    protein level, bound to ``group_x``, it is that level's column."""
+    assert entry_id("annotation:prolfquapp/*/*/obs/-/subject*").level == "*"
+    every = next(
+        entry
+        for annotation in packaged_catalogues("apb").annotations
+        for entry in annotation.entries
+        if entry.reference.prefix == "group"
+    )
+    assert every.entry_id == "annotation:prolfquapp/*/*/obs/-/group*"
+    on_protein = every.on("protein")
+    assert on_protein is not None
+    bound = on_protein.bound("group_x")
+    assert bound.entry_id == "annotation:prolfquapp/*/protein/obs/-/group_x"
+    assert (bound.reference.level, bound.reference.name) == ("protein", "group_x")
+    assert _entry("PEP").on("protein") is None, "an entry of one level answers only there"
+
+
+def test_a_vendor_entry_names_its_level() -> None:
+    """Rule levels come from vendor entries, so only apps and annotations name every level."""
+    every = _entry("PEP").model_copy(
+        update={"reference": Reference(level="*", location="layers", name="PEP")}
+    )
+    with pytest.raises(ValueError, match="a vendor entry names its level"):
+        _catalogue(every)
 
 
 def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:

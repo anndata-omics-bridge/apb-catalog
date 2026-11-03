@@ -15,7 +15,15 @@ from typing import Literal, TypedDict, cast
 
 from pydantic import Field, TypeAdapter, model_validator
 
-from apb_catalog.rules import Address, Location, rule_levels
+from apb_catalog.rules import (
+    ANY,
+    Address,
+    EntryId,
+    Location,
+    entry_id,
+    rule_levels,
+    version_patterns,
+)
 from apb_catalog.vocabulary import FrozenModel, Qualifier, SetVocabulary
 
 type Requirement = Literal["MUST", "SHOULD", "MAY"]
@@ -85,9 +93,36 @@ class SourceEntry(FrozenModel):
     qualifiers: dict[str, str]
     evidence: Evidence
 
+    @property
+    def source(self) -> str:
+        """Who the entry comes from: the software, an app, or ``annotation:<convention>``, the
+        first field of its id ``<source>/<version>/<level>/<attribute>/<key>/<column>``; one id
+        with two kinds is two entries."""
+        return self.entry_id.partition("/")[0]
+
+    def on(self, level: str, /) -> SourceEntry | None:
+        """This entry on one level: itself, an entry of every level (``*``) taking that level in
+        its reference and id, or ``None`` on another level."""
+        if self.reference.level == level:
+            return self
+        if self.reference.level != ANY:
+            return None
+        source, version, _, rest = self.entry_id.split("/", 3)
+        return self.model_copy(
+            update={
+                "entry_id": f"{source}/{version}/{level}/{rest}",
+                "reference": self.reference.model_copy(update={"level": level}),
+            }
+        )
+
     def bound(self, name: str, /) -> SourceEntry:
-        """This entry with its reference bound to one level's column."""
-        return self.model_copy(update={"reference": self.reference.bound(name)})
+        """This entry bound to one level's column: its reference and the column of its id."""
+        return self.model_copy(
+            update={
+                "entry_id": f"{self.entry_id.rpartition('/')[0]}/{name}",
+                "reference": self.reference.bound(name),
+            }
+        )
 
 
 class Key(FrozenModel):
@@ -126,8 +161,7 @@ class SourceCatalogue(FrozenModel):
 
     @model_validator(mode="after")
     def _consistent(self) -> SourceCatalogue:
-        entry_ids = [entry.entry_id for entry in self.entries]
-        if len(entry_ids) != len(set(entry_ids)):
+        if _ids_repeat(self.entries):
             raise ValueError(f"{self.software_name}: duplicate entry ids")
         declared = {(variant.software_version_pattern, variant.level) for variant in self.variants}
         if len(declared) != len(self.variants):
@@ -137,6 +171,8 @@ class SourceCatalogue(FrozenModel):
                 raise ValueError(f"{self.software_name}: {entry.reference} lists no version")
             if entry.reference.name is None:
                 raise ValueError(f"{self.software_name}: a vendor entry names its column")
+            if entry.reference.level == ANY:
+                raise ValueError(f"{self.software_name}: a vendor entry names its level")
             undeclared = {
                 (pattern, entry.reference.level) for pattern in entry.software_version_pattern
             } - declared
@@ -173,8 +209,7 @@ class ProducerCatalogue(FrozenModel):
 
     @model_validator(mode="after")
     def _consistent(self) -> ProducerCatalogue:
-        entry_ids = [entry.entry_id for entry in self.entries]
-        if len(entry_ids) != len(set(entry_ids)):
+        if _ids_repeat(self.entries):
             raise ValueError(f"{self.label}: duplicate entry ids")
         if any(entry.software_version_pattern for entry in self.entries):
             raise ValueError(f"{self.label}: app entries apply to every software version")
@@ -190,8 +225,8 @@ class ProducerCatalogue(FrozenModel):
         return self.producer
 
     def entries_on(self, level: str) -> tuple[SourceEntry, ...]:
-        """Return the entries this producer supplies on one level."""
-        return tuple(entry for entry in self.entries if entry.reference.level == level)
+        """Return the entries this producer supplies on one level, those of every level included."""
+        return tuple(found for entry in self.entries if (found := entry.on(level)) is not None)
 
     def ran(self, metadata: Mapping[str, object]) -> bool:
         """Whether a result's metadata records this producer's run."""
@@ -225,8 +260,7 @@ class AnnotationCatalogue(FrozenModel):
 
     @model_validator(mode="after")
     def _consistent(self) -> AnnotationCatalogue:
-        entry_ids = [entry.entry_id for entry in self.entries]
-        if len(entry_ids) != len(set(entry_ids)):
+        if _ids_repeat(self.entries):
             raise ValueError(f"{self.label}: duplicate entry ids")
         if any(entry.software_version_pattern for entry in self.entries):
             raise ValueError(f"{self.label}: annotation entries apply to every software version")
@@ -244,8 +278,9 @@ class AnnotationCatalogue(FrozenModel):
         return self.convention in metadata
 
     def entries_on(self, level: str) -> tuple[SourceEntry, ...]:
-        """Return the entries this convention supplies on one level."""
-        return tuple(entry for entry in self.entries if entry.reference.level == level)
+        """Return the entries this convention supplies on one level, those of every level
+        included."""
+        return tuple(found for entry in self.entries if (found := entry.on(level)) is not None)
 
 
 class RequirementRow(FrozenModel):
@@ -259,7 +294,7 @@ class RequirementRow(FrozenModel):
     def describes(self, entry: SourceEntry, /) -> bool:
         """Whether an entry on this row's level answers the row."""
         return (
-            entry.reference.level == self.level
+            entry.reference.level in (self.level, ANY)
             and entry.reference.location in READS[self.location]
             and entry.key == self.key
         )
@@ -331,8 +366,7 @@ class SourceCatalogues:
             raise ValueError("a key repeats in the set")
         self._by_version: dict[tuple[str, str, str], ReviewedRule] = {}
         entries = [entry for source in self.sources() for entry in source.entries]
-        entry_ids = [entry.entry_id for entry in entries]
-        if len(entry_ids) != len(set(entry_ids)):
+        if _ids_repeat(entries):
             raise ValueError("an entry id repeats across the set's catalogues")
         _check_keys(vocabulary, keys, entries)
         for row in requirements:
@@ -379,6 +413,12 @@ class SourceCatalogues:
     ) -> RequirementRow | None:
         """Return the requirement row a request asks for, if any."""
         return next((row for row in self.requirements if row.asked(level, location, key)), None)
+
+
+def _ids_repeat(entries: Sequence[SourceEntry], /) -> bool:
+    """Whether two entries share an id and a key; one id may carry two kinds."""
+    ids = [(entry.entry_id, entry.key) for entry in entries]
+    return len(ids) != len(set(ids))
 
 
 def _check_keys(
@@ -499,9 +539,10 @@ def _set_names(folder: Traversable, /) -> list[str]:
 def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
     """Load one set's rows from a folder of catalogue tables and check them.
 
-    Vendor entries name their conversion software in ``source``; such a set reviews every rule
-    level ``rule_levels.csv`` lists. A source ``producers.csv`` names is an app; its entries and
-    ``annotation:<convention>`` entries apply to every software version.
+    An entry id names the entry's source and version: vendor entries their conversion software and
+    a label of ``versions.csv``, or ``*`` for every version; such a set reviews every level the
+    packaged entries name for each version. A source ``producers.csv`` names is an app; its entries
+    and ``annotation:<convention>`` entries apply to every software version.
     """
 
     def rows(table: str) -> list[Row]:
@@ -509,13 +550,14 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
 
     description, vocabulary = _vocabulary(name, rows("vocabulary"))
     keys = tuple(_key(row) for row in rows("keys"))
-    qualifiers: dict[str, dict[str, str]] = {}
+    qualifiers: dict[tuple[str, str], dict[str, str]] = {}
     for row in rows("entry_qualifiers"):
-        qualifiers.setdefault(row["entry_id"], {})[row["qualifier"]] = row["value"]
+        qualifiers.setdefault((row["entry_id"], row["kind"]), {})[row["qualifier"]] = row["value"]
     by_source: dict[str, list[SourceEntry]] = {}
     for row in rows("entries"):
-        entry = _entry(row, qualifiers.pop(row["entry_id"], {}), keys)
-        by_source.setdefault(row["source"], []).append(entry)
+        named = entry_id(row["entry_id"])
+        entry = _entry(row, named, qualifiers.pop((row["entry_id"], row["kind"]), {}), keys)
+        by_source.setdefault(named.source, []).append(entry)
     if qualifiers:
         raise ValueError(f"{name}: entry_qualifiers.csv qualifies no entry {sorted(qualifiers)}")
     runs = {row["producer"]: row for row in rows("producers")}
@@ -602,21 +644,22 @@ def _key(row: Row) -> Key:
     )
 
 
-def _entry(row: Row, qualifiers: Mapping[str, str], keys: Sequence[Key]) -> SourceEntry:
-    """One entry from its ``entries.csv`` row, its other qualifiers and the key they match.
+def _entry(
+    row: Row, named: EntryId, qualifiers: Mapping[str, str], keys: Sequence[Key]
+) -> SourceEntry:
+    """One entry from its ``entries.csv`` row and parsed id, its other qualifiers and the key
+    they match.
 
     Raises:
         ValueError: The entry matches no key, or more than one.
     """
-    if row["reference_by"] not in ("name", "prefix"):
-        raise ValueError(f"{row['entry_id']}: reference_by is name or prefix")
-    reference = Reference.model_validate(
-        {
-            "level": row["level"],
-            "location": row["location"],
-            "table": row["table"] or None,
-            row["reference_by"]: row["reference"],
-        }
+    prefix = named.name.removesuffix("*") if named.name.endswith("*") else None
+    reference = Reference(
+        level=named.level,
+        location=named.attribute,
+        table=named.table,
+        name=None if prefix is not None else named.name,
+        prefix=prefix,
     )
     described = {"kind": row["kind"], **qualifiers}
     matching = key_of(keys, described)
@@ -624,11 +667,7 @@ def _entry(row: Row, qualifiers: Mapping[str, str], keys: Sequence[Key]) -> Sour
         raise ValueError(f"{row['entry_id']}: matches the keys {matching}, not exactly one")
     return SourceEntry(
         entry_id=row["entry_id"],
-        software_version_pattern=(
-            tuple(row["software_version_pattern"].split(";"))
-            if row["software_version_pattern"]
-            else ()
-        ),
+        software_version_pattern=version_patterns(named.source, named.version),
         reference=reference,
         key=matching[0],
         qualifiers=described,
@@ -639,8 +678,8 @@ def _entry(row: Row, qualifiers: Mapping[str, str], keys: Sequence[Key]) -> Sour
 def _vendors(
     name: str, entries: Mapping[str, tuple[SourceEntry, ...]]
 ) -> tuple[SourceCatalogue, ...]:
-    """One catalogue per software of ``rule_levels.csv``, each reviewing every rule level of
-    that software, when the set has vendor entries; none otherwise."""
+    """One catalogue per software of ``versions.csv``, each reviewing every level the packaged
+    entries name for its versions, when the set has vendor entries; none otherwise."""
     if not entries:
         return ()
     variants: dict[str, list[RuleVariant]] = {}

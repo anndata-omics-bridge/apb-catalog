@@ -57,11 +57,11 @@ def test_the_manifest_lists_every_file_each_bundle_holds(bundles: tuple[Path, Pa
     for folder in bundles:
         manifest = _object(folder / "manifest.json")
         assert manifest["files"] == _held(folder)
-        assert manifest["bundle_format"] == 2
+        assert manifest["bundle_format"] == 3
 
 
 def test_the_bundle_holds_only_what_a_lookup_reads(bundle: Path, test_bundle: Path) -> None:
-    """The served bundle holds the catalogue tables, ``rule_levels.csv`` among them; the
+    """The served bundle holds the catalogue tables, ``versions.csv`` among them; the
     answers and synthetic results go to the test bundle."""
     assert {path.split("/")[0] for path in _held(bundle)} == {"catalogues"}
     assert {path.split("/")[0] for path in _held(test_bundle)} == {"cases", "results.tar.gz"}
@@ -84,10 +84,11 @@ def test_a_plugin_set_never_enters_the_bundle(bundle: Path, test_bundle: Path) -
     assert {case["catalogue"] for case in cases} == set(packaged)
 
 
-def test_the_bundle_carries_the_packaged_rule_levels(bundle: Path) -> None:
-    """Readers take the levels of each software version from the table the build wrote."""
-    packaged = resources.files("apb_catalog").joinpath("data", "rule_levels.csv")
-    assert (bundle / "catalogues" / "rule_levels.csv").read_text("utf-8") == packaged.read_text(
+def test_the_bundle_carries_the_packaged_versions(bundle: Path) -> None:
+    """Readers turn a result's version pattern into the label entries name with the table the
+    build wrote."""
+    packaged = resources.files("apb_catalog").joinpath("data", "versions.csv")
+    assert (bundle / "catalogues" / "versions.csv").read_text("utf-8") == packaged.read_text(
         "utf-8"
     )
 

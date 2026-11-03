@@ -1,9 +1,9 @@
-"""Write src/apb_catalog/data/rule_levels.csv from APB2's packaged rules.
+"""Write src/apb_catalog/data/versions.csv from APB2's packaged rules.
 
 The catalog reads APB2's parse rules only when it is written; at runtime it reads this table:
-which levels APB2 converts for each software version range, and the range's label. Run
-``make rule-levels`` after an APB2 rule change; ``tests/test_rule_levels.py`` fails until the
-table matches.
+each software version range APB2 has a rule for, its label, which entries name, and the rule's
+version pattern, which a converted result stores. Run ``make versions`` after an APB2 rule
+change; ``tests/test_versions.py`` fails until the table matches.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from apb2.api import packaged_rule_declarations
 
 from apb_catalog.rules import COLUMNS
 
-TABLE = Path(__file__).resolve().parents[1] / "src" / "apb_catalog" / "data" / "rule_levels.csv"
+TABLE = Path(__file__).resolve().parents[1] / "src" / "apb_catalog" / "data" / "versions.csv"
 
 VERSION_LABELS: dict[str, str] = {
     "^2\\.": "2.x",
@@ -45,7 +45,7 @@ VERSION_LABELS: dict[str, str] = {
 
 
 def render() -> str:
-    """The table's text: one row per packaged rule level, in APB2's order.
+    """The table's text: one row per software version range, in APB2's order.
 
     Raises:
         KeyError: A rule's version pattern has no label in ``VERSION_LABELS``.
@@ -53,7 +53,8 @@ def render() -> str:
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\n")
     writer.writerow(COLUMNS)
-    for (_, level), texts in packaged_rule_declarations().items():
+    written: set[tuple[str, str]] = set()
+    for texts in packaged_rule_declarations().values():
         declared = cast(dict[str, object], json.loads(texts[0]))
         software, pattern = (
             str(declared["software_name"]),
@@ -61,7 +62,9 @@ def render() -> str:
         )
         if pattern not in VERSION_LABELS:
             raise KeyError(f"no version label for {pattern!r}; add one to VERSION_LABELS")
-        writer.writerow((software, pattern, VERSION_LABELS[pattern], level))
+        if (software, pattern) not in written:
+            written.add((software, pattern))
+            writer.writerow((software, VERSION_LABELS[pattern], pattern))
     return buffer.getvalue()
 
 

@@ -1,7 +1,7 @@
 VENV_BIN := .venv/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help sync format format-check lint typecheck deps test build bundle docs docs-tables rule-levels check check-full clean schema
+.PHONY: help sync format format-check lint typecheck deps test build bundle docs docs-tables versions check check-full clean schema
 
 help:  ## Show developer commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -39,8 +39,8 @@ build:  ## Build and validate source and wheel distributions
 bundle:  ## Build the language bundle (catalogue tables) and its test bundle (expected answers) into build/
 	$(VENV_BIN)/python -m scripts.build_bundle build
 
-rule-levels:  ## Rewrite rule_levels.csv from APB2's packaged rules
-	$(VENV_BIN)/python -m scripts.rule_levels
+versions:  ## Rewrite versions.csv from APB2's packaged rules
+	$(VENV_BIN)/python -m scripts.versions
 
 docs-tables:  ## Regenerate the Catalogues page tables from the packaged catalogues
 	$(VENV_BIN)/python -m scripts.coverage_tables

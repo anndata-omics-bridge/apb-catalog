@@ -18,6 +18,7 @@ from apb_catalog.catalog import (
     Reference,
     attach_snapshot,
 )
+from apb_catalog.resolver import UnresolvedField
 from apb_catalog.table import KEY_COLUMNS, catalogue_table
 from tests.packaged_rules import declared_rule_json
 
@@ -115,12 +116,70 @@ def test_an_annotation_column_is_found_by_its_convention_prefix() -> None:
         metadata={"prolfquapp": {"schema_version": "4"}},
     )
     catalog = DataCatalog(annotated, "apb")
-    condition = catalog.obs("peptidoform_ion", key="condition")
+    condition = catalog.obs("peptidoform_ion", key="group")
     assert condition is not None and condition.to_list() == ["A", "A", "B"]
-    replicate = catalog.obs("peptidoform_ion", key="bioreplicate")
+    replicate = catalog.obs("peptidoform_ion", key="subject")
     assert replicate is not None and replicate.to_list() == ["s1", "s2", "s1"]
     plain = DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"], obs=obs), "apb")
-    assert plain.obs("peptidoform_ion", key="condition") is None, "no convention recorded"
+    assert plain.obs("peptidoform_ion", key="group") is None, "no convention recorded"
+
+
+def test_an_annotation_entry_of_every_level_is_one_table_row_and_a_column_per_level() -> None:
+    """The long table keeps the entry's level ``*``; a result's fields name the level and the
+    column it bound to."""
+    table = catalogue_table("apb").filter(pl.col("entry_id").str.starts_with("annotation:"))
+    assert set(table.get_column("level")) == {"*"}
+    obs = {"group_condition": ["A", "A", "B"]}
+    annotated = _result(
+        "diann/v2/rules.json",
+        ["Precursor_Normalised"],
+        obs=obs,
+        metadata={"prolfquapp": {"schema_version": "4"}},
+    )
+    fields = DataCatalog(annotated, "apb").fields().filter(pl.col("key") == "group")
+    assert fields.select("level", "name", "entry_id").rows() == [
+        (
+            "peptidoform_ion",
+            "group_condition",
+            "annotation:prolfquapp/*/peptidoform_ion/obs/-/group_condition",
+        )
+    ]
+
+
+def test_a_list_of_names_reads_every_column_a_prefix_binds() -> None:
+    """A prolfquapp table with ``group`` and ``bait`` columns has two conditions."""
+    obs = {"group_x": ["A", "A", "B"], "bait": ["b1", "b2", "b1"], "subject": ["s1", "s2", "s1"]}
+    annotated = _result(
+        "diann/v2/rules.json",
+        ["Precursor_Normalised"],
+        obs=obs,
+        metadata={"prolfquapp": {"schema_version": "4"}},
+    )
+    level = DataCatalog(annotated, "apb").levels["peptidoform_ion"]
+    with pytest.raises(UnresolvedField, match="ambiguous"):
+        level.obs["group"]
+    design = level.obs[["group", "subject", "Run"]]
+    assert design.columns == ["group_x", "bait", "subject", "Run"]
+
+
+def test_catalog_levels_hold_names() -> None:
+    """The slots of a data catalog's levels, holding names: no data, so no own names."""
+    abundance = Catalog("DIA-NN", "2.6.0", "abundance")
+    assert list(abundance.levels) == ["peptidoform_ion", "protein"]
+    ion = abundance.levels["peptidoform_ion"]
+    assert ion.layers["intensity"] == "Precursor_Quantity"
+    assert ion.layers.keys() == {
+        "intensity",
+        "ms1_intensity",
+        "normalized_intensity",
+        "normalized_ms1_intensity",
+    }
+    with pytest.raises(KeyError, match="Precursor_Quantity"):
+        ion.layers["Precursor_Quantity"]
+    apb = Catalog("DIA-NN", "2.6.0", "apb").levels["peptidoform_ion"]
+    assert apb.var[["peptidoform_ion", "protein_assignment"]] == ("ProForma_ion", "Protein_Group")
+    with pytest.raises(KeyError, match="peptide"):
+        apb.layers["peptide"]
 
 
 def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCaptureFixture) -> None:
@@ -213,8 +272,8 @@ def test_the_long_table_lists_every_set() -> None:
     library = table.filter((pl.col("set") == "confidence") & (pl.col("kind") == "library_q_value"))
     assert {"Lib_Q_Value", "EG_LibraryQvalue"} <= set(library.get_column("name"))
     duplicated = (
-        table.group_by("set", "entry_id", "software_version_pattern")
+        table.group_by("set", "entry_id", "kind", "software_version_pattern")
         .len()
         .filter(pl.col("len") > 1)
     )
-    assert duplicated.is_empty(), "set, entry id and software version pattern identify a row"
+    assert duplicated.is_empty(), "set, entry id, kind and software version pattern identify a row"
