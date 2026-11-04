@@ -45,9 +45,24 @@ peak_qc = "peak_qc_app.catalogue"
 
 ## A mini example: two tools
 
-A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogues both for DIA-NN and FragPipe, in five files in the package folder `peak_qc_app/catalogue/`. Every row starts with the set's name.
+A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogues both for DIA-NN and FragPipe, in five files in the package folder `peak_qc_app/catalogue/`. Every row of every file starts with the set's name, `peak_qc`; the tables leave that column out, and the CSV file under each table has it.
 
 `vocabulary.csv` holds the set's own row, with an empty `qualifier`, its purpose and its users. Then come its qualifiers, `kind` and `unit`, each with its values and their definitions; every qualifier lists `unknown`.
+
+| `qualifier` | `value` | `definition` | `purpose` | `used_by` |
+| --- | --- | --- | --- | --- |
+|  |  | Retention time and peak width of an ion in one run. | Peak-shape QC: where each ion eluted, and how wide its peak was. | peak-qc app |
+| `kind` |  | Which quantity the value is. |  |  |
+| `kind` | `retention_time` | Where the ion eluted in this run: the apex of its elution peak. |  |  |
+| `kind` | `peak_fwhm` | The width of the elution peak at half its maximum height. |  |  |
+| `kind` | `unknown` | The reviewer could not establish this. |  |  |
+| `unit` |  | The time unit of the value. |  |  |
+| `unit` | `minute` | Minutes. |  |  |
+| `unit` | `second` | Seconds. |  |  |
+| `unit` | `unknown` | The reviewer could not establish this. |  |  |
+
+<details markdown>
+<summary>The CSV file</summary>
 
 ```csv
 set,qualifier,value,definition,purpose,used_by
@@ -62,7 +77,17 @@ peak_qc,unit,second,Seconds.,,
 peak_qc,unit,unknown,The reviewer could not establish this.,,
 ```
 
+</details>
+
 `keys.csv` holds the names the app asks by, each naming one kind. `normalization`, `stage` and `psi_ms` are left empty here; a key fills them when it fixes a qualifier value or has a PSI-MS term.
+
+| `key` | `kind` | `normalization` | `stage` | `psi_ms` |
+| --- | --- | --- | --- | --- |
+| `retention_time` | `retention_time` |  |  |  |
+| `peak_fwhm` | `peak_fwhm` |  |  |  |
+
+<details markdown>
+<summary>The CSV file</summary>
 
 ```csv
 set,key,kind,normalization,stage,psi_ms
@@ -70,7 +95,19 @@ peak_qc,retention_time,retention_time,,,
 peak_qc,peak_fwhm,peak_fwhm,,,
 ```
 
+</details>
+
 `entries.csv` holds one row per column a software writes. The `entry_id` says where the column lives, as `<software>/<version>/<level>/<attribute>/<key>/<column>` (see [An entry](maintaining.md#an-entry)); then come its kind and the evidence. Version `*` holds for every version. DIA-NN reports `FWHM` only from 2.x, so that entry names the label `2.x`.
+
+| `entry_id` | `kind` | `basis` | `evidence_url` |
+| --- | --- | --- | --- |
+| `DIA-NN/*/peptidoform_ion/layers/RT/-` | `retention_time` | DIA-NN README: the observed precursor retention time, in minutes. | [DIA-NN README](https://github.com/vdemichev/DiaNN#main-output-reference) |
+| `DIA-NN/2.x/peptidoform_ion/layers/FWHM/-` | `peak_fwhm` | DIA-NN README: the estimated peak width at half maximum, in minutes. | [DIA-NN README](https://github.com/vdemichev/DiaNN#main-output-reference) |
+| `FragPipe/*/peptidoform_ion/layers/Apex_Retention_Time/-` | `retention_time` | FragPipe outputs: the retention time of the precursor's apex intensity; the unit depends on the instrument. | [FragPipe outputs](https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html) |
+| `FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-` | `peak_fwhm` | FragPipe outputs: the width of the precursor's elution peak at half maximum; the unit depends on the instrument. | [FragPipe outputs](https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html) |
+
+<details markdown>
+<summary>The CSV file</summary>
 
 ```csv
 set,entry_id,kind,basis,evidence_url
@@ -80,7 +117,19 @@ peak_qc,FragPipe/*/peptidoform_ion/layers/Apex_Retention_Time/-,retention_time,"
 peak_qc,FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-,peak_fwhm,"FragPipe outputs: the width of the precursor's elution peak at half maximum; the unit depends on the instrument.",https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html
 ```
 
+</details>
+
 `entry_qualifiers.csv` gives each entry a value for every qualifier besides `kind`; here that is the unit.
+
+| `entry_id` | `kind` | `qualifier` | `value` |
+| --- | --- | --- | --- |
+| `DIA-NN/*/peptidoform_ion/layers/RT/-` | `retention_time` | `unit` | `minute` |
+| `DIA-NN/2.x/peptidoform_ion/layers/FWHM/-` | `peak_fwhm` | `unit` | `minute` |
+| `FragPipe/*/peptidoform_ion/layers/Apex_Retention_Time/-` | `retention_time` | `unit` | `unknown` |
+| `FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-` | `peak_fwhm` | `unit` | `unknown` |
+
+<details markdown>
+<summary>The CSV file</summary>
 
 ```csv
 set,entry_id,kind,qualifier,value
@@ -90,13 +139,25 @@ peak_qc,FragPipe/*/peptidoform_ion/layers/Apex_Retention_Time/-,retention_time,u
 peak_qc,FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-,peak_fwhm,unit,unknown
 ```
 
+</details>
+
 `requirements.csv` says how strongly the app needs each key, per level and location.
+
+| `level` | `location` | `key` | `requirement` |
+| --- | --- | --- | --- |
+| `peptidoform_ion` | `layers` | `retention_time` | `required` |
+| `peptidoform_ion` | `layers` | `peak_fwhm` | `recommended` |
+
+<details markdown>
+<summary>The CSV file</summary>
 
 ```csv
 set,level,location,key,requirement
 peak_qc,peptidoform_ion,layers,retention_time,required
 peak_qc,peptidoform_ion,layers,peak_fwhm,recommended
 ```
+
+</details>
 
 `producers.csv` is left out; it names apps, such as apb-fasta, whose fields exist only after they have run.
 
