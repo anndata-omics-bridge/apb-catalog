@@ -62,7 +62,7 @@ A peak-shape QC app needs each ion's retention time and, if the software reports
 | `unit` | `unknown` | The reviewer could not establish this. |  |  |
 
 <details markdown>
-<summary>The CSV file</summary>
+<summary>The CSV file: <code>vocabulary.csv</code></summary>
 
 ```csv
 set,qualifier,value,definition,purpose,used_by
@@ -87,7 +87,7 @@ peak_qc,unit,unknown,The reviewer could not establish this.,,
 | `peak_fwhm` | `peak_fwhm` |  |  |  |
 
 <details markdown>
-<summary>The CSV file</summary>
+<summary>The CSV file: <code>keys.csv</code></summary>
 
 ```csv
 set,key,kind,normalization,stage,psi_ms
@@ -107,7 +107,7 @@ peak_qc,peak_fwhm,peak_fwhm,,,
 | `FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-` | `peak_fwhm` | FragPipe outputs: the width of the precursor's elution peak at half maximum; the unit depends on the instrument. | [FragPipe outputs](https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html) |
 
 <details markdown>
-<summary>The CSV file</summary>
+<summary>The CSV file: <code>entries.csv</code></summary>
 
 ```csv
 set,entry_id,kind,basis,evidence_url
@@ -129,7 +129,7 @@ peak_qc,FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-,peak_fwhm,"FragP
 | `FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-` | `peak_fwhm` | `unit` | `unknown` |
 
 <details markdown>
-<summary>The CSV file</summary>
+<summary>The CSV file: <code>entry_qualifiers.csv</code></summary>
 
 ```csv
 set,entry_id,kind,qualifier,value
@@ -149,7 +149,7 @@ peak_qc,FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-,peak_fwhm,unit,u
 | `peptidoform_ion` | `layers` | `peak_fwhm` | `recommended` |
 
 <details markdown>
-<summary>The CSV file</summary>
+<summary>The CSV file: <code>requirements.csv</code></summary>
 
 ```csv
 set,level,location,key,requirement
