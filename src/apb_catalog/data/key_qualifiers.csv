@@ -1,0 +1,15 @@
+set,key,qualifier,value
+abundance,intensity,normalization,none
+abundance,normalized_intensity,normalization,run_setting
+abundance,intensity_unknown_normalization,normalization,unknown
+abundance,ms1_intensity,normalization,none
+abundance,normalized_ms1_intensity,normalization,run_setting
+abundance,unknown,normalization,none
+abundance,normalized_unknown,normalization,run_setting
+confidence,pep,stage,identification
+confidence,q_value,stage,identification
+confidence,quantification_q_value,stage,quantification
+confidence,library_q_value,stage,identification
+proteobench_entrapment,pep,stage,identification
+proteobench_entrapment,q_value,stage,identification
+proteobench_entrapment,library_q_value,stage,identification

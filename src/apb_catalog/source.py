@@ -453,7 +453,15 @@ class CatalogueDescription(FrozenModel):
     used_by: tuple[str, ...]
 
 
-TABLES = ("entries", "entry_qualifiers", "vocabulary", "keys", "requirements", "producers")
+TABLES = (
+    "entries",
+    "entry_qualifiers",
+    "vocabulary",
+    "keys",
+    "key_qualifiers",
+    "requirements",
+    "producers",
+)
 """The CSV tables a catalogue folder holds, each named ``<table>.csv``; ``datapackage.json``
 declares their columns."""
 
@@ -549,7 +557,7 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
         return [row for row in _table(folder, table) if row["set"] == name]
 
     description, vocabulary = _vocabulary(name, rows("vocabulary"))
-    keys = tuple(_key(row) for row in rows("keys"))
+    keys = _keys(name, vocabulary, rows("keys"), rows("key_qualifiers"))
     qualifiers: dict[tuple[str, str], dict[str, str]] = {}
     for row in rows("entry_qualifiers"):
         qualifiers.setdefault((row["entry_id"], row["kind"]), {})[row["qualifier"]] = row["value"]
@@ -630,18 +638,42 @@ def _vocabulary(name: str, rows: Sequence[Row]) -> tuple[CatalogueDescription, S
     return description, vocabulary
 
 
-_KEY_COLUMNS = ("set", "key", "kind", "psi_ms")
-"""The columns of ``keys.csv`` besides those of the qualifiers a key fixes."""
+def _keys(
+    name: str, vocabulary: SetVocabulary, rows: Sequence[Row], qualifiers: Sequence[Row]
+) -> tuple[Key, ...]:
+    """A set's keys from their ``keys.csv`` rows and the values ``key_qualifiers.csv`` fixes; a
+    qualifier without a row stays open.
 
+    The values are checked here, before any entry is matched to its key.
 
-def _key(row: Row) -> Key:
-    """One key from its ``keys.csv`` row: an empty qualifier column leaves that qualifier open."""
-    return Key(
-        key=row["key"],
-        kind=row["kind"],
-        fixed={name: value for name, value in row.items() if name not in _KEY_COLUMNS and value},
-        psi_ms=tuple(row["psi_ms"].split(";")) if row["psi_ms"] else (),
+    Raises:
+        ValueError: A ``key_qualifiers.csv`` row fixes the kind, which ``keys.csv`` holds, or
+            names no key; or a key names a kind or value the vocabulary does not admit.
+    """
+    fixed: dict[str, dict[str, str]] = {}
+    for row in qualifiers:
+        if row["qualifier"] == "kind":
+            raise ValueError(
+                f"{name}: key_qualifiers.csv fixes the kind of {row['key']!r}; keys.csv holds it"
+            )
+        fixed.setdefault(row["key"], {})[row["qualifier"]] = row["value"]
+    keys = tuple(
+        Key(
+            key=row["key"],
+            kind=row["kind"],
+            fixed=fixed.pop(row["key"], {}),
+            psi_ms=tuple(row["psi_ms"].split(";")) if row["psi_ms"] else (),
+        )
+        for row in rows
     )
+    if fixed:
+        raise ValueError(f"{name}: key_qualifiers.csv qualifies no key {sorted(fixed)}")
+    for found in keys:
+        try:
+            vocabulary.check_predicate(found.predicate())
+        except ValueError as error:
+            raise ValueError(f"{name}: key {found.key!r}: {error}") from error
+    return keys
 
 
 def _entry(

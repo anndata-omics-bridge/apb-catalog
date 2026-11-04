@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib.metadata import EntryPoint, EntryPoints
+from pathlib import Path
 
 import polars as pl
 import pytest
@@ -82,3 +83,44 @@ def test_two_plugins_cannot_name_one_set() -> None:
     point = EntryPoint("toy", "tests", PLUGIN_GROUP)
     with pytest.raises(ValueError, match=r"several installed plugins .*\['toy'\]"):
         plugin_folders(EntryPoints([point, point]))
+
+
+def _toy_copy(folder: Path, monkeypatch: pytest.MonkeyPatch, name: str, key_qualifier: str) -> str:
+    """The toy set copied under another name, with one ``key_qualifiers.csv`` row.
+
+    A set loaded without error stays cached by name, so each test that loads one names its own.
+    """
+    folder.mkdir()
+    for table in (TESTS / "toy_set").glob("*.csv"):
+        text = table.read_text("utf-8").replace("\ntoy,", f"\n{name},")
+        (folder / table.name).write_text(text, "utf-8")
+    (folder / "key_qualifiers.csv").write_text(
+        f"set,key,qualifier,value\n{name},{key_qualifier}\n", "utf-8"
+    )
+    monkeypatch.setattr("apb_catalog.source._plugin_folders", lambda: {name: folder})
+    return name
+
+
+def test_a_plugin_key_fixes_a_qualifier_of_its_own_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A key can fix any qualifier its set declares, here the toy set's ``origin``."""
+    name = _toy_copy(tmp_path / "toy_set", monkeypatch, "fixed_origin", "group,origin,vendor")
+    assert catalogue_set(name).key("group").fixed == {"origin": "vendor"}
+
+
+@pytest.mark.parametrize(
+    ("key_qualifier", "message"),
+    [
+        ("no_such_key,origin,vendor", r"qualifies no key \['no_such_key'\]"),
+        ("group,origin,elsewhere", "does not admit 'elsewhere'"),
+        ("group,kind,charge", "fixes the kind of 'group'"),
+    ],
+)
+def test_a_key_qualifier_names_a_key_and_a_value_of_the_vocabulary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, key_qualifier: str, message: str
+) -> None:
+    """A row naming no key, a value the vocabulary does not admit, or the kind is refused."""
+    name = _toy_copy(tmp_path / "toy_set", monkeypatch, "broken", key_qualifier)
+    with pytest.raises(ValueError, match=message):
+        catalogue_set(name)

@@ -7,7 +7,8 @@ The CSV tables under `src/apb_catalog/data/` are the source of truth, one file p
 | `entries.csv` | One row per catalogued field: its set, its source (the conversion software, with every column its APB2 rule writes; an app such as apb-fasta; or `annotation:<convention>` for sample-annotation fields found by column prefix), the software version patterns it holds for, where it lives, its kind and its evidence |
 | `entry_qualifiers.csv` | Each entry's qualifiers besides its kind |
 | `vocabulary.csv` | Each set's row with its purpose and users, its qualifiers and their values; every qualifier defines `unknown` |
-| `keys.csv` | Each set's keys: the name callers ask by, the kind and the `normalization` or `stage` it fixes, empty where it leaves one open, and its PSI-MS terms |
+| `keys.csv` | Each set's keys: the name callers ask by, its kind and its PSI-MS terms |
+| `key_qualifiers.csv` | The qualifier values each key fixes besides its kind, one row each, such as `normalization` `run_setting` for `normalized_intensity`; a qualifier without a row stays open |
 | `requirements.csv` | Each set's requirement rows by key, if it has any |
 | `producers.csv` | Apps whose fields exist only once they have run: the metadata path recording the run, and what to run |
 | `versions.csv` | The software versions APB2 has a rule for: the label entries name, and the rule's version pattern a converted result stores; written by `make versions` from APB2's packaged rules |
@@ -64,7 +65,7 @@ Each entry has exactly one key: the one whose kind and fixed values it carries; 
 ## Adding a set
 
 1. Add its row, purpose and users, and its vocabulary, `kind` and any other qualifiers with `unknown` among their values, to `vocabulary.csv`
-2. Add its keys to `keys.csv`: one per kind, or one per kind and value of a qualifier that changes the meaning
+2. Add its keys to `keys.csv`: one per kind, or one per kind and value of a qualifier that changes the meaning, with that value in `key_qualifiers.csv`
 3. Add its entries to `entries.csv` and their qualifiers to `entry_qualifiers.csv`
 4. Add its requirement rows, if any, to `requirements.csv`
 5. Catalogue only the fields its consumer reads, or, for a set that qualifies an APB2 role, every field with that role
@@ -79,7 +80,7 @@ An installed package adds a set without changing this one, through the `apb_cata
 toy = "toy_package.catalogue"
 ```
 
-The package's folder holds the same CSV files with the set's rows only, in the columns `datapackage.json` declares; `requirements.csv` and `producers.csv` are optional.
+The package's folder holds the same CSV files with the set's rows only, in the columns `datapackage.json` declares; `key_qualifiers.csv`, `requirements.csv` and `producers.csv` are optional.
 
 `DataCatalog`, `catalogues()`, `rule_coverage()` and `apb-catalog check` then work as for a packaged set. A name a packaged set or another plugin already uses raises `ValueError`.
 

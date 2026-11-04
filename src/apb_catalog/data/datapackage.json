@@ -1,7 +1,7 @@
 {
   "name": "apb-catalog",
   "title": "APB catalogue sets",
-  "version": "0.16",
+  "version": "0.17",
   "resources": [
     {
       "name": "entries",
@@ -56,17 +56,33 @@
     {
       "name": "keys",
       "path": "keys.csv",
-      "description": "The access keys of each set, one meaning each: the kind and the qualifier values a key stands for. An entry has the key whose kind and fixed values it carries.",
+      "description": "The access keys of each set, one meaning each: the kind a key stands for, and in key_qualifiers the qualifier values it fixes. An entry has the key whose kind and fixed values it carries.",
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
           {"name": "key", "type": "string", "description": "The name callers ask by."},
           {"name": "kind", "type": "string", "description": "The kind the key stands for."},
-          {"name": "normalization", "type": "string", "description": "The normalization the key stands for; empty when the key leaves it open."},
-          {"name": "stage", "type": "string", "description": "The stage the key stands for; empty when the key leaves it open."},
           {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, separated by ';'; may be empty."}
         ],
         "primaryKey": ["set", "key"]
+      }
+    },
+    {
+      "name": "key_qualifiers",
+      "path": "key_qualifiers.csv",
+      "description": "The qualifier values each key fixes besides its kind, one row each; a qualifier without a row stays open.",
+      "schema": {
+        "fields": [
+          {"name": "set", "type": "string", "description": "The catalogue set."},
+          {"name": "key", "type": "string", "description": "The key that fixes the value."},
+          {"name": "qualifier", "type": "string", "description": "A qualifier of the set's vocabulary, other than kind."},
+          {"name": "value", "type": "string", "description": "The value the key fixes."}
+        ],
+        "primaryKey": ["set", "key", "qualifier"],
+        "foreignKeys": [
+          {"fields": ["set", "key"], "reference": {"resource": "keys", "fields": ["set", "key"]}},
+          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "vocabulary", "fields": ["set", "qualifier", "value"]}}
+        ]
       }
     },
     {

@@ -79,23 +79,25 @@ peak_qc,unit,unknown,The reviewer could not establish this.,,
 
 </details>
 
-`keys.csv` holds the names the app asks by, each naming one kind. `normalization`, `stage` and `psi_ms` are left empty here; a key fills them when it fixes a qualifier value or has a PSI-MS term.
+`keys.csv` holds the names the app asks by, each naming one kind; `psi_ms` is left empty here, and a key fills it with its PSI-MS terms.
 
-| `key` | `kind` | `normalization` | `stage` | `psi_ms` |
-| --- | --- | --- | --- | --- |
-| `retention_time` | `retention_time` |  |  |  |
-| `peak_fwhm` | `peak_fwhm` |  |  |  |
+| `key` | `kind` | `psi_ms` |
+| --- | --- | --- |
+| `retention_time` | `retention_time` |  |
+| `peak_fwhm` | `peak_fwhm` |  |
 
 <details markdown>
 <summary>The CSV file: <code>keys.csv</code></summary>
 
 ```csv
-set,key,kind,normalization,stage,psi_ms
-peak_qc,retention_time,retention_time,,,
-peak_qc,peak_fwhm,peak_fwhm,,,
+set,key,kind,psi_ms
+peak_qc,retention_time,retention_time,
+peak_qc,peak_fwhm,peak_fwhm,
 ```
 
 </details>
+
+`key_qualifiers.csv` is left out, because neither key fixes a qualifier. A key that does has one row per value, such as abundance's `abundance,normalized_intensity,normalization,run_setting`: an intensity normalized across runs.
 
 `entries.csv` holds one row per column a software writes. The `entry_id` says where the column lives, as `<software>/<version>/<level>/<attribute>/<key>/<column>` (see [An entry](maintaining.md#an-entry)); then come its kind and the evidence. Version `*` holds for every version. DIA-NN reports `FWHM` only from 2.x, so that entry names the label `2.x`.
 
