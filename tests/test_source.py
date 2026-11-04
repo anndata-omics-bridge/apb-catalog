@@ -41,13 +41,14 @@ def _catalogues(name: str) -> tuple[SourceCatalogue, ...]:
     return packaged_catalogues(name).catalogues
 
 
-def _entry(name: str, key: str = "pep", **qualifiers: str) -> SourceEntry:
+def _entry(name: str, key: str = "pep", kind: str = "pep", **qualifiers: str) -> SourceEntry:
     return SourceEntry(
         entry_id=f"vendor.peptidoform_ion.{name}",
         software_version_pattern=("^1\\.",),
         reference=Reference(level="peptidoform_ion", location="layers", name=name),
         key=key,
-        qualifiers={"kind": "pep", "stage": "identification"} | qualifiers,
+        kind=kind,
+        qualifiers={"stage": "identification"} | qualifiers,
         evidence=Evidence(basis="test"),
     )
 
@@ -177,7 +178,7 @@ def test_every_entry_has_exactly_one_key(name: str) -> None:
         entry.entry_id
         for source in sources.sources()
         for entry in source.entries
-        if key_of(sources.keys, entry.qualifiers) != [entry.key]
+        if key_of(sources.keys, entry.kind, entry.qualifiers) != [entry.key]
     ]
     assert mismatched == []
 
@@ -216,7 +217,7 @@ def test_entry_ids_are_unique() -> None:
 
 def test_entry_qualifiers_must_describe_every_vocabulary_qualifier() -> None:
     """Leaving a qualifier out is rejected; ``unknown`` must be recorded explicitly."""
-    partial = _entry("PEP").model_copy(update={"qualifiers": {"kind": "pep"}})
+    partial = _entry("PEP").model_copy(update={"qualifiers": {}})
     with pytest.raises(ValueError, match="qualifiers must be exactly"):
         SourceCatalogues(CONFIDENCE, "test", (_catalogue(partial),), DESCRIPTION, keys=KEYS)
 
@@ -431,7 +432,7 @@ def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> 
 def _apb_columns() -> set[tuple[str, str, str, str, str]]:
     """Every (software, pattern, level, column, kind) the apb set catalogues."""
     return {
-        (catalogue.software_name, pattern, entry.reference.level, name, entry.qualifiers["kind"])
+        (catalogue.software_name, pattern, entry.reference.level, name, entry.kind)
         for catalogue in _catalogues("apb")
         for entry in catalogue.entries
         for pattern in entry.software_version_pattern

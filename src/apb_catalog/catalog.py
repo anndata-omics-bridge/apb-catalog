@@ -153,7 +153,8 @@ class _Lookups:
             ValueError: The set has no such key, or a qualifier names the kind or a value the key
                 already fixes.
         """
-        fixed = {} if key is None else self.catalogues.key(key).predicate()
+        found = None if key is None else self.catalogues.key(key)
+        fixed = {} if found is None else found.accepted()
         clashing = sorted(({"kind"} | set(fixed)) & set(qualifiers))
         if clashing:
             raise ValueError(f"ask by key; {key or 'the lookup'} fixes {', '.join(clashing)}")
@@ -161,11 +162,12 @@ class _Lookups:
             level=level,
             location=location,
             key=key,
+            kind=None if found is None else found.kind,
             qualifiers=fixed | {name: (value,) for name, value in qualifiers.items()},
         )
 
     def answer(self, request: FieldRequest) -> Resolution:
-        self.catalogues.vocabulary.check_predicate(request.qualifiers)
+        self.catalogues.vocabulary.check_predicate(request.kind, request.qualifiers)
         return self.views.get(request.level, AbsentLevel(request.level)).resolve(request)
 
     def resolve(self, request: FieldRequest) -> Resolution:

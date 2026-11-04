@@ -1,0 +1,2 @@
+set,definition,kind_definition,purpose,used_by
+toy,A synthetic field the tests look up.,Which synthetic field.,"Synthetic plugin set: a few ion fields from vendors, APB2 and apb-fasta.",apb-catalog tests

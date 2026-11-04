@@ -372,7 +372,7 @@ def requests(sources: SourceCatalogues, level: str) -> list[Request]:
             location: Location = (
                 "var" if entry.reference.location == "varm" else entry.reference.location
             )
-            fixed = sources.key(entry.key).predicate()
+            fixed = sources.key(entry.key).fixed
             add(
                 location,
                 entry.key,

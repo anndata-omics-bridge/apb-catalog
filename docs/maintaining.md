@@ -6,7 +6,10 @@ The CSV tables under `src/apb_catalog/data/` are the source of truth, one file p
 | --- | --- |
 | `entries.csv` | One row per catalogued field: its set, its source (the conversion software, with every column its APB2 rule writes; an app such as apb-fasta; or `annotation:<convention>` for sample-annotation fields found by column prefix), the software version patterns it holds for, where it lives, its kind and its evidence |
 | `entry_qualifiers.csv` | Each entry's qualifiers besides its kind |
-| `vocabulary.csv` | Each set's row with its purpose and users, its qualifiers and their values; every qualifier defines `unknown` |
+| `sets.csv` | One row per set: what its fields are, what its kinds name, its purpose and its users |
+| `kinds.csv` | Each set's kinds, `unknown` among them: what an entry or a key stands for |
+| `qualifiers.csv` | Each set's qualifiers, which refine a kind, such as `normalization` or `unit`; never `kind` |
+| `qualifier_values.csv` | The values each qualifier admits, `unknown` among them |
 | `keys.csv` | Each set's keys: the name callers ask by, its kind and its PSI-MS terms |
 | `key_qualifiers.csv` | The qualifier values each key fixes besides its kind, one row each, such as `normalization` `run_setting` for `normalized_intensity`; a qualifier without a row stays open |
 | `requirements.csv` | Each set's requirement rows by key, if it has any |
@@ -49,7 +52,7 @@ confidence,DIA-NN/2.x/peptidoform_ion/layers/PEP/-,pep,stage,identification
 | Column | Holds |
 | --- | --- |
 | `entry_id` | Where the field lives, built as CPE names are: `<source>/<version>/<level>/<attribute>/<key>/<column>`, six fields of one value each. `test_an_entry_id_names_where_its_field_lives` checks the grammar |
-| `kind` and `entry_qualifiers.csv` | Every qualifier the set's vocabulary declares; `unknown` where the evidence does not establish one. One id with two kinds, such as a protein column APB2 marks `protein_assignment` and `fasta_accessions`, is two rows; qualifiers join on `entry_id` and `kind` |
+| `kind` and `entry_qualifiers.csv` | One of the set's kinds, and a value for every qualifier the set declares; `unknown` where the evidence does not establish one. One id with two kinds, such as a protein column APB2 marks `protein_assignment` and `fasta_accessions`, is two rows; qualifiers join on `entry_id` and `kind` |
 | `basis`, `evidence_url` | Why the meaning holds, and where it is stated |
 
 | Id field | Holds |
@@ -64,7 +67,7 @@ Each entry has exactly one key: the one whose kind and fixed values it carries; 
 
 ## Adding a set
 
-1. Add its row, purpose and users, and its vocabulary, `kind` and any other qualifiers with `unknown` among their values, to `vocabulary.csv`
+1. Add its row, with its definition, what its kinds name, its purpose and its users, to `sets.csv`; its kinds, `unknown` among them, to `kinds.csv`; and any qualifiers to `qualifiers.csv`, with their values, `unknown` among them, in `qualifier_values.csv`
 2. Add its keys to `keys.csv`: one per kind, or one per kind and value of a qualifier that changes the meaning, with that value in `key_qualifiers.csv`
 3. Add its entries to `entries.csv` and their qualifiers to `entry_qualifiers.csv`
 4. Add its requirement rows, if any, to `requirements.csv`
@@ -80,7 +83,7 @@ An installed package adds a set without changing this one, through the `apb_cata
 toy = "toy_package.catalogue"
 ```
 
-The package's folder holds the same CSV files with the set's rows only, in the columns `datapackage.json` declares; `key_qualifiers.csv`, `requirements.csv` and `producers.csv` are optional.
+The package's folder holds the same CSV files with the set's rows only, in the columns `datapackage.json` declares; `qualifiers.csv` and `qualifier_values.csv` for a set without qualifiers, `key_qualifiers.csv`, `requirements.csv` and `producers.csv` are optional.
 
 `DataCatalog`, `catalogues()`, `rule_coverage()` and `apb-catalog check` then work as for a packaged set. A name a packaged set or another plugin already uses raises `ValueError`.
 
@@ -95,7 +98,7 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 | `test_the_entries_name_every_level_apb2_converts` | The entries name a level APB2 does not convert, or miss one it does |
 | `test_entries_name_fields_the_rules_retain` | An entry names a field the rule of one of its version patterns does not keep |
 | `test_packaged_catalogues_load_against_the_vocabulary` | A qualifier is missing or not admitted, a table's columns differ from `datapackage.json`, a key repeats, or an entry names a software or version `versions.csv` does not list |
-| `test_every_packaged_set_states_its_purpose_and_users` | `entries.csv` and the set rows of `vocabulary.csv` disagree |
+| `test_every_packaged_set_states_its_purpose_and_users` | `entries.csv` and `sets.csv` disagree |
 | `test_domain_sets_hold_no_apb2_columns` | A set other than `apb` names an APB2 `ProForma_*` column |
 | `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | A vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
 | `test_abundance_entries_are_the_layers_apb2_marks_abundance` | The `abundance` set and the layers APB2 marks `abundance` differ |

@@ -444,7 +444,7 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
         "prefix": None,
     }
     entry = next(entry for entry in stored["entries"] if entry["reference"] == answer["reference"])
-    assert entry["qualifiers"]["kind"] == "pep"
+    assert (entry["kind"], entry["qualifiers"]) == ("pep", {"stage": "identification"})
 
 
 def test_every_packaged_set_states_its_purpose_and_users() -> None:

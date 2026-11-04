@@ -1,0 +1,5 @@
+set,qualifier,definition
+abundance,normalization,Whether the producing software normalizes the value across runs; which method a run used is not catalogued.
+confidence,stage,Which decision the value qualifies.
+proteobench_entrapment,stage,Which decision the value qualifies.
+chromatography,unit,"Time unit or scale of the retained numeric value, before any consumer conversion. Unknown means the source does not establish one unit for this field."

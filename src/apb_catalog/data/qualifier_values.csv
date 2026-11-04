@@ -1,0 +1,14 @@
+set,qualifier,value,definition
+abundance,normalization,none,The software never normalizes this column.
+abundance,normalization,run_setting,"The column carries whatever cross-run normalization the run's settings chose, possibly none, as DIA-NN's Normalised columns do."
+abundance,normalization,unknown,The reviewer could not establish this.
+confidence,stage,identification,Whether the level's entity is correctly identified.
+confidence,stage,quantification,"Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+confidence,stage,unknown,The reviewer could not establish this.
+proteobench_entrapment,stage,identification,Whether the level's entity is correctly identified.
+proteobench_entrapment,stage,quantification,"Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+proteobench_entrapment,stage,unknown,The reviewer could not establish this.
+chromatography,unit,second,Seconds; multiply by 1 to express the value in QPX seconds.
+chromatography,unit,minute,Minutes; multiply by 60 to express the value in QPX seconds.
+chromatography,unit,irt,Indexed retention time: the dimensionless scale of the software's library or reference peptides. It is not a physical time and cannot be converted to seconds.
+chromatography,unit,unknown,The reviewer could not establish this.

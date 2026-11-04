@@ -181,11 +181,11 @@ def _verdict(requirements: list[str]) -> Verdict:
 
 def _field(entry: SourceEntry, producer: ProducerCatalogue | None) -> dict[str, object]:
     reference = entry.reference
-    others = {name: value for name, value in entry.qualifiers.items() if name != "kind"}
+    others = dict(entry.qualifiers)
     origin = others.pop("origin", None)
     return {
         "key": entry.key,
-        "kind": entry.qualifiers["kind"],
+        "kind": entry.kind,
         "qualifiers": _pairs(others),
         "origin": origin,
         "producer": None if producer is None else producer.producer,

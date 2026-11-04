@@ -4,11 +4,12 @@ The catalog can be extended to suit your application. New terms are supported by
 
 ## What a catalog is
 
-A catalogue set covers one topic, such as `abundance` or `confidence`, in four tables:
+A catalogue set covers one topic, such as `abundance` or `confidence`:
 
 | Part | Holds | Example |
 | --- | --- | --- |
-| Vocabulary | The kinds and qualifiers of the topic, each with `unknown` | kind `intensity`, normalization `none` or `run_setting` |
+| Kinds | What a field is, `unknown` among them | `intensity`, `maxlfq` |
+| Qualifiers | Optional: what refines a kind, each with its values, `unknown` among them | `normalization`: `none` or `run_setting` |
 | Keys | The names an application asks by | `intensity`: an intensity without normalization |
 | Entries | For each software version, the column that holds a key, with the tool's documentation as evidence | DIA-NN 2.x: `Precursor_Quantity` |
 | Requirements | Optional: how strongly an application needs each key, `required`, `recommended` or `optional` | `abundance` recommends `intensity` on ions |
@@ -45,36 +46,76 @@ peak_qc = "peak_qc_app.catalogue"
 
 ## A mini example: two tools
 
-A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogues both for DIA-NN and FragPipe, in five files in the package folder `peak_qc_app/catalogue/`. Every row of every file starts with the set's name, `peak_qc`; the tables leave that column out, and the CSV file under each table has it.
+A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogues both for DIA-NN and FragPipe, in eight files in the package folder `peak_qc_app/catalogue/`. Every row of every file starts with the set's name, `peak_qc`; the tables leave that column out, and the CSV file under each table has it.
 
-`vocabulary.csv` holds the set's own row, with an empty `qualifier`, its purpose and its users. Then come its qualifiers, `kind` and `unit`, each with its values and their definitions; every qualifier lists `unknown`.
+`sets.csv` holds the set's one row: what its fields are, what its kinds name, its purpose and its users.
 
-| `qualifier` | `value` | `definition` | `purpose` | `used_by` |
-| --- | --- | --- | --- | --- |
-|  |  | Retention time and peak width of an ion in one run. | Peak-shape QC: where each ion eluted, and how wide its peak was. | peak-qc app |
-| `kind` |  | Which quantity the value is. |  |  |
-| `kind` | `retention_time` | Where the ion eluted in this run: the apex of its elution peak. |  |  |
-| `kind` | `peak_fwhm` | The width of the elution peak at half its maximum height. |  |  |
-| `kind` | `unknown` | The reviewer could not establish this. |  |  |
-| `unit` |  | The time unit of the value. |  |  |
-| `unit` | `minute` | Minutes. |  |  |
-| `unit` | `second` | Seconds. |  |  |
-| `unit` | `unknown` | The reviewer could not establish this. |  |  |
+| `definition` | `kind_definition` | `purpose` | `used_by` |
+| --- | --- | --- | --- |
+| Retention time and peak width of an ion in one run. | Which quantity the value is. | Peak-shape QC: where each ion eluted, and how wide its peak was. | peak-qc app |
 
 <details markdown>
-<summary>The CSV file: <code>vocabulary.csv</code></summary>
+<summary>The CSV file: <code>sets.csv</code></summary>
 
 ```csv
-set,qualifier,value,definition,purpose,used_by
-peak_qc,,,"Retention time and peak width of an ion in one run.","Peak-shape QC: where each ion eluted, and how wide its peak was.",peak-qc app
-peak_qc,kind,,Which quantity the value is.,,
-peak_qc,kind,retention_time,"Where the ion eluted in this run: the apex of its elution peak.",,
-peak_qc,kind,peak_fwhm,The width of the elution peak at half its maximum height.,,
-peak_qc,kind,unknown,The reviewer could not establish this.,,
-peak_qc,unit,,The time unit of the value.,,
-peak_qc,unit,minute,Minutes.,,
-peak_qc,unit,second,Seconds.,,
-peak_qc,unit,unknown,The reviewer could not establish this.,,
+set,definition,kind_definition,purpose,used_by
+peak_qc,Retention time and peak width of an ion in one run.,Which quantity the value is.,"Peak-shape QC: where each ion eluted, and how wide its peak was.",peak-qc app
+```
+
+</details>
+
+`kinds.csv` holds what a field of the set can be, `unknown` among them.
+
+| `kind` | `definition` |
+| --- | --- |
+| `retention_time` | Where the ion eluted in this run: the apex of its elution peak. |
+| `peak_fwhm` | The width of the elution peak at half its maximum height. |
+| `unknown` | The reviewer could not establish this. |
+
+<details markdown>
+<summary>The CSV file: <code>kinds.csv</code></summary>
+
+```csv
+set,kind,definition
+peak_qc,retention_time,Where the ion eluted in this run: the apex of its elution peak.
+peak_qc,peak_fwhm,The width of the elution peak at half its maximum height.
+peak_qc,unknown,The reviewer could not establish this.
+```
+
+</details>
+
+`qualifiers.csv` holds what refines a kind; here the unit, which a set without qualifiers leaves out.
+
+| `qualifier` | `definition` |
+| --- | --- |
+| `unit` | The time unit of the value. |
+
+<details markdown>
+<summary>The CSV file: <code>qualifiers.csv</code></summary>
+
+```csv
+set,qualifier,definition
+peak_qc,unit,The time unit of the value.
+```
+
+</details>
+
+`qualifier_values.csv` holds the values each qualifier admits, `unknown` among them.
+
+| `qualifier` | `value` | `definition` |
+| --- | --- | --- |
+| `unit` | `minute` | Minutes. |
+| `unit` | `second` | Seconds. |
+| `unit` | `unknown` | The reviewer could not establish this. |
+
+<details markdown>
+<summary>The CSV file: <code>qualifier_values.csv</code></summary>
+
+```csv
+set,qualifier,value,definition
+peak_qc,unit,minute,Minutes.
+peak_qc,unit,second,Seconds.
+peak_qc,unit,unknown,The reviewer could not establish this.
 ```
 
 </details>
@@ -121,7 +162,7 @@ peak_qc,FragPipe/*/peptidoform_ion/layers/Retention_Time_FWHM/-,peak_fwhm,"FragP
 
 </details>
 
-`entry_qualifiers.csv` gives each entry a value for every qualifier besides `kind`; here that is the unit.
+`entry_qualifiers.csv` gives each entry a value for every qualifier of the set; here that is the unit.
 
 | `entry_id` | `kind` | `qualifier` | `value` |
 | --- | --- | --- | --- |
@@ -189,6 +230,19 @@ PASS  DIA-NN 2.x peptidoform_ion
 ```
 
 A set with entries for some tools reviews them only. `apb-catalog check peak_qc` fails every level of the tools it has no entries for, and their lookups find nothing.
+
+## Kinds, qualifiers and keys
+
+A kind says what a field is; it is part of an entry's identity, so one column with two meanings is two entries. A qualifier such as `unit` refines a kind, and every entry gives each qualifier a value, `unknown` where the evidence does not establish one. A key names one kind and may fix qualifier values; every entry must match exactly one key.
+
+An app that wants minutes need not change the keys; it narrows the lookup instead:
+
+| Lookup | DIA-NN 2.2 | FragPipe 23 |
+| --- | --- | --- |
+| `get("retention_time")` | `RT` | `Apex_Retention_Time` |
+| `get("retention_time", unit="minute")` | `RT` | unknown: FragPipe does not state its unit |
+
+A key that fixes the unit is a different matter. Added beside `retention_time`, a key `retention_time_minutes` with the row `peak_qc,retention_time_minutes,unit,minute` in `key_qualifiers.csv` fails the load, because `RT` then matches both keys. The open key has to be split instead, into `retention_time_minutes` (unit `minute`) and `retention_time_unknown_unit` (unit `unknown`), as `abundance` splits `intensity` by normalization. Fix a qualifier in a key only when it changes the meaning enough that an app asks for it by name.
 
 ## Getting started
 

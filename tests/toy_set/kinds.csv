@@ -1,0 +1,7 @@
+set,kind,definition
+toy,group,The protein group the feature belongs to.
+toy,charge,The precursor charge.
+toy,decoy,Whether the feature is a decoy.
+toy,contaminant,Whether the feature is a contaminant.
+toy,peptidoform,The modified sequence without charge.
+toy,unknown,The reviewer could not establish this.

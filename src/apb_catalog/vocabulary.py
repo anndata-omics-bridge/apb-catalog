@@ -1,4 +1,4 @@
-"""Each catalogue set's vocabulary: the qualifiers its entries are described by."""
+"""Each catalogue set's vocabulary: its kinds, and the qualifiers that refine a kind."""
 
 from __future__ import annotations
 
@@ -7,8 +7,8 @@ from collections.abc import Mapping
 from pydantic import BaseModel, ConfigDict, model_validator
 
 UNKNOWN = "unknown"
-"""The qualifier value recording that a reviewer could not establish the fact; every qualifier
-defines it."""
+"""The kind or qualifier value recording that a reviewer could not establish the fact; every set
+defines it as a kind and every qualifier as a value."""
 
 
 class FrozenModel(BaseModel):
@@ -32,22 +32,28 @@ class Qualifier(FrozenModel):
 
 
 class SetVocabulary(FrozenModel):
-    """What one set's entries mean, with every qualifier they must be described by.
+    """What one set's entries mean: its kinds, and the qualifiers that refine a kind.
 
-    Every set has a ``kind`` qualifier.
+    An entry has one kind and a value for every qualifier; ``unknown`` is among the kinds and
+    among every qualifier's values.
     """
 
     definition: str
+    kind_definition: str
+    kinds: dict[str, str]
     qualifiers: dict[str, Qualifier]
 
     @model_validator(mode="after")
-    def _has_kind(self) -> SetVocabulary:
-        if "kind" not in self.qualifiers:
-            raise ValueError("a set vocabulary declares the qualifier 'kind'")
+    def _kinds_apart(self) -> SetVocabulary:
+        if UNKNOWN not in self.kinds:
+            raise ValueError(f"a set defines the kind {UNKNOWN!r}")
+        if "kind" in self.qualifiers:
+            raise ValueError("a set's kinds are no qualifier; they are its kinds")
         return self
 
-    def check_description(self, qualifiers: Mapping[str, str], /) -> None:
-        """Require every qualifier, each with an admitted value."""
+    def check_description(self, kind: str, qualifiers: Mapping[str, str], /) -> None:
+        """Require an admitted kind and every qualifier, each with an admitted value."""
+        self.check_kind(kind)
         if set(qualifiers) != set(self.qualifiers):
             raise ValueError(
                 f"qualifiers must be exactly {sorted(self.qualifiers)}, got {sorted(qualifiers)}"
@@ -55,13 +61,25 @@ class SetVocabulary(FrozenModel):
         for name, value in qualifiers.items():
             self._check_value(name, value)
 
-    def check_predicate(self, qualifiers: Mapping[str, tuple[str, ...]], /) -> None:
-        """Allow any subset of qualifiers, each accepting admitted values."""
+    def check_predicate(
+        self, kind: str | None, qualifiers: Mapping[str, tuple[str, ...]], /
+    ) -> None:
+        """Allow an admitted kind or none, and any subset of qualifiers, each accepting admitted
+        values."""
+        if kind is not None:
+            self.check_kind(kind)
         for name, accepted in qualifiers.items():
             if not accepted:
                 raise ValueError(f"qualifier {name!r} accepts no value")
             for value in accepted:
                 self._check_value(name, value)
+
+    def check_kind(self, kind: str, /) -> None:
+        """Require one of the set's kinds."""
+        if kind not in self.kinds:
+            raise ValueError(
+                f"the set does not admit the kind {kind!r}; kinds: {sorted(self.kinds)}"
+            )
 
     def _check_value(self, name: str, value: str) -> None:
         qualifier = self.qualifiers.get(name)

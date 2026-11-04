@@ -26,15 +26,17 @@ from apb_catalog.vocabulary import Qualifier, SetVocabulary
 VARIANT = RuleVariant(level="peptidoform_ion", software_version_pattern="^1\\.")
 
 
-def _entry(name: str, location: str = "layers", **qualifiers: str) -> SourceEntry:
-    described = {"kind": "pep", "stage": "identification"} | qualifiers
+def _entry(
+    name: str, location: str = "layers", kind: str = "pep", **qualifiers: str
+) -> SourceEntry:
     return SourceEntry.model_validate(
         {
             "entry_id": f"vendor.peptidoform_ion.{name}",
             "software_version_pattern": ("^1\\.",),
             "reference": {"level": "peptidoform_ion", "location": location, "name": name},
-            "key": described["kind"],
-            "qualifiers": described,
+            "key": kind,
+            "kind": kind,
+            "qualifiers": {"stage": "identification"} | qualifiers,
             "evidence": Evidence(basis="test"),
         }
     )
@@ -49,11 +51,14 @@ def _level(*entries: SourceEntry) -> ReviewedLevel:
     return ReviewedLevel("peptidoform_ion", ReviewedRule(catalogue, VARIANT), entries)
 
 
-def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> FieldRequest:
+def _request(
+    location: str | None = "layers", kind: str | None = None, **qualifiers: tuple[str, ...]
+) -> FieldRequest:
     return FieldRequest.model_validate(
         {
             "level": "peptidoform_ion",
             "location": location,
+            "kind": kind,
             "qualifiers": qualifiers,
         }
     )
@@ -62,7 +67,7 @@ def _request(location: str | None = "layers", **qualifiers: tuple[str, ...]) -> 
 def test_one_matching_entry_resolves_to_its_reference() -> None:
     """A single compatible, fully known entry is the answer."""
     resolution = _level(_entry("PEP"), _entry("Q_Value", kind="q_value")).resolve(
-        _request(kind=("pep",), stage=("identification",))
+        _request(kind="pep", stage=("identification",))
     )
     assert resolution.status == "resolved"
     assert resolution.reference == Reference(level="peptidoform_ion", location="layers", name="PEP")
@@ -70,7 +75,7 @@ def test_one_matching_entry_resolves_to_its_reference() -> None:
 
 def test_pep_and_q_value_are_never_interchangeable() -> None:
     """Asking for a PEP never returns a q-value, even when it is the only confidence field."""
-    resolution = _level(_entry("Q_Value", kind="q_value")).resolve(_request(kind=("pep",)))
+    resolution = _level(_entry("Q_Value", kind="q_value")).resolve(_request(kind="pep"))
     assert resolution.status == "missing"
     assert resolution.reference is None
 
@@ -78,14 +83,14 @@ def test_pep_and_q_value_are_never_interchangeable() -> None:
 def test_quantification_confidence_does_not_answer_an_identification_request() -> None:
     """An MS1-peak q-value is not an identification q-value."""
     level = _level(_entry("Peak_Q", kind="q_value", stage="quantification"))
-    assert level.resolve(_request(kind=("q_value",), stage=("identification",))).status == "missing"
+    assert level.resolve(_request(kind="q_value", stage=("identification",))).status == "missing"
     assert level.resolve(_request(stage=("quantification",))).status == "resolved"
 
 
 def test_two_matching_entries_are_ambiguous_and_both_are_reported() -> None:
     """The resolver never picks the first match."""
     level = _level(_entry("EG_Qvalue", kind="q_value"), _entry("FG_Qvalue", kind="q_value"))
-    answer = level.resolve(_request(kind=("q_value",)))
+    answer = level.resolve(_request(kind="q_value"))
     assert answer.status == "ambiguous"
     assert [candidate.reference.name for candidate in answer.candidates] == [
         "EG_Qvalue",
@@ -96,7 +101,7 @@ def test_two_matching_entries_are_ambiguous_and_both_are_reported() -> None:
 def test_an_unknown_qualifier_makes_the_answer_unknown() -> None:
     """An entry the reviewer could not place may match, so the resolver will not decide."""
     answer = _level(_entry("Q_Value", kind="q_value", stage="unknown")).resolve(
-        _request(kind=("q_value",), stage=("identification",))
+        _request(kind="q_value", stage=("identification",))
     )
     assert answer.status == "unknown"
     assert answer.candidates[0].undecided == ("stage",)
@@ -106,7 +111,7 @@ def test_an_unknown_qualifier_makes_the_answer_unknown() -> None:
 def test_accepting_unknown_admits_an_undecided_entry() -> None:
     """A consumer may explicitly accept an unestablished qualifier."""
     answer = _level(_entry("Q_Value", kind="q_value", stage="unknown")).resolve(
-        _request(kind=("q_value",), stage=("identification", "unknown"))
+        _request(kind="q_value", stage=("identification", "unknown"))
     )
     assert answer.status == "resolved"
 
@@ -114,7 +119,7 @@ def test_accepting_unknown_admits_an_undecided_entry() -> None:
 def test_an_undecided_entry_blocks_a_single_match() -> None:
     """One sure match plus one possible match is not a unique answer."""
     answer = _level(_entry("PEP"), _entry("Other_PEP", stage="unknown")).resolve(
-        _request(kind=("pep",), stage=("identification",))
+        _request(kind="pep", stage=("identification",))
     )
     assert answer.status == "unknown"
 
@@ -155,19 +160,28 @@ def test_a_resolution_carries_a_reference_exactly_when_resolved() -> None:
 def test_request_predicates_are_checked_against_the_vocabulary() -> None:
     """A request may name only declared qualifiers and admitted values."""
     vocabulary = packaged_catalogues("confidence").vocabulary
-    vocabulary.check_predicate({"kind": ("pep", "unknown")})
+    vocabulary.check_predicate("pep", {"stage": ("identification", "unknown")})
+    vocabulary.check_predicate(None, {})
     with pytest.raises(ValueError, match="unknown qualifier"):
-        vocabulary.check_predicate({"flavour": ("pep",)})
-    with pytest.raises(ValueError, match="does not admit"):
-        vocabulary.check_predicate({"kind": ("fdr",)})
+        vocabulary.check_predicate(None, {"flavour": ("pep",)})
+    with pytest.raises(ValueError, match="does not admit the kind 'fdr'"):
+        vocabulary.check_predicate("fdr", {})
     with pytest.raises(ValueError, match="accepts no value"):
-        vocabulary.check_predicate({"kind": ()})
+        vocabulary.check_predicate("pep", {"stage": ()})
 
 
-def test_every_set_vocabulary_has_a_kind() -> None:
-    """A vocabulary without the qualifier ``kind`` is refused."""
-    with pytest.raises(ValueError, match="'kind'"):
-        SetVocabulary(definition="test", qualifiers={})
+def test_a_vocabulary_keeps_its_kinds_apart_from_its_qualifiers() -> None:
+    """The kinds include ``unknown``, and no qualifier is named ``kind``."""
+    unknown = {"unknown": "The reviewer could not establish this."}
+    with pytest.raises(ValueError, match="defines the kind 'unknown'"):
+        SetVocabulary(definition="test", kind_definition="test", kinds={"pep": "a"}, qualifiers={})
+    with pytest.raises(ValueError, match="no qualifier"):
+        SetVocabulary(
+            definition="test",
+            kind_definition="test",
+            kinds=unknown,
+            qualifiers={"kind": Qualifier(definition="test", values=unknown)},
+        )
 
 
 def test_every_qualifier_defines_unknown() -> None:
@@ -187,10 +201,10 @@ def test_a_pending_entry_makes_its_answer_unknown_with_the_reason() -> None:
     level = ReviewedLevel(
         "peptidoform_ion", ReviewedRule(catalogue, VARIANT), (_entry("PEP"),), (pending,)
     )
-    answer = level.resolve(_request(location="var", kind=("q_value",)))
+    answer = level.resolve(_request(location="var", kind="q_value"))
     assert (answer.status, answer.reasons) == ("unknown", ("tool has not run; run `tool`",))
     assert answer.offered() == ("q_value",)
-    assert level.resolve(_request(kind=("pep",))).status == "resolved"
+    assert level.resolve(_request(kind="pep")).status == "resolved"
 
 
 def test_a_var_request_reads_varm_tables_too() -> None:
@@ -206,7 +220,8 @@ def test_a_var_request_reads_varm_tables_too() -> None:
                 "table": "checks",
             },
             "key": "pep",
-            "qualifiers": {"kind": "pep", "stage": "identification"},
+            "kind": "pep",
+            "qualifiers": {"stage": "identification"},
             "evidence": Evidence(basis="test"),
         }
     )

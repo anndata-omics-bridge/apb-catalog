@@ -33,13 +33,11 @@ KEYS = tuple(
 )
 VOCABULARY = SetVocabulary(
     definition="A synthetic field the tests look up.",
+    kind_definition="Which synthetic field.",
+    kinds=dict.fromkeys(
+        ("group", "charge", "decoy", "contaminant", "peptidoform", "unknown"), "test"
+    ),
     qualifiers={
-        "kind": Qualifier(
-            definition="Which synthetic field.",
-            values=dict.fromkeys(
-                ("group", "charge", "decoy", "contaminant", "peptidoform", "unknown"), "test"
-            ),
-        ),
         "origin": Qualifier(
             definition="Who writes the field.",
             values=dict.fromkeys(("vendor", "apb2", "apb_fasta", "unknown"), "test"),
@@ -61,7 +59,8 @@ def _entry(name: str, kind: str, origin: str = "vendor", location: str = "var") 
                 "table": table,
             },
             "key": kind,
-            "qualifiers": {"kind": kind, "origin": origin},
+            "kind": kind,
+            "qualifiers": {"origin": origin},
             "evidence": Evidence(basis="test"),
         }
     )

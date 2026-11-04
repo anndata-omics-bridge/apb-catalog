@@ -15,6 +15,10 @@
           "title": "Key",
           "type": "string"
         },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
         "qualifiers": {
           "additionalProperties": {
             "type": "string"
@@ -35,6 +39,7 @@
         "entry_id",
         "reference",
         "key",
+        "kind",
         "qualifiers"
       ],
       "title": "Candidate",
@@ -92,7 +97,7 @@
     },
     "FieldRequest": {
       "additionalProperties": false,
-      "description": "A consumer's question: one level, constrained by accepted qualifier values.\n\n``key`` names the access key asked for; ``qualifiers`` hold what it stands for, its kind and\nfixed values, plus any further qualifiers the caller asked for. Qualifiers left out accept\nany value. Accepting ``unknown`` admits entries whose reviewer could not establish that\nqualifier. A ``var`` request also reads feature-aligned ``varm`` tables.",
+      "description": "A consumer's question: one level, constrained by a kind and accepted qualifier values.\n\n``key`` names the access key asked for and ``kind`` the kind it stands for, ``None`` when the\nrequest spans every key; ``qualifiers`` hold the values the key fixes, plus any further\nqualifiers the caller asked for. Qualifiers left out accept any value. An entry whose\nreviewer could not establish its kind or a qualifier is undecided unless the request\naccepts ``unknown`` there. A ``var`` request also reads feature-aligned ``varm`` tables.",
       "properties": {
         "level": {
           "title": "Level",
@@ -120,6 +125,18 @@
           ],
           "default": null,
           "title": "Key"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
         },
         "qualifiers": {
           "additionalProperties": {
@@ -417,11 +434,22 @@
     },
     "SetVocabulary": {
       "additionalProperties": false,
-      "description": "What one set's entries mean, with every qualifier they must be described by.\n\nEvery set has a ``kind`` qualifier.",
+      "description": "What one set's entries mean: its kinds, and the qualifiers that refine a kind.\n\nAn entry has one kind and a value for every qualifier; ``unknown`` is among the kinds and\namong every qualifier's values.",
       "properties": {
         "definition": {
           "title": "Definition",
           "type": "string"
+        },
+        "kind_definition": {
+          "title": "Kind Definition",
+          "type": "string"
+        },
+        "kinds": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "object"
         },
         "qualifiers": {
           "additionalProperties": {
@@ -433,6 +461,8 @@
       },
       "required": [
         "definition",
+        "kind_definition",
+        "kinds",
         "qualifiers"
       ],
       "title": "SetVocabulary",
@@ -440,7 +470,7 @@
     },
     "SourceEntry": {
       "additionalProperties": false,
-      "description": "The reviewed meaning of one retained field for the listed software version patterns.\n\n``key`` is the set's access key whose kind and fixed qualifier values the entry carries.",
+      "description": "The reviewed meaning of one retained field for the listed software version patterns.\n\n``kind`` is what the field is and ``qualifiers`` hold a value for every other qualifier of\nthe set; ``key`` is the set's access key whose kind and fixed values the entry carries.",
       "properties": {
         "entry_id": {
           "title": "Entry Id",
@@ -460,6 +490,10 @@
           "title": "Key",
           "type": "string"
         },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
         "qualifiers": {
           "additionalProperties": {
             "type": "string"
@@ -476,6 +510,7 @@
         "software_version_pattern",
         "reference",
         "key",
+        "kind",
         "qualifiers",
         "evidence"
       ],

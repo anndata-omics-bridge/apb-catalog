@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Annotated, Literal
 
@@ -16,23 +15,26 @@ type ResolutionStatus = Literal["resolved", "missing", "ambiguous", "unknown"]
 
 
 class FieldRequest(FrozenModel):
-    """A consumer's question: one level, constrained by accepted qualifier values.
+    """A consumer's question: one level, constrained by a kind and accepted qualifier values.
 
-    ``key`` names the access key asked for; ``qualifiers`` hold what it stands for, its kind and
-    fixed values, plus any further qualifiers the caller asked for. Qualifiers left out accept
-    any value. Accepting ``unknown`` admits entries whose reviewer could not establish that
-    qualifier. A ``var`` request also reads feature-aligned ``varm`` tables.
+    ``key`` names the access key asked for and ``kind`` the kind it stands for, ``None`` when the
+    request spans every key; ``qualifiers`` hold the values the key fixes, plus any further
+    qualifiers the caller asked for. Qualifiers left out accept any value. An entry whose
+    reviewer could not establish its kind or a qualifier is undecided unless the request
+    accepts ``unknown`` there. A ``var`` request also reads feature-aligned ``varm`` tables.
     """
 
     level: str
     location: Location | None = None
     key: str | None = None
+    kind: str | None = None
     qualifiers: dict[str, tuple[str, ...]] = Field(default_factory=dict)
 
     def wanted(self) -> str:
-        """The key asked for and the qualifiers the request accepts, for messages."""
+        """The key asked for, its kind and the qualifiers the request accepts, for messages."""
+        kind = () if self.kind is None else (f"kind={self.kind}",)
         accepted = ", ".join(
-            f"{name}={'|'.join(values)}" for name, values in self.qualifiers.items()
+            (*kind, *(f"{name}={'|'.join(values)}" for name, values in self.qualifiers.items()))
         )
         return accepted if self.key is None else f"{self.key} ({accepted})"
 
@@ -42,22 +44,30 @@ class FieldRequest(FrozenModel):
 
     def admits(self, entry: SourceEntry) -> bool:
         """Whether an entry answers this request apart from qualifiers it leaves unknown."""
-        return self.selects(entry) and not self.mismatched(entry.qualifiers)
+        return self.selects(entry) and not self.mismatched(entry)
 
-    def mismatched(self, qualifiers: Mapping[str, str], /) -> tuple[str, ...]:
-        """Return the requested qualifiers an entry's known values contradict."""
-        return tuple(
-            name
-            for name, accepted in self.qualifiers.items()
-            if qualifiers[name] != UNKNOWN and qualifiers[name] not in accepted
+    def mismatched(self, entry: SourceEntry, /) -> tuple[str, ...]:
+        """Return what the request asks that an entry's known kind or values contradict."""
+        kind = self.kind is not None and entry.kind not in (UNKNOWN, self.kind)
+        return (
+            *(("kind",) if kind else ()),
+            *(
+                name
+                for name, accepted in self.qualifiers.items()
+                if entry.qualifiers[name] != UNKNOWN and entry.qualifiers[name] not in accepted
+            ),
         )
 
-    def undecided(self, qualifiers: Mapping[str, str], /) -> tuple[str, ...]:
-        """Return the requested qualifiers an entry leaves unknown."""
-        return tuple(
-            name
-            for name, accepted in self.qualifiers.items()
-            if qualifiers[name] == UNKNOWN and UNKNOWN not in accepted
+    def undecided(self, entry: SourceEntry, /) -> tuple[str, ...]:
+        """Return what the request asks that an entry leaves unknown: its kind or qualifiers."""
+        kind = self.kind not in (None, UNKNOWN) and entry.kind == UNKNOWN
+        return (
+            *(("kind",) if kind else ()),
+            *(
+                name
+                for name, accepted in self.qualifiers.items()
+                if entry.qualifiers[name] == UNKNOWN and UNKNOWN not in accepted
+            ),
         )
 
 
@@ -67,6 +77,7 @@ class Candidate(FrozenModel):
     entry_id: str
     reference: Reference
     key: str
+    kind: str
     qualifiers: dict[str, str]
     undecided: tuple[str, ...] = ()
 
@@ -169,8 +180,9 @@ def _resolve(
             entry_id=entry.entry_id,
             reference=entry.reference,
             key=entry.key,
+            kind=entry.kind,
             qualifiers=entry.qualifiers,
-            undecided=request.undecided(entry.qualifiers),
+            undecided=request.undecided(entry),
         )
         for entry in entries
         if request.admits(entry)
@@ -185,6 +197,7 @@ def _resolve(
                 entry_id=found.entry.entry_id,
                 reference=found.entry.reference,
                 key=found.entry.key,
+                kind=found.entry.kind,
                 qualifiers=found.entry.qualifiers,
             )
             for found in waiting

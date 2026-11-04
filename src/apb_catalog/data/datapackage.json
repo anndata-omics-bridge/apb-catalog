@@ -11,11 +11,14 @@
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
           {"name": "entry_id", "type": "string", "description": "Where the field lives, as six fields separated by /: <source>/<version>/<level>/<attribute>/<key>/<column>. Read apb-fasta/*/peptidoform_ion/varm/fasta_validation/is_proteotypic as: apb-fasta writes it, for every software version, on the peptidoform_ion level, in varm, in the table fasta_validation, column is_proteotypic. source: the conversion software, an app named in producers, or annotation:<convention>. version: one versions.csv label, or * for every version. level: the quantification level, or * for every level, which only annotation and app entries use. attribute: obs, var, layers or varm. key: the name of a layer or varm table; - for obs and var, which have none. column: a column of obs, var or a varm table; - for a layer, which has none; a trailing * matches every obs column starting with it, as in annotation:sdrf/*/protein/obs/-/factor_value_*.", "constraints": {"pattern": "^[^/]+/[^/]+/[^/]+/(obs|var|layers|varm)/[^/]+/[^/]+$"}},
-          {"name": "kind", "type": "string", "description": "What the field measures; a value of the set's kind qualifier."},
+          {"name": "kind", "type": "string", "description": "What the field measures; one of the set's kinds."},
           {"name": "basis", "type": "string", "description": "Why the reviewer assigned this meaning."},
           {"name": "evidence_url", "type": "string", "description": "Where the basis can be checked; may be empty."}
         ],
-        "primaryKey": ["set", "entry_id", "kind"]
+        "primaryKey": ["set", "entry_id", "kind"],
+        "foreignKeys": [
+          {"fields": ["set", "kind"], "reference": {"resource": "kinds", "fields": ["set", "kind"]}}
+        ]
       }
     },
     {
@@ -33,24 +36,72 @@
         "primaryKey": ["set", "entry_id", "kind", "qualifier"],
         "foreignKeys": [
           {"fields": ["set", "entry_id", "kind"], "reference": {"resource": "entries", "fields": ["set", "entry_id", "kind"]}},
-          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "vocabulary", "fields": ["set", "qualifier", "value"]}}
+          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "qualifier_values", "fields": ["set", "qualifier", "value"]}}
         ]
       }
     },
     {
-      "name": "vocabulary",
-      "path": "vocabulary.csv",
-      "description": "Each set, its qualifiers and their values, with their definitions. A set's row has an empty qualifier; a qualifier's row has an empty value.",
+      "name": "sets",
+      "path": "sets.csv",
+      "description": "One row per catalogue set: what its fields are, what its kinds name, what it is for and who uses it.",
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "qualifier", "type": "string", "description": "The qualifier defined; empty on the set's row."},
-          {"name": "value", "type": "string", "description": "The value defined; empty on the set's and the qualifiers' rows."},
-          {"name": "definition", "type": "string", "description": "What the set, qualifier or value means."},
-          {"name": "purpose", "type": "string", "description": "The set's row only: what the set is for."},
-          {"name": "used_by", "type": "string", "description": "The set's row only: who uses the set, separated by ';'."}
+          {"name": "definition", "type": "string", "description": "What the set's fields are."},
+          {"name": "kind_definition", "type": "string", "description": "What a kind names in this set."},
+          {"name": "purpose", "type": "string", "description": "What the set is for."},
+          {"name": "used_by", "type": "string", "description": "Who uses the set, separated by ';'."}
         ],
-        "primaryKey": ["set", "qualifier", "value"]
+        "primaryKey": ["set"]
+      }
+    },
+    {
+      "name": "kinds",
+      "path": "kinds.csv",
+      "description": "The kinds of each set, unknown among them: what an entry or key stands for.",
+      "schema": {
+        "fields": [
+          {"name": "set", "type": "string", "description": "The catalogue set."},
+          {"name": "kind", "type": "string", "description": "The kind defined."},
+          {"name": "definition", "type": "string", "description": "What the kind means."}
+        ],
+        "primaryKey": ["set", "kind"],
+        "foreignKeys": [
+          {"fields": ["set"], "reference": {"resource": "sets", "fields": ["set"]}}
+        ]
+      }
+    },
+    {
+      "name": "qualifiers",
+      "path": "qualifiers.csv",
+      "description": "The qualifiers of each set that refine a kind, such as normalization or unit.",
+      "schema": {
+        "fields": [
+          {"name": "set", "type": "string", "description": "The catalogue set."},
+          {"name": "qualifier", "type": "string", "description": "The qualifier defined; never kind."},
+          {"name": "definition", "type": "string", "description": "What the qualifier records."}
+        ],
+        "primaryKey": ["set", "qualifier"],
+        "foreignKeys": [
+          {"fields": ["set"], "reference": {"resource": "sets", "fields": ["set"]}}
+        ]
+      }
+    },
+    {
+      "name": "qualifier_values",
+      "path": "qualifier_values.csv",
+      "description": "The values each qualifier admits, unknown among them.",
+      "schema": {
+        "fields": [
+          {"name": "set", "type": "string", "description": "The catalogue set."},
+          {"name": "qualifier", "type": "string", "description": "The qualifier."},
+          {"name": "value", "type": "string", "description": "The value defined."},
+          {"name": "definition", "type": "string", "description": "What the value means."}
+        ],
+        "primaryKey": ["set", "qualifier", "value"],
+        "foreignKeys": [
+          {"fields": ["set", "qualifier"], "reference": {"resource": "qualifiers", "fields": ["set", "qualifier"]}}
+        ]
       }
     },
     {
@@ -64,7 +115,10 @@
           {"name": "kind", "type": "string", "description": "The kind the key stands for."},
           {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, separated by ';'; may be empty."}
         ],
-        "primaryKey": ["set", "key"]
+        "primaryKey": ["set", "key"],
+        "foreignKeys": [
+          {"fields": ["set", "kind"], "reference": {"resource": "kinds", "fields": ["set", "kind"]}}
+        ]
       }
     },
     {
@@ -75,13 +129,13 @@
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
           {"name": "key", "type": "string", "description": "The key that fixes the value."},
-          {"name": "qualifier", "type": "string", "description": "A qualifier of the set's vocabulary, other than kind."},
+          {"name": "qualifier", "type": "string", "description": "A qualifier of the set."},
           {"name": "value", "type": "string", "description": "The value the key fixes."}
         ],
         "primaryKey": ["set", "key", "qualifier"],
         "foreignKeys": [
           {"fields": ["set", "key"], "reference": {"resource": "keys", "fields": ["set", "key"]}},
-          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "vocabulary", "fields": ["set", "qualifier", "value"]}}
+          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "qualifier_values", "fields": ["set", "qualifier", "value"]}}
         ]
       }
     },
@@ -97,7 +151,10 @@
           {"name": "key", "type": "string", "description": "The key required."},
           {"name": "requirement", "type": "string", "description": "required, recommended or optional."}
         ],
-        "primaryKey": ["set", "level", "location", "key"]
+        "primaryKey": ["set", "level", "location", "key"],
+        "foreignKeys": [
+          {"fields": ["set", "key"], "reference": {"resource": "keys", "fields": ["set", "key"]}}
+        ]
       }
     },
     {

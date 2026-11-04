@@ -16,9 +16,9 @@ KEY_COLUMNS = ("set", "source", "software_version_pattern", "level", "location",
 qualifier, ``requirement`` and ``entry_id`` follow."""
 
 
-def other_qualifiers(sources: SourceCatalogues, /) -> tuple[str, ...]:
-    """The set's qualifiers besides ``kind``, in vocabulary order."""
-    return tuple(name for name in sources.vocabulary.qualifiers if name != "kind")
+def qualifier_names(sources: SourceCatalogues, /) -> tuple[str, ...]:
+    """The set's qualifiers, in vocabulary order; the kind is a column of its own."""
+    return tuple(sources.vocabulary.qualifiers)
 
 
 def field_name(entry: SourceEntry, /) -> str:
@@ -48,8 +48,8 @@ def entry_row(
         "table": reference.table,
         "name": field_name(entry),
         "key": entry.key,
-        "kind": entry.qualifiers["kind"],
-        **{f"qualifier.{name}": entry.qualifiers[name] for name in other_qualifiers(sources)},
+        "kind": entry.kind,
+        **{f"qualifier.{name}": entry.qualifiers[name] for name in qualifier_names(sources)},
         "requirement": None if row is None else row.requirement,
         "entry_id": entry.entry_id,
     }
@@ -79,7 +79,7 @@ def schema(sources: SourceCatalogues, /) -> dict[str, type[pl.DataType]]:
         *KEY_COLUMNS,
         "key",
         "kind",
-        *(f"qualifier.{name}" for name in other_qualifiers(sources)),
+        *(f"qualifier.{name}" for name in qualifier_names(sources)),
     ]
     return dict.fromkeys((*columns, "requirement", "entry_id"), pl.String)
 

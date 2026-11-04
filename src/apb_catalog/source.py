@@ -83,13 +83,15 @@ class Evidence(FrozenModel):
 class SourceEntry(FrozenModel):
     """The reviewed meaning of one retained field for the listed software version patterns.
 
-    ``key`` is the set's access key whose kind and fixed qualifier values the entry carries.
+    ``kind`` is what the field is and ``qualifiers`` hold a value for every other qualifier of
+    the set; ``key`` is the set's access key whose kind and fixed values the entry carries.
     """
 
     entry_id: str
     software_version_pattern: tuple[str, ...]
     reference: Reference
     key: str
+    kind: str
     qualifiers: dict[str, str]
     evidence: Evidence
 
@@ -134,13 +136,13 @@ class Key(FrozenModel):
     fixed: dict[str, str] = Field(default_factory=dict)
     psi_ms: tuple[str, ...] = ()
 
-    def predicate(self) -> dict[str, tuple[str, ...]]:
-        """The qualifier values a request for this key accepts."""
-        return {"kind": (self.kind,), **{name: (value,) for name, value in self.fixed.items()}}
+    def accepted(self) -> dict[str, tuple[str, ...]]:
+        """The qualifier values a request for this key accepts, besides its kind."""
+        return {name: (value,) for name, value in self.fixed.items()}
 
-    def describes(self, qualifiers: Mapping[str, str], /) -> bool:
-        """Whether an entry with these qualifiers has this key."""
-        return qualifiers.get("kind") == self.kind and all(
+    def describes(self, kind: str, qualifiers: Mapping[str, str], /) -> bool:
+        """Whether an entry of this kind with these qualifiers has this key."""
+        return kind == self.kind and all(
             qualifiers.get(name) == value for name, value in self.fixed.items()
         )
 
@@ -428,22 +430,23 @@ def _check_keys(
     and have exactly the one key it records."""
     for found in keys:
         try:
-            vocabulary.check_predicate(found.predicate())
+            vocabulary.check_predicate(found.kind, found.accepted())
         except ValueError as error:
             raise ValueError(f"key {found.key!r}: {error}") from error
     for entry in entries:
         try:
-            vocabulary.check_description(entry.qualifiers)
+            vocabulary.check_description(entry.kind, entry.qualifiers)
         except ValueError as error:
             raise ValueError(f"{entry.entry_id}: {error}") from error
-        matching = key_of(keys, entry.qualifiers)
+        matching = key_of(keys, entry.kind, entry.qualifiers)
         if matching != [entry.key]:
             raise ValueError(f"{entry.entry_id} has the key {entry.key!r}; matches {matching}")
 
 
-def key_of(keys: Sequence[Key], qualifiers: Mapping[str, str], /) -> list[str]:
-    """The keys an entry with these qualifiers has: exactly one in a consistent set."""
-    return [found.key for found in keys if found.describes(qualifiers)]
+def key_of(keys: Sequence[Key], kind: str, qualifiers: Mapping[str, str], /) -> list[str]:
+    """The keys an entry of this kind with these qualifiers has: exactly one in a consistent
+    set."""
+    return [found.key for found in keys if found.describes(kind, qualifiers)]
 
 
 class CatalogueDescription(FrozenModel):
@@ -456,7 +459,10 @@ class CatalogueDescription(FrozenModel):
 TABLES = (
     "entries",
     "entry_qualifiers",
-    "vocabulary",
+    "sets",
+    "kinds",
+    "qualifiers",
+    "qualifier_values",
     "keys",
     "key_qualifiers",
     "requirements",
@@ -534,9 +540,9 @@ def _set_names(folder: Traversable, /) -> list[str]:
     """The sets a folder describes, in table order, after checking every row names one of them.
 
     Raises:
-        ValueError: A table has rows of a set that ``vocabulary.csv`` does not describe.
+        ValueError: A table has rows of a set that ``sets.csv`` does not describe.
     """
-    names = [row["set"] for row in _table(folder, "vocabulary") if not row["qualifier"]]
+    names = [row["set"] for row in _table(folder, "sets")]
     for table in TABLES:
         stray = sorted({row["set"] for row in _table(folder, table)} - set(names))
         if stray:
@@ -556,7 +562,9 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
     def rows(table: str) -> list[Row]:
         return [row for row in _table(folder, table) if row["set"] == name]
 
-    description, vocabulary = _vocabulary(name, rows("vocabulary"))
+    description, vocabulary = _vocabulary(
+        name, rows("sets"), rows("kinds"), rows("qualifiers"), rows("qualifier_values")
+    )
     keys = _keys(name, vocabulary, rows("keys"), rows("key_qualifiers"))
     qualifiers: dict[tuple[str, str], dict[str, str]] = {}
     for row in rows("entry_qualifiers"):
@@ -609,33 +617,49 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
     )
 
 
-def _vocabulary(name: str, rows: Sequence[Row]) -> tuple[CatalogueDescription, SetVocabulary]:
-    """A set's description and vocabulary from its rows: the set's, each qualifier's, and each
-    value's."""
-    heads = [row for row in rows if not row["qualifier"]]
-    if len(heads) != 1:
-        raise ValueError(f"vocabulary.csv has {len(heads)} rows describing the set {name!r}")
-    head = heads[0]
-    definitions = {
-        row["qualifier"]: row["definition"] for row in rows if row["qualifier"] and not row["value"]
-    }
-    values: dict[str, dict[str, str]] = {qualifier: {} for qualifier in definitions}
-    for row in rows:
-        if row["value"]:
-            if row["qualifier"] not in values:
-                raise ValueError(f"{name}: vocabulary.csv defines {row['value']!r} of no qualifier")
-            values[row["qualifier"]][row["value"]] = row["definition"]
-    description = CatalogueDescription(
-        purpose=head["purpose"], used_by=tuple(head["used_by"].split(";"))
-    )
+def _vocabulary(
+    name: str,
+    sets: Sequence[Row],
+    kinds: Sequence[Row],
+    qualifiers: Sequence[Row],
+    values: Sequence[Row],
+) -> tuple[CatalogueDescription, SetVocabulary]:
+    """A set's description and vocabulary from its row of ``sets.csv``, its kinds, its qualifiers
+    and their values.
+
+    Raises:
+        ValueError: ``sets.csv`` describes the set other than once, ``qualifiers.csv`` declares
+            ``kind``, or ``qualifier_values.csv`` defines a value of no qualifier.
+    """
+    if len(sets) != 1:
+        raise ValueError(f"sets.csv has {len(sets)} rows describing the set {name!r}")
+    head = sets[0]
+    definitions = {row["qualifier"]: row["definition"] for row in qualifiers}
+    if "kind" in definitions:
+        raise ValueError(f"{name}: qualifiers.csv declares 'kind'; kinds.csv holds the kinds")
+    defined: dict[str, dict[str, str]] = {qualifier: {} for qualifier in definitions}
+    for row in values:
+        if row["qualifier"] not in defined:
+            raise ValueError(
+                f"{name}: qualifier_values.csv defines {row['value']!r} of no qualifier"
+            )
+        defined[row["qualifier"]][row["value"]] = row["definition"]
+    description = _description(head)
     vocabulary = SetVocabulary(
         definition=head["definition"],
+        kind_definition=head["kind_definition"],
+        kinds={row["kind"]: row["definition"] for row in kinds},
         qualifiers={
-            qualifier: Qualifier(definition=definition, values=values[qualifier])
+            qualifier: Qualifier(definition=definition, values=defined[qualifier])
             for qualifier, definition in definitions.items()
         },
     )
     return description, vocabulary
+
+
+def _description(head: Row) -> CatalogueDescription:
+    """What a set holds and who uses it, from its ``sets.csv`` row."""
+    return CatalogueDescription(purpose=head["purpose"], used_by=tuple(head["used_by"].split(";")))
 
 
 def _keys(
@@ -670,7 +694,7 @@ def _keys(
         raise ValueError(f"{name}: key_qualifiers.csv qualifies no key {sorted(fixed)}")
     for found in keys:
         try:
-            vocabulary.check_predicate(found.predicate())
+            vocabulary.check_predicate(found.kind, found.accepted())
         except ValueError as error:
             raise ValueError(f"{name}: key {found.key!r}: {error}") from error
     return keys
@@ -693,8 +717,7 @@ def _entry(
         name=None if prefix is not None else named.name,
         prefix=prefix,
     )
-    described = {"kind": row["kind"], **qualifiers}
-    matching = key_of(keys, described)
+    matching = key_of(keys, row["kind"], qualifiers)
     if len(matching) != 1:
         raise ValueError(f"{row['entry_id']}: matches the keys {matching}, not exactly one")
     return SourceEntry(
@@ -702,7 +725,8 @@ def _entry(
         software_version_pattern=version_patterns(named.source, named.version),
         reference=reference,
         key=matching[0],
-        qualifiers=described,
+        kind=row["kind"],
+        qualifiers=dict(qualifiers),
         evidence=Evidence(basis=row["basis"], source=row["evidence_url"] or None),
     )
 
@@ -733,11 +757,8 @@ def _vendors(
 @cache
 def packaged_descriptions() -> dict[str, CatalogueDescription]:
     """Return every packaged catalogue set's description, by set name."""
-    rows = _table(_data(), "vocabulary")
-    return {
-        name: _vocabulary(name, [row for row in rows if row["set"] == name])[0]
-        for name in _set_names(_data())
-    }
+    heads = {row["set"]: row for row in _table(_data(), "sets")}
+    return {name: _description(heads[name]) for name in _set_names(_data())}
 
 
 @cache

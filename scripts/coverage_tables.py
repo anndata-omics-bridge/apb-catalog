@@ -64,18 +64,17 @@ def _version_key(label: str) -> tuple[int, ...]:
 
 
 class Vocabulary:
-    """The order and wording a set's vocabulary gives its qualifiers and values."""
+    """The order and wording a set's vocabulary gives its kinds, qualifiers and values."""
 
     def __init__(self, sources: SourceCatalogues) -> None:
+        self._kinds = sources.vocabulary.kinds
         self._qualifiers = sources.vocabulary.qualifiers
         self._keys = [found.key for found in sources.keys]
         self._fixed = {found.key: found.fixed for found in sources.keys}
 
     def meaning_qualifiers(self) -> tuple[str, ...]:
-        """The qualifiers besides ``kind`` that choose a meaning, in vocabulary order."""
-        return tuple(
-            name for name in self._qualifiers if name != "kind" and name not in VALUE_QUALIFIERS
-        )
+        """The qualifiers that choose a meaning, in vocabulary order."""
+        return tuple(name for name in self._qualifiers if name not in VALUE_QUALIFIERS)
 
     def open_qualifiers(self, key: str) -> tuple[str, ...]:
         """The meaning qualifiers a key leaves open, in vocabulary order."""
@@ -94,28 +93,40 @@ class Vocabulary:
         """A key's position in the set's keys table."""
         return self._keys.index(key)
 
-    def table(self, used: dict[str, set[str]]) -> str:
-        """Every qualifier value the set's fields use, with its meaning."""
-        rows: list[list[str]] = []
+    def table(self, used: Used) -> str:
+        """Every kind and qualifier value the set's fields use, with its meaning: the kinds
+        first, as the rows of ``kind``."""
+        rows = _value_rows("kind", self._kinds, used.kinds)
         for name, qualifier in self._qualifiers.items():
-            meanings = {**qualifier.values, UNKNOWN: "The evidence does not establish it."}
-            rows += [
-                [_code(name), _code(value), text]
-                for value, text in meanings.items()
-                if value in used.get(name, set())
-            ]
+            rows += _value_rows(name, qualifier.values, used.values.get(name, set()))
         return _table(["Qualifier", "Value", "Meaning"], rows)
 
 
-def _used_values(sources: SourceCatalogues) -> dict[str, set[str]]:
-    used: dict[str, set[str]] = {}
+def _value_rows(name: str, values: dict[str, str], used: set[str]) -> list[list[str]]:
+    meanings = {**values, UNKNOWN: "The evidence does not establish it."}
+    return [[_code(name), _code(value), text] for value, text in meanings.items() if value in used]
+
+
+@dataclass(frozen=True)
+class Used:
+    """The kinds and qualifier values a set's entries and requirements use."""
+
+    kinds: set[str]
+    values: dict[str, set[str]]
+
+
+def _used_values(sources: SourceCatalogues) -> Used:
+    used = Used(kinds=set(), values={})
     for source in sources.sources():
         for entry in source.entries:
+            used.kinds.add(entry.kind)
             for name, value in entry.qualifiers.items():
-                used.setdefault(name, set()).add(value)
+                used.values.setdefault(name, set()).add(value)
     for row in sources.requirements:
-        for name, (value,) in sources.key(row.key).predicate().items():
-            used.setdefault(name, set()).add(value)
+        found = sources.key(row.key)
+        used.kinds.add(found.kind)
+        for name, value in found.fixed.items():
+            used.values.setdefault(name, set()).add(value)
     return used
 
 

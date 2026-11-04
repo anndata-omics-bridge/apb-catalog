@@ -1,0 +1,5 @@
+set,qualifier,value,definition
+toy,origin,vendor,The vendor's export.
+toy,origin,apb2,APB2's canonical columns.
+toy,origin,apb_fasta,"apb-fasta, after it has run."
+toy,origin,unknown,The reviewer could not establish this.
