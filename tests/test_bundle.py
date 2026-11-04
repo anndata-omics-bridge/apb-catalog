@@ -57,7 +57,7 @@ def test_the_manifest_lists_every_file_each_bundle_holds(bundles: tuple[Path, Pa
     for folder in bundles:
         manifest = _object(folder / "manifest.json")
         assert manifest["files"] == _held(folder)
-        assert manifest["bundle_format"] == 3
+        assert manifest["bundle_format"] == 4
 
 
 def test_the_bundle_holds_only_what_a_lookup_reads(bundle: Path, test_bundle: Path) -> None:

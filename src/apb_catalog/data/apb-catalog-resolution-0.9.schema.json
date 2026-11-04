@@ -313,9 +313,9 @@
     },
     "Requirement": {
       "enum": [
-        "MUST",
-        "SHOULD",
-        "MAY"
+        "required",
+        "recommended",
+        "optional"
       ],
       "type": "string"
     },
@@ -543,8 +543,8 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.8",
-      "default": "0.8",
+      "const": "0.9",
+      "default": "0.9",
       "title": "Contract Version",
       "type": "string"
     },

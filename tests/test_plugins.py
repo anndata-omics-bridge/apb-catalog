@@ -34,7 +34,7 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
 
 
 def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> None:
-    """DIA-NN supplies every MUST field; FragPipe names no protein group; a set with vendor
+    """DIA-NN supplies every required field; FragPipe names no protein group; a set with vendor
     entries reviews every packaged rule level, so a vendor it catalogues nothing of fails."""
     judged = (
         rule_coverage(toy_set)

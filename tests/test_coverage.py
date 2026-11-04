@@ -24,9 +24,9 @@ DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 PATTERN = "^2\\..*"
 ION = RuleVariant(level="peptidoform_ion", software_version_pattern=PATTERN)
 REQUIRED = (
-    RequirementRow(level="peptidoform_ion", location="var", key="group", requirement="MUST"),
-    RequirementRow(level="peptidoform_ion", location="var", key="charge", requirement="MUST"),
-    RequirementRow(level="peptidoform_ion", location="var", key="decoy", requirement="MAY"),
+    RequirementRow(level="peptidoform_ion", location="var", key="group", requirement="required"),
+    RequirementRow(level="peptidoform_ion", location="var", key="charge", requirement="required"),
+    RequirementRow(level="peptidoform_ion", location="var", key="decoy", requirement="optional"),
 )
 KEYS = tuple(
     Key(key=kind, kind=kind) for kind in ("group", "charge", "decoy", "contaminant", "peptidoform")
@@ -96,9 +96,9 @@ DECOY = _entry("apb_Decoy", "decoy")
 
 @pytest.mark.parametrize(
     ("entries", "verdict"),
-    [((GROUP,), "fail"), ((GROUP, CHARGE), "warn"), ((GROUP, CHARGE, DECOY), "pass")],
+    [((GROUP,), "fail"), ((GROUP, CHARGE), "pass"), ((GROUP, CHARGE, DECOY), "pass")],
 )
-def test_a_missing_must_fails_and_a_missing_may_warns(
+def test_a_missing_required_field_fails_and_a_missing_optional_one_passes(
     entries: tuple[SourceEntry, ...], verdict: str
 ) -> None:
     """The level verdict follows the strongest requirement it misses."""
@@ -110,7 +110,18 @@ def test_a_missing_must_fails_and_a_missing_may_warns(
 def test_unsupported_fields_name_their_requirement_and_no_column() -> None:
     """A required field nothing answers is a row of its own, with no column."""
     missing = coverage_of(_sources(GROUP)).filter(pl.col("column").is_null())
-    assert missing.select("kind", "requirement").rows() == [("charge", "MUST"), ("decoy", "MAY")]
+    assert missing.select("kind", "requirement").rows() == [
+        ("charge", "required"),
+        ("decoy", "optional"),
+    ]
+
+
+def test_a_missing_optional_field_passes_and_is_still_listed() -> None:
+    """An optional field nothing answers leaves the level passing, as a row with no column."""
+    coverage = coverage_of(_sources(GROUP, CHARGE))
+    assert set(coverage.get_column("verdict")) == {"pass"}
+    missing = coverage.filter(pl.col("column").is_null())
+    assert missing.select("kind", "requirement").rows() == [("decoy", "optional")]
 
 
 def test_an_app_field_counts_on_every_level_of_every_software() -> None:
@@ -141,17 +152,17 @@ def test_requirements_must_name_the_sets_keys() -> None:
         variants=(ION,),
         entries=(GROUP,),
     )
-    row = RequirementRow(level="peptidoform_ion", location="var", key="fdr", requirement="MUST")
+    row = RequirementRow(level="peptidoform_ion", location="var", key="fdr", requirement="required")
     with pytest.raises(ValueError, match="unknown key 'fdr'"):
         SourceCatalogues(VOCABULARY, "test", (vendor,), DESCRIPTION, (), (), (row,), KEYS)
 
 
 def test_a_requirement_row_matches_its_key() -> None:
-    """The abundance set's SHOULD asks for an un-normalized intensity, not any intensity."""
+    """The abundance set's recommended row asks for an un-normalized intensity, not any intensity."""
     coverage = rule_coverage("abundance").filter(pl.col("software") == "FragPipe")
     missing = coverage.filter(pl.col("column").is_null())
     assert missing.select("key", "kind", "qualifiers", "requirement").rows() == [
-        ("intensity", "intensity", "normalization=none", "SHOULD")
+        ("intensity", "intensity", "normalization=none", "recommended")
     ]
     assert "intensity_unknown_normalization" in coverage.get_column("key").to_list()
     assert set(coverage.get_column("verdict")) == {"warn"}

@@ -46,7 +46,7 @@ from apb_catalog.table import entry_row
 METADATA_KEY = "catalog"
 _LOG = logging.getLogger("apb_catalog")
 
-type Enforce = Literal["MUST", "SHOULD"] | None
+type Enforce = Literal["required", "recommended"] | None
 
 
 class MissingRequiredField(LookupError):
@@ -189,12 +189,12 @@ class _Lookups:
             if resolution.status == "missing" and self.enforce is not None
             else None
         )
-        if row is None or row.requirement == "MAY":
+        if row is None or row.requirement == "optional":
             self.record(resolution)
             return resolution
         resolution = resolution.model_copy(update={"requirement": row.requirement})
         self.record(resolution)
-        if row.requirement == "MUST" or self.enforce == "SHOULD":
+        if row.requirement == "required" or self.enforce == "recommended":
             raise MissingRequiredField(resolution, row)
         _LOG.warning(str(MissingRequiredField(resolution, row)))
         return resolution
@@ -659,8 +659,8 @@ def _with_level_summary(
 ) -> dict[str, JsonValue]:
     """One level's metadata with its count of resolved, missing and unresolved requests.
 
-    A missing field the lookup required but did not raise for, a SHOULD field under
-    ``enforce="MUST"``, needs attention. A level the snapshot answered no request for keeps its
+    A missing field the lookup required but did not raise for, a recommended field under
+    ``enforce="required"``, needs attention. A level the snapshot answered no request for keeps its
     metadata unchanged.
     """
     answered = [

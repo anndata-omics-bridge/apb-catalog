@@ -175,15 +175,18 @@ def test_catalog_levels_hold_names() -> None:
         apb.layers["peptide"]
 
 
-def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCaptureFixture) -> None:
+def test_enforce_required_warns_for_a_missing_recommended_field(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     """PEAKS has no un-normalized intensity: a warning, a summary entry, and no exception."""
     parsed = _result("peaks/rules.json", ["Normalized_Area"])
-    catalog = DataCatalog(parsed, "abundance", enforce="MUST")
+    catalog = DataCatalog(parsed, "abundance", enforce="required")
     with caplog.at_level(logging.WARNING, logger="apb_catalog"):
         found = catalog.levels["peptidoform_ion"].layers.get("intensity")
     assert found is None
-    assert "SHOULD field intensity (kind=intensity, normalization=none) on peptidoform_ion" in (
-        caplog.text
+    assert (
+        "recommended field intensity (kind=intensity, normalization=none) on peptidoform_ion"
+        in (caplog.text)
     )
     attached = attach_snapshot(parsed, catalog.snapshot())
     records = cast(dict[str, Any], attached.levels["peptidoform_ion"].metadata[METADATA_KEY])
@@ -197,21 +200,21 @@ def test_enforce_must_warns_for_a_missing_should_field(caplog: pytest.LogCapture
     )
 
 
-def test_enforce_should_raises_for_a_missing_should_field() -> None:
-    """``enforce="SHOULD"`` makes SHOULD fields binding too."""
+def test_enforce_recommended_raises_for_a_missing_recommended_field() -> None:
+    """``enforce="recommended"`` makes recommended fields binding too."""
     catalog = DataCatalog(
-        _result("peaks/rules.json", ["Normalized_Area"]), "abundance", enforce="SHOULD"
+        _result("peaks/rules.json", ["Normalized_Area"]), "abundance", enforce="recommended"
     )
-    with pytest.raises(MissingRequiredField, match="SHOULD field"):
+    with pytest.raises(MissingRequiredField, match="recommended field"):
         catalog.levels["peptidoform_ion"].layers.get("intensity")
 
 
-def test_enforce_raises_for_a_missing_must_field() -> None:
-    """A peptidoform-ion level without ``ProForma_peptide`` misses a MUST field of the apb set."""
+def test_enforce_raises_for_a_missing_required_field() -> None:
+    """A peptidoform-ion level without ``ProForma_peptide`` misses a required field of the apb set."""
     catalog = DataCatalog(
-        _result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb", enforce="MUST"
+        _result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb", enforce="required"
     )
-    with pytest.raises(MissingRequiredField, match=r"MUST field peptide \(kind=peptide\)"):
+    with pytest.raises(MissingRequiredField, match=r"required field peptide \(kind=peptide\)"):
         catalog.levels["peptidoform_ion"].var.get("peptide")
     assert (
         DataCatalog(_result("diann/v2/rules.json", ["Precursor_Normalised"]), "apb")
@@ -224,11 +227,11 @@ def test_enforce_raises_for_a_missing_must_field() -> None:
 def test_enforce_needs_requirements() -> None:
     """A set without requirement rows has nothing to enforce; a data catalog composes apb's."""
     with pytest.raises(ValueError, match="sets no requirements"):
-        Catalog("PEAKS", "13", "confidence", enforce="MUST")
+        Catalog("PEAKS", "13", "confidence", enforce="required")
     composed = DataCatalog(
-        _result("peaks/rules.json", ["Normalized_Area"]), "confidence", enforce="MUST"
+        _result("peaks/rules.json", ["Normalized_Area"]), "confidence", enforce="required"
     )
-    with pytest.raises(MissingRequiredField, match="MUST field peptide"):
+    with pytest.raises(MissingRequiredField, match="required field peptide"):
         composed.levels["peptidoform_ion"].var.get("peptide")
 
 

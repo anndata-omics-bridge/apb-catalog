@@ -26,7 +26,7 @@ from apb_catalog.rules import (
 )
 from apb_catalog.vocabulary import FrozenModel, Qualifier, SetVocabulary
 
-type Requirement = Literal["MUST", "SHOULD", "MAY"]
+type Requirement = Literal["required", "recommended", "optional"]
 type Convention = Literal["sdrf", "prolfquapp"]
 
 READS: dict[Location, tuple[Location, ...]] = {

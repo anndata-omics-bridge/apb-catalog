@@ -56,7 +56,7 @@ from apb_catalog.table import KEY_COLUMNS, schema, set_rows
 
 NAME = "apb-catalog-bundle"
 TEST_NAME = "apb-catalog-test-bundle"
-BUNDLE_FORMAT = 3
+BUNDLE_FORMAT = 4
 """Raised when a reader of the previous format could not read the bundle."""
 
 
@@ -485,7 +485,7 @@ def data_catalog_cases(
         levels = list(parsed.levels)
         for name, sources in sets.items():
             enforced: tuple[Enforce, ...] = (
-                (None, "MUST", "SHOULD") if sources.requirements else (None,)
+                (None, "required", "recommended") if sources.requirements else (None,)
             )
             for enforce in enforced:
                 catalog = DataCatalog(parsed, name, enforce=enforce)

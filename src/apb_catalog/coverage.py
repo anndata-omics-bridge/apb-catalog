@@ -1,8 +1,8 @@
 """Which catalogued fields every packaged rule supplies, and whether each level meets its set.
 
-A set with requirements judges each rule level: ``fail`` when a MUST field is unsupported,
-``warn`` when a SHOULD or MAY field is, ``pass`` otherwise. A set without requirements reports
-coverage only. Fields an app such as apb-fasta adds after conversion count on every level, with
+A set with requirements judges each rule level: ``fail`` when a required field is unsupported,
+``warn`` when a recommended one is, ``pass`` otherwise; an unsupported optional field is listed
+but passes. A set without requirements reports coverage only. Fields an app such as apb-fasta adds after conversion count on every level, with
 what to run.
 """
 
@@ -53,7 +53,7 @@ CATALOGUES_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "entries": pl.UInt32,
 }
 
-_SEVERITY: dict[str, Verdict] = {"MUST": "fail", "SHOULD": "warn", "MAY": "warn"}
+_SEVERITY: dict[str, Verdict] = {"required": "fail", "recommended": "warn", "optional": "pass"}
 
 
 def catalogues() -> pl.DataFrame:
@@ -176,7 +176,7 @@ def _verdict(requirements: list[str]) -> Verdict:
     severities = {_SEVERITY[requirement] for requirement in requirements}
     if "fail" in severities:
         return "fail"
-    return "warn" if severities else "pass"
+    return "warn" if "warn" in severities else "pass"
 
 
 def _field(entry: SourceEntry, producer: ProducerCatalogue | None) -> dict[str, object]:

@@ -34,7 +34,7 @@ def overview() -> int:
 
 @app.command
 def check(catalogue: str, software: str | None = None, /) -> int:
-    """Check every packaged rule level against CATALOGUE; exit 1 when one misses a MUST field.
+    """Check every packaged rule level against CATALOGUE; exit 1 when one misses a required field.
 
     Each line is FAIL, WARN or PASS with the rule level and its unsupported fields; levels the
     catalogue sets no requirements for are left out, and a catalogue without any requirements
