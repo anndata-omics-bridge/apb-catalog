@@ -18,6 +18,7 @@ With pandas, on the MuData or AnnData object APB2 wrote, the same keys return An
 | [Catalogues](catalogues.md) | Every set: its vocabulary, which software has which field |
 | [Python API](api.md) | Every call, answer, table and command |
 | [Maintaining](maintaining.md) | APB2 rule changes, new sets, the checks |
+| [Contributing](contributing.md) | Extend a catalog, or create your own |
 
 ## Catalogue or rule role?
 

@@ -32,6 +32,7 @@ nav:
   - Catalogues: catalogues.md
   - Python API: api.md
   - Maintaining: maintaining.md
+  - Contributing: contributing.md
 
 extra_css:
   - stylesheets/extra.css

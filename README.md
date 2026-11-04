@@ -7,12 +7,15 @@ APB Catalog finds APB result fields by reviewed meaning, so a consumer asks for 
 
 Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/)
 
+Catalog viewer: [fgcz-ms.uzh.ch/public/apb-catalog](https://fgcz-ms.uzh.ch/public/apb-catalog/), every catalogue set with its entries, requirements and coverage, in the browser.
+
 | Page | For |
 | --- | --- |
 | [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/) | Install, look up fields, use the data |
 | [Catalogues](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) | Every set: its vocabulary, which software has which field |
 | [Python API](https://anndata-omics-bridge.github.io/apb-catalog/api/) | Every call, answer, table and command |
 | [Maintaining](https://anndata-omics-bridge.github.io/apb-catalog/maintaining/) | APB2 rule changes, new sets, the checks |
+| [Contributing](https://anndata-omics-bridge.github.io/apb-catalog/contributing/) | Extend a catalog, or create your own |
 
 ## Install
 

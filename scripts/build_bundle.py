@@ -204,14 +204,15 @@ def synthetic_level(
     obs: dict[str, list[object]] = {
         key: [f"S{i}" for i in range(SAMPLES)] for key in axis["obs_keys"]
     }
+    # A computed entry has no type in the stored rule: its value is text.
     for column in columns.get("obs", []):
-        obs.setdefault(str(column["name"]), _values(str(column["type"]), SAMPLES))
+        obs.setdefault(str(column["name"]), _values(str(column.get("type", "string")), SAMPLES))
     obs |= {name: list(values) for name, values in (obs_extra or {}).items()}
     var: dict[str, list[object]] = {
         key: [f"F{i}" for i in range(FEATURES)] for key in axis["var_keys"]
     }
     for column in columns.get("var", []):
-        var.setdefault(str(column["name"]), _values(str(column["type"]), FEATURES))
+        var.setdefault(str(column["name"]), _values(str(column.get("type", "string")), FEATURES))
     abundance: dict[str, pl.DataFrame] = {}
     auxiliary: dict[str, pl.DataFrame] = {}
     measurements = cast(dict[str, list[dict[str, JsonValue]]], declared["measurements"])
