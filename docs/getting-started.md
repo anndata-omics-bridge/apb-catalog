@@ -114,7 +114,15 @@ ion.var.get("library_q_value").name  # 'Lib_Q_Value'
 
 `get` returns `None` where `[...]` raises `KeyError`, and takes the qualifiers a key leaves open, as `ion.layers.get("retention_time", unit="minute")` with the `chromatography` set.
 
-A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray's `ds.cf[...]` does. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns, `obs["group"]` raises `UnresolvedField` and the list `obs[["group"]]` reads them all.
+A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray's `ds.cf[...]` does. A vendor may name a column as a key is named, so a prefix makes the lookup exact:
+
+| Name | Answered by | Nothing answers |
+| --- | --- | --- |
+| `q_value` | a key of the composed sets, else the level's own field of that name | `get` gives `None`, `[...]` raises `KeyError` |
+| `c:q_value` | the set whose prefix is `c`, confidence, alone; never a field of that name | the same |
+| `v:Q_Value` | the level's own field of that name alone; never the catalog | the same |
+
+`catalogues()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns, `obs["group"]` raises `UnresolvedField` and the list `obs[["group"]]` reads them all.
 
 ## Read the AnnData object with pandas
 
@@ -158,7 +166,7 @@ A qualifier the key leaves open is a keyword of `get` and `name`; [Catalogues](c
 | --- | --- | --- |
 | `chromatography` | `layers.get("retention_time", unit="minute")` | DIA-NN `RT` |
 | `chromatography` | `layers.get("retention_time", unit="second")` | DIA-NN `None`: its RT is in minutes |
-| `chromatography` | `layers.get("aligned_retention_time")` | MaxQuant `Calibrated_Retention_Time` |
+| `chromatography` | `layers.get("aligned_retention_time")` | MaxQuant `Calibrated_retention_time` |
 
 - A keyword the key already fixes, such as `stage` with `q_value`, raises `ValueError`
 - `[...]` takes no keywords

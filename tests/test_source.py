@@ -114,9 +114,9 @@ ABUNDANCE_LEFT_OUT = {
     ("protein", "Genes_MaxLFQ"),
     # One entry per key: AlphaPept's MS1 sum over the peak area is its intensity; the apex and
     # maximum variants stay readable by name.
-    ("peptidoform_ion", "MS1_Int_Sum_Apex"),
-    ("peptidoform_ion", "MS1_Int_Max_Area"),
-    ("peptidoform_ion", "MS1_Int_Max_Apex"),
+    ("peptidoform_ion", "ms1_int_sum_apex"),
+    ("peptidoform_ion", "ms1_int_max_area"),
+    ("peptidoform_ion", "ms1_int_max_apex"),
     # Spectronaut's fragment peak area is its intensity; the peak height stays readable by name.
     ("peptidoform_fragment", "F_PeakHeight"),
     # Spectronaut's elution-group quantities under the run's settings are not the precursor's own

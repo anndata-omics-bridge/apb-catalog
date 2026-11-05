@@ -225,6 +225,16 @@ class _Lookups:
             raise UnresolvedField(resolution)
         return tuple(candidate.reference for candidate in resolution.candidates)
 
+    def alone(self) -> Lookup:
+        """How this set alone answers keys, as a name with its prefix asks it."""
+        return Lookup(
+            field=self.find,
+            fields=self.find_all,
+            offered=lambda level, location: self.keys(level, location, {}),
+            known=frozenset(found.key for found in self.catalogues.keys),
+            sets={},
+        )
+
     def keys(
         self, level: str, location: Location, qualifiers: Mapping[str, str]
     ) -> tuple[str, ...]:
@@ -324,6 +334,7 @@ class Catalog:
             fields=self._lookups.find_all,
             offered=self._offered,
             known=frozenset(found.key for found in catalogues.keys),
+            sets={catalogues.vocabulary.prefix: self._lookups.alone()},
         )
         self.levels = {name: LevelNames(name, lookup) for name in views}
 
@@ -395,7 +406,16 @@ class ComposedSets:
 
     def lookup(self) -> Lookup:
         """How the levels answer keys."""
-        return Lookup(field=self.find, fields=self.find_all, offered=self.offered, known=self.known)
+        return Lookup(
+            field=self.find,
+            fields=self.find_all,
+            offered=self.offered,
+            known=self.known,
+            sets={
+                lookups.catalogues.vocabulary.prefix: lookups.alone()
+                for lookups in self.sets.values()
+            },
+        )
 
     def first(self) -> _Lookups:
         return next(iter(self.sets.values()))

@@ -169,14 +169,14 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `none` | AlphaPept | 0.5 | `MS1_Int_Sum_Area` | peptidoform_ion |
+| layers | `none` | AlphaPept | 0.5 | `ms1_int_sum_area` | peptidoform_ion |
 |  |  | DIA-NN | 1.0–1.7 | `Fragment_Quant_Raw` | peptidoform_fragment |
 |  |  | DIA-NN | 1.0–1.7 | `PG_Quantity` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Quantity` | peptidoform_ion |
 |  |  | DIA-NN | 1.8–1.9 | `Fragment_Quant_Raw` | peptidoform_fragment |
 |  |  | DIA-NN | 1.8–1.9 | `PG_Quantity` | protein |
 |  |  | MaxQuant | 1.5, 1.6, 2.x | `Intensity` | protein, peptide, peptidoform, peptidoform_ion |
-|  |  | MSAngel | 2.x | `Raw_Abundance` | peptidoform_ion |
+|  |  | MSAngel | 2.x | `raw_abundance` | peptidoform_ion |
 |  |  | Spectronaut | 15 | `FG_MS2RawQuantity` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `F_PeakArea` | peptidoform_fragment |
 
@@ -184,23 +184,23 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | AlphaPept | 0.5 | `Intensity` | peptidoform_ion |
+| layers | `run_setting` | AlphaPept | 0.5 | `ms1_int_sum_apex_dn` | peptidoform_ion |
 |  |  | DIA-NN | 1.0–1.7 | `PG_Normalised` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Precursor_Normalised` | peptidoform_ion |
 |  |  | DIA-NN | 1.8–1.9 | `PG_Normalised` | protein |
-|  |  | MSAngel | 2.x | `Abundance` | peptidoform_ion |
+|  |  | MSAngel | 2.x | `abundance` | peptidoform_ion |
 |  |  | PEAKS | 13 | `Normalized_Area` | peptidoform_ion |
-|  |  | ProlineStudio | 2.x | `Abundance` | peptidoform_ion |
+|  |  | ProlineStudio | 2.x | `abundance` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `FG_Quantity` | peptidoform_ion |
-|  |  | WOMBAT-P | 0.9.11 | `Abundance` | peptidoform, peptidoform_ion |
+|  |  | WOMBAT-P | 0.9.11 | `abundance` | peptidoform, peptidoform_ion |
 
 **`intensity_unknown_normalization`**
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `unknown` | FragPipe | 22–23 | `Intensity` | peptidoform_ion |
-|  |  | i2MassChroQ | 1.x | `Intensity` | peptidoform_ion |
-|  |  | MetaMorpheus | 1.x | `Intensity` | peptidoform_ion |
+|  |  | i2MassChroQ | 1.x | `area` | peptidoform_ion |
+|  |  | MetaMorpheus | 1.x | `Peak_intensity` | peptidoform_ion |
 |  |  | pb_custom | any | `Intensity` | peptidoform_ion |
 |  |  | quantms | 1.x | `Intensity` | peptidoform_ion |
 |  |  | Sage | 0.x | `Intensity` | peptidoform, peptidoform_ion |
@@ -224,16 +224,16 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `run_setting` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `PG_MaxLFQ` | protein |
-|  |  | MaxQuant | 1.5, 1.6, 2.x | `LFQ_Intensity` | protein, peptide |
+|  |  | MaxQuant | 1.5, 1.6, 2.x | `LFQ_intensity` | protein, peptide |
 
 **`directlfq`**
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
 | layers | `run_setting` | AlphaDIA | 1.10 | `Intensity` | peptidoform_ion |
-|  |  | AlphaDIA | 1.12 | `Intensity` | peptidoform_ion |
-|  |  | AlphaDIA | 2.x | `PG_Intensity` | protein |
-|  |  | AlphaDIA | 2.x | `Precursor_Intensity` | peptidoform_ion |
+|  |  | AlphaDIA | 1.12 | `intensity` | peptidoform_ion |
+|  |  | AlphaDIA | 2.x | `pg_intensity` | protein |
+|  |  | AlphaDIA | 2.x | `precursor_intensity` | peptidoform_ion |
 
 **`ibaq`**
 
@@ -245,13 +245,13 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `none` | MSAngel | 2.x | `Raw_Abundance` | protein |
+| layers | `none` | MSAngel | 2.x | `raw_abundance` | protein |
 
 **`normalized_unknown`**
 
 | Location | Normalization | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `run_setting` | MSAngel | 2.x | `Abundance` | protein |
+| layers | `run_setting` | MSAngel | 2.x | `abundance` | protein |
 |  |  | Spectronaut | 15, 19–20, 21 | `PG_Quantity` | protein |
 
 <!-- end of generated block: abundance -->
@@ -568,24 +568,24 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- |
-| var | AlphaDIA | 1.10 | `Genes` | peptidoform_ion |
-|  | AlphaDIA | 1.12 | `Proteins` | peptidoform_ion |
-|  | AlphaDIA | 2.x | `Protein_Group` | protein, peptidoform_ion |
-|  | AlphaPept | 0.5 | `Protein_Group` | peptidoform_ion |
+| var | AlphaDIA | 1.10 | `genes` | peptidoform_ion |
+|  | AlphaDIA | 1.12 | `proteins` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `pg_name` | protein, peptidoform_ion |
+|  | AlphaPept | 0.5 | `protein_group` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7 | `Protein_Group` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Group` | protein, peptidoform_ion |
 |  | DIA-NN | 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `Protein` | peptidoform_ion |
-|  | i2MassChroQ | 1.x | `Proteins` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `proteins` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `Protein_IDs` | protein, peptide, peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `Proteins` | peptidoform |
-|  | MetaMorpheus | 1.x | `Proteins` | peptidoform_ion |
-|  | MSAngel | 2.x | `Same_Set_Proteins` | protein, peptidoform_ion |
+|  | MetaMorpheus | 1.x | `Protein_Group` | peptidoform_ion |
+|  | MSAngel | 2.x | `samesets_accessions` | protein, peptidoform_ion |
 |  | pb_custom | any | `Proteins` | peptidoform_ion |
 |  | PEAKS | 13 | `Accession` | peptidoform_ion |
-|  | ProlineStudio | 2.x | `Same_Set_Proteins` | peptidoform_ion |
-|  | quantms | 1.x | `Protein` | peptidoform_ion |
-|  | Sage | 0.x | `Proteins` | peptidoform, peptidoform_ion |
+|  | ProlineStudio | 2.x | `samesets_accessions` | peptidoform_ion |
+|  | quantms | 1.x | `ProteinName` | peptidoform_ion |
+|  | Sage | 0.x | `proteins` | peptidoform, peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `PG_ProteinGroups` | protein, peptidoform_ion, peptidoform_fragment |
 |  | WOMBAT-P | 0.9.11 | `protein_group` | peptidoform, peptidoform_ion |
 
@@ -593,26 +593,26 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- |
-| var | AlphaDIA | 1.10 | `Genes` | peptidoform_ion |
-|  | AlphaDIA | 1.12 | `Proteins` | peptidoform_ion |
-|  | AlphaDIA | 2.x | `Protein_Group` | protein |
-|  | AlphaDIA | 2.x | `Proteins` | peptidoform_ion |
-|  | AlphaPept | 0.5 | `Protein_Group` | peptidoform_ion |
+| var | AlphaDIA | 1.10 | `genes` | peptidoform_ion |
+|  | AlphaDIA | 1.12 | `proteins` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `pg_name` | protein |
+|  | AlphaDIA | 2.x | `pg_proteins` | peptidoform_ion |
+|  | AlphaPept | 0.5 | `protein_group` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7 | `Protein_Group` | peptidoform_fragment |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Group` | protein |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Protein_Ids` | peptidoform_ion |
 |  | DIA-NN | 1.8–1.9 | `Protein_Group` | peptidoform_fragment |
 |  | FragPipe | 22–23 | `Protein` | peptidoform_ion |
-|  | i2MassChroQ | 1.x | `Proteins` | peptidoform_ion |
+|  | i2MassChroQ | 1.x | `proteins` | peptidoform_ion |
 |  | MaxQuant | 1.5, 1.6, 2.x | `Protein_IDs` | protein |
 |  | MaxQuant | 1.5, 1.6, 2.x | `Proteins` | peptide, peptidoform, peptidoform_ion |
-|  | MetaMorpheus | 1.x | `Proteins` | peptidoform_ion |
+|  | MetaMorpheus | 1.x | `Protein_Group` | peptidoform_ion |
 |  | MSAngel | 2.x | `Proteins` | protein, peptidoform_ion |
 |  | pb_custom | any | `Proteins` | peptidoform_ion |
 |  | PEAKS | 13 | `Accession` | peptidoform_ion |
 |  | ProlineStudio | 2.x | `Proteins` | peptidoform_ion |
-|  | quantms | 1.x | `Protein` | peptidoform_ion |
-|  | Sage | 0.x | `Proteins` | peptidoform, peptidoform_ion |
+|  | quantms | 1.x | `ProteinName` | peptidoform_ion |
+|  | Sage | 0.x | `proteins` | peptidoform, peptidoform_ion |
 |  | Spectronaut | 15 | `PG_ProteinGroups` | protein, peptidoform_ion, peptidoform_fragment |
 |  | Spectronaut | 19–20 | `PG_ProteinAccessions` | protein, peptidoform_ion, peptidoform_fragment |
 |  | Spectronaut | 21 | `PG_ProteinAccessions` | protein, peptidoform_ion, peptidoform_fragment |
@@ -859,42 +859,42 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12 | `RT_Observed` | `second` | peptidoform_ion |
-|  | AlphaDIA | 2.x | `RT_Observed` | `second` | peptidoform_ion |
-|  | AlphaPept | 0.5 | `Retention_Time` | `unknown` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `rt_observed` | `second` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `precursor_rt_observed` | `second` | peptidoform_ion |
+|  | AlphaPept | 0.5 | `rt` | `unknown` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `RT` | `minute` | peptidoform_ion |
 |  | FragPipe | 22–23 | `Apex_Retention_Time` | `unknown` | peptidoform_ion |
-|  | MaxQuant | 1.5, 1.6, 2.x | `Retention_Time` | `minute` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Retention_time` | `minute` | peptidoform_ion |
 |  | MetaMorpheus | 1.x | `Peak_RT_Apex` | `minute` | peptidoform_ion |
-|  | MSAngel | 2.x | `Elution_Time` | `minute` | peptidoform_ion |
-|  | PEAKS | 13 | `Sample_RT_Mean` | `minute` | peptidoform_ion |
-|  | ProlineStudio | 2.x | `Elution_Time` | `minute` | peptidoform_ion |
+|  | MSAngel | 2.x | `elution_time` | `minute` | peptidoform_ion |
+|  | PEAKS | 13 | `RT_mean` | `minute` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `elution_time` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_ApexRT` | `minute` | peptidoform_ion |
-| var | MaxQuant | 1.5, 1.6, 2.x | `Retention_Time` | `minute` | peptidoform |
-|  | MSAngel | 2.x | `Master_Elution_Time` | `minute` | peptidoform_ion |
-|  | PEAKS | 13 | `RT_Mean` | `minute` | peptidoform_ion |
-|  | ProlineStudio | 2.x | `Master_Elution_Time` | `minute` | peptidoform_ion |
+| var | MaxQuant | 1.5, 1.6, 2.x | `Retention_time` | `minute` | peptidoform |
+|  | MSAngel | 2.x | `master_elution_time` | `minute` | peptidoform_ion |
+|  | PEAKS | 13 | `RT_mean` | `minute` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `master_elution_time` | `minute` | peptidoform_ion |
 
 **`aligned_retention_time`**
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaPept | 0.5 | `Retention_Time_Calibrated` | `unknown` | peptidoform_ion |
+| layers | AlphaPept | 0.5 | `rt_calib` | `unknown` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Predicted_iRT` | `irt` | peptidoform_ion |
-|  | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_Retention_Time` | `minute` | peptidoform_ion |
-|  | MSAngel | 2.x | `Corrected_Time` | `minute` | peptidoform_ion |
-|  | ProlineStudio | 2.x | `Corrected_Time` | `minute` | peptidoform_ion |
+|  | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_retention_time` | `minute` | peptidoform_ion |
+|  | MSAngel | 2.x | `corrected_time` | `minute` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `corrected_time` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_iRTEmpirical` | `irt` | peptidoform_ion |
-| var | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_Retention_Time` | `minute` | peptidoform |
-|  | MSAngel | 2.x | `Master_Ion_Elution_Time` | `minute` | peptidoform_ion |
-|  | ProlineStudio | 2.x | `Master_Ion_Elution_Time` | `minute` | peptidoform_ion |
+| var | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_retention_time` | `minute` | peptidoform |
+|  | MSAngel | 2.x | `master_quant_peptide_ion_elution_time` | `minute` | peptidoform_ion |
+|  | ProlineStudio | 2.x | `master_quant_peptide_ion_elution_time` | `minute` | peptidoform_ion |
 
 **`predicted_retention_time`**
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12 | `RT_Calibrated` | `second` | peptidoform_ion |
-|  | AlphaDIA | 2.x | `RT_Calibrated` | `second` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `rt_calibrated` | `second` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `precursor_rt_calibrated` | `second` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Predicted_RT` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_RTPredicted` | `minute` | peptidoform_ion |
 
@@ -902,8 +902,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12 | `RT_Library` | `unknown` | peptidoform_ion |
-|  | AlphaDIA | 2.x | `RT_Library` | `unknown` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `rt_library` | `unknown` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `precursor_rt_library` | `unknown` | peptidoform_ion |
 | var | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `iRT` | `irt` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_iRTPredicted` | `irt` | peptidoform_ion |
 
@@ -923,7 +923,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaPept | 0.5 | `Retention_Time_Start` | `unknown` | peptidoform_ion |
+| layers | AlphaPept | 0.5 | `rt_start` | `unknown` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `RT_Start` | `minute` | peptidoform_ion |
 |  | FragPipe | 22–23 | `Retention_Time_Start` | `unknown` | peptidoform_ion |
 |  | MetaMorpheus | 1.x | `Peak_RT_Start` | `minute` | peptidoform_ion |
@@ -933,7 +933,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaPept | 0.5 | `Retention_Time_End` | `unknown` | peptidoform_ion |
+| layers | AlphaPept | 0.5 | `rt_end` | `unknown` | peptidoform_ion |
 |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `RT_Stop` | `minute` | peptidoform_ion |
 |  | FragPipe | 22–23 | `Retention_Time_End` | `unknown` | peptidoform_ion |
 |  | MetaMorpheus | 1.x | `Peak_RT_End` | `minute` | peptidoform_ion |
@@ -943,23 +943,23 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_Retention_Time_Start` | `minute` | peptidoform_ion |
+| layers | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_retention_time_start` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_StartiRT` | `irt` | peptidoform_ion |
 
 **`aligned_peak_end`**
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_Retention_Time_Finish` | `minute` | peptidoform_ion |
+| layers | MaxQuant | 1.5, 1.6, 2.x | `Calibrated_retention_time_finish` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_EndiRT` | `irt` | peptidoform_ion |
 
 **`peak_fwhm`**
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | AlphaDIA | 1.12 | `Cycle_FWHM` | `unknown` | peptidoform_ion |
-|  | AlphaDIA | 2.x | `RT_FWHM` | `unknown` | peptidoform_ion |
-|  | AlphaPept | 0.5 | `FWHM` | `unknown` | peptidoform_ion |
+| layers | AlphaDIA | 1.12 | `cycle_fwhm` | `unknown` | peptidoform_ion |
+|  | AlphaDIA | 2.x | `precursor_rt_fwhm` | `unknown` | peptidoform_ion |
+|  | AlphaPept | 0.5 | `fwhm` | `unknown` | peptidoform_ion |
 |  | DIA-NN | 1.8–1.9 | `FWHM` | `minute` | peptidoform_ion |
 |  | DIA-NN | 2.x | `FWHM` | `minute` | peptidoform_ion |
 |  | FragPipe | 22–23 | `Retention_Time_FWHM` | `unknown` | peptidoform_ion |
@@ -975,7 +975,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Software | Versions | APB field | Unit | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | MaxQuant | 1.5, 1.6, 2.x | `Retention_Length` | `minute` | peptidoform_ion |
+| layers | MaxQuant | 1.5, 1.6, 2.x | `Retention_length` | `minute` | peptidoform_ion |
 |  | Spectronaut | 15, 19–20, 21 | `EG_PeakWidth` | `minute` | peptidoform_ion |
 
 <!-- end of generated block: chromatography -->
@@ -1095,9 +1095,9 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `identification` | AlphaDIA | 1.12 | `QValue` | peptidoform_ion |
-|  |  | AlphaDIA | 2.x | `QValue` | peptidoform_ion |
-|  |  | AlphaPept | 0.5 | `Q_Value` | peptidoform_ion |
+| layers | `identification` | AlphaDIA | 1.12 | `qval` | peptidoform_ion |
+|  |  | AlphaDIA | 2.x | `precursor_qval` | peptidoform_ion |
+|  |  | AlphaPept | 0.5 | `q_value` | peptidoform_ion |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `PG_Q_Value` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Q_Value` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `EG_Qvalue` | peptidoform_ion |
@@ -1105,7 +1105,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 |  |  | Spectronaut | 21 | `PG_QValue_Run_Wise` | protein |
 | var | `identification` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Global_PG_Q_Value` | protein |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Global_Q_Value` | peptidoform_ion |
-|  |  | MaxQuant | 1.5, 1.6, 2.x | `Q_Value` | protein |
+|  |  | MaxQuant | 1.5, 1.6, 2.x | `Q_value` | protein |
 |  |  | Spectronaut | 19–20 | `PG_Qvalue` | protein |
 |  |  | Spectronaut | 21 | `PG_Qvalue` | protein |
 
@@ -1113,7 +1113,7 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| var | `quantification` | Sage | 0.x | `Q_Value` | peptidoform, peptidoform_ion |
+| var | `quantification` | Sage | 0.x | `q_value` | peptidoform, peptidoform_ion |
 
 **`library_q_value`**
 
@@ -1188,8 +1188,8 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Location | Stage | Software | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| layers | `identification` | AlphaDIA | 1.12 | `QValue` | peptidoform_ion |
-|  |  | AlphaDIA | 2.x | `QValue` | peptidoform_ion |
+| layers | `identification` | AlphaDIA | 1.12 | `qval` | peptidoform_ion |
+|  |  | AlphaDIA | 2.x | `precursor_qval` | peptidoform_ion |
 |  |  | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Q_Value` | peptidoform_ion |
 |  |  | Spectronaut | 15, 19–20, 21 | `EG_Qvalue` | peptidoform_ion |
 | var | `identification` | DIA-NN | 1.0–1.7, 1.8–1.9, 2.x | `Global_Q_Value` | peptidoform_ion |

@@ -18,9 +18,9 @@ from tests.packaged_rules import declared_rule_json
         ("DIA-NN", "1.7.16", "RT", "minute"),
         ("DIA-NN", "1.8.1", "RT", "minute"),
         ("DIA-NN", "2.3.0", "RT", "minute"),
-        ("MaxQuant", "2.4.0.0", "Retention_Time", "minute"),
-        ("AlphaDIA", "1.12.2", "RT_Observed", "second"),
-        ("AlphaDIA", "2.1.0", "RT_Observed", "second"),
+        ("MaxQuant", "2.4.0.0", "Retention_time", "minute"),
+        ("AlphaDIA", "1.12.2", "rt_observed", "second"),
+        ("AlphaDIA", "2.1.0", "precursor_rt_observed", "second"),
     ],
 )
 def test_reviewed_rt_names_and_units(software: str, version: str, column: str, unit: str) -> None:
@@ -93,7 +93,7 @@ def test_an_older_rule_without_retained_rt_answers_missing() -> None:
 def test_feature_average_rt_is_distinct_from_per_run_rt() -> None:
     catalog = Catalog("MaxQuant", "2.4.0.0", "chromatography")
     assert (
-        catalog.levels["peptidoform"].var.get("retention_time", unit="minute") == "Retention_Time"
+        catalog.levels["peptidoform"].var.get("retention_time", unit="minute") == "Retention_time"
     )
     assert catalog.levels["peptidoform"].layers.get("retention_time") is None
 
@@ -122,21 +122,35 @@ def test_instrument_dependent_units_are_not_assumed() -> None:
             "2.4.0.0",
             "aligned_retention_time",
             "layers",
-            "Calibrated_Retention_Time",
+            "Calibrated_retention_time",
             "minute",
         ),
-        ("AlphaDIA", "2.1.0", "predicted_retention_time", "layers", "RT_Calibrated", "second"),
-        ("AlphaDIA", "2.1.0", "library_retention_time", "layers", "RT_Library", "unknown"),
-        ("ProlineStudio", "2.3.0", "aligned_retention_time", "layers", "Corrected_Time", "minute"),
+        (
+            "AlphaDIA",
+            "2.1.0",
+            "predicted_retention_time",
+            "layers",
+            "precursor_rt_calibrated",
+            "second",
+        ),
+        (
+            "AlphaDIA",
+            "2.1.0",
+            "library_retention_time",
+            "layers",
+            "precursor_rt_library",
+            "unknown",
+        ),
+        ("ProlineStudio", "2.3.0", "aligned_retention_time", "layers", "corrected_time", "minute"),
         (
             "ProlineStudio",
             "2.3.0",
             "aligned_retention_time",
             "var",
-            "Master_Ion_Elution_Time",
+            "master_quant_peptide_ion_elution_time",
             "minute",
         ),
-        ("ProlineStudio", "2.3.0", "retention_time", "var", "Master_Elution_Time", "minute"),
+        ("ProlineStudio", "2.3.0", "retention_time", "var", "master_elution_time", "minute"),
     ],
 )
 def test_measured_aligned_predicted_and_library_rt_are_separate_kinds(
@@ -162,12 +176,12 @@ def test_measured_aligned_predicted_and_library_rt_are_separate_kinds(
         ("Spectronaut", "21.0", "peak_width", "EG_PeakWidth", "minute"),
         ("Spectronaut", "21.0", "aligned_peak_start", "EG_StartiRT", "irt"),
         ("Spectronaut", "21.0", "mean_apex_retention_time", "EG_MeanApexRT", "minute"),
-        ("MaxQuant", "2.4.0.0", "aligned_peak_end", "Calibrated_Retention_Time_Finish", "minute"),
-        ("MaxQuant", "2.4.0.0", "peak_width", "Retention_Length", "minute"),
+        ("MaxQuant", "2.4.0.0", "aligned_peak_end", "Calibrated_retention_time_finish", "minute"),
+        ("MaxQuant", "2.4.0.0", "peak_width", "Retention_length", "minute"),
         ("MetaMorpheus", "1.0.5", "ms2_retention_time", "MS2_Retention_Time", "minute"),
         ("MetaMorpheus", "1.0.5", "retention_time", "Peak_RT_Apex", "minute"),
         ("MetaMorpheus", "1.0.5", "peak_end", "Peak_RT_End", "minute"),
-        ("AlphaDIA", "1.12.2", "peak_fwhm", "Cycle_FWHM", "unknown"),
+        ("AlphaDIA", "1.12.2", "peak_fwhm", "cycle_fwhm", "unknown"),
     ],
 )
 def test_peak_bounds_widths_and_scan_times_are_their_own_kinds(

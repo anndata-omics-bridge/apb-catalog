@@ -133,15 +133,59 @@ def test_a_vendor_without_the_field_returns_none() -> None:
 
 
 def test_quantification_confidence_is_found_only_when_asked_for() -> None:
-    """Sage's q-value rates the MS1 peak, one value per feature."""
-    parsed = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
-    catalog = DataCatalog(parsed, "confidence")
-    assert catalog.levels["peptidoform_ion"].var.get("q_value") is None
-    column = catalog.levels["peptidoform_ion"].var.get("quantification_q_value")
+    """Sage's q-value rates the MS1 peak, one value per feature; the confidence set's
+    ``q_value``, asked with its prefix, is no such value."""
+    parsed = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
+    var = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].var
+    assert var.get("c:q_value") is None
+    column = var.get("quantification_q_value")
     assert column is not None
     assert column.to_list() == [0.001, 0.002]
     with pytest.raises(ValueError, match="q_value fixes stage"):
-        catalog.levels["peptidoform_ion"].var.get("q_value", stage="quantification")
+        var.get("q_value", stage="quantification")
+
+
+def test_a_prefix_tells_a_key_from_the_vendor_column_of_its_name() -> None:
+    """Sage names its column ``q_value``: a plain name falls back to it, ``c:`` never reads it
+    and ``v:`` always does."""
+    parsed = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
+    var = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].var
+    assert var.name("q_value") == "q_value"
+    assert var.name("v:q_value") == "q_value"
+    assert var.name("c:quantification_q_value") == "q_value"
+    assert ("q_value" in var, "c:q_value" in var, "v:q_value" in var) == (False, False, True)
+    with pytest.raises(KeyError, match="'c:q_value'"):
+        var["c:q_value"]
+    with pytest.raises(KeyError, match="'c:q_value'"):
+        var[["c:q_value"]]
+    assert var[["v:q_value", "apb:peptidoform_ion"]].columns == ["q_value", "ProForma_ion"]
+
+
+def test_a_plain_key_reads_the_catalog_where_it_answers_and_v_the_vendor() -> None:
+    """AlphaDIA 1.12 reports its own ``decoy`` beside APB's ``apb_Decoy``, which the key names;
+    its ``intensity`` is directLFQ's, which the abundance key ``intensity`` is not."""
+    parsed = _result(
+        "alphadia/v1_12/rules.json",
+        ["qval", "intensity"],
+        {"decoy": [0, 1], "apb_Decoy": [False, True]},
+    )
+    level = DataCatalog(parsed, "abundance").levels["peptidoform_ion"]
+    assert (level.var.name("decoy"), level.var.name("apb:decoy")) == ("apb_Decoy", "apb_Decoy")
+    assert level.var.name("v:decoy") == "decoy"
+    assert level.layers.get("a:intensity") is None
+    assert level.layers.name("v:intensity") == level.layers.name("intensity") == "intensity"
+
+
+def test_a_prefix_of_no_composed_set_or_a_qualified_vendor_name_is_refused() -> None:
+    """A prefix names one of the composed sets, a key of that set; ``v:`` takes no qualifiers."""
+    parsed = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
+    var = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].var
+    with pytest.raises(ValueError, match=r"unknown prefix 'a'.*\['apb', 'c', 'v'\]"):
+        var.get("a:intensity")
+    with pytest.raises(ValueError, match="unknown key 'intensity'"):
+        var.get("c:intensity")
+    with pytest.raises(ValueError, match="takes no qualifiers"):
+        var.get("v:q_value", stage="run")
 
 
 DIANN_ION = {
@@ -291,7 +335,7 @@ def test_keys_lists_what_a_level_offers() -> None:
     ).levels["peptidoform_ion"]
     assert dia_nn.layers.keys() == {"q_value"}
     assert dia_nn.var.keys() == {"peptidoform_ion"}, "apb's, always in"
-    sage = _result("sage/rules.json", ["Intensity"], {"Q_Value": [0.001, 0.002]})
+    sage = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
     assert DataCatalog(sage, "confidence").levels["peptidoform_ion"].var.keys() == {
         "peptidoform_ion",
         "quantification_q_value",

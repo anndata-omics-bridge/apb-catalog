@@ -646,6 +646,7 @@ def _vocabulary(
         defined[row["qualifier"]][row["value"]] = row["definition"]
     description = _description(head)
     vocabulary = SetVocabulary(
+        prefix=head["prefix"],
         definition=head["definition"],
         kind_definition=head["kind_definition"],
         kinds={row["kind"]: row["definition"] for row in kinds},
@@ -798,14 +799,27 @@ def catalogue_descriptions() -> dict[str, CatalogueDescription]:
     """Return every packaged and plugin catalogue set's description, by set name.
 
     Raises:
-        ValueError: A plugin set has a packaged set's name.
+        ValueError: A plugin set has a packaged set's name, or two sets share a prefix.
     """
     packaged = packaged_descriptions()
     plugins = _plugin_folders()
     clashing = sorted(set(packaged) & set(plugins))
     if clashing:
         raise ValueError(f"plugin catalogue sets {clashing} have the names of packaged sets")
+    prefixes = {
+        **_packaged_prefixes(),
+        **{name: _plugin_set(name).vocabulary.prefix for name in plugins},
+    }
+    shared = sorted(prefix for prefix, count in Counter(prefixes.values()).items() if count > 1)
+    if shared:
+        raise ValueError(f"catalogue sets share the prefixes {shared}: {prefixes}")
     return {**packaged, **{name: _plugin_set(name).description for name in plugins}}
+
+
+@cache
+def _packaged_prefixes() -> dict[str, str]:
+    """Every packaged set's prefix, by set name, from ``sets.csv``."""
+    return {row["set"]: row["prefix"] for row in _table(_data(), "sets")}
 
 
 def catalogue_set(name: str, /) -> SourceCatalogues:

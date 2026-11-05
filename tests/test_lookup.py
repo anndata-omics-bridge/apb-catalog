@@ -175,6 +175,18 @@ def test_catalog_levels_hold_names() -> None:
         apb.layers["peptide"]
 
 
+def test_a_catalog_answers_its_own_prefix_and_no_vendor_name() -> None:
+    """Without data, ``a:`` asks the set as a plain key does; ``v:`` has no own name to read."""
+    ion = Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"]
+    assert ion.layers["a:intensity"] == "Precursor_Quantity"
+    assert "a:intensity" in ion.layers
+    assert ion.layers.get("v:Precursor_Quantity") is None
+    with pytest.raises(KeyError, match="'v:Precursor_Quantity'"):
+        ion.layers["v:Precursor_Quantity"]
+    with pytest.raises(ValueError, match=r"unknown prefix 'c'.*\['a', 'v'\]"):
+        ion.layers.get("c:pep")
+
+
 def test_enforce_required_warns_for_a_missing_recommended_field(
     caplog: pytest.LogCaptureFixture,
 ) -> None:

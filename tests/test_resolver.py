@@ -174,9 +174,12 @@ def test_a_vocabulary_keeps_its_kinds_apart_from_its_qualifiers() -> None:
     """The kinds include ``unknown``, and no qualifier is named ``kind``."""
     unknown = {"unknown": "The reviewer could not establish this."}
     with pytest.raises(ValueError, match="defines the kind 'unknown'"):
-        SetVocabulary(definition="test", kind_definition="test", kinds={"pep": "a"}, qualifiers={})
+        SetVocabulary(
+            prefix="t", definition="test", kind_definition="test", kinds={"pep": "a"}, qualifiers={}
+        )
     with pytest.raises(ValueError, match="no qualifier"):
         SetVocabulary(
+            prefix="t",
             definition="test",
             kind_definition="test",
             kinds=unknown,

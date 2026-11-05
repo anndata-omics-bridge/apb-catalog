@@ -32,6 +32,7 @@ KEYS = tuple(
     Key(key=kind, kind=kind) for kind in ("group", "charge", "decoy", "contaminant", "peptidoform")
 )
 VOCABULARY = SetVocabulary(
+    prefix="toy",
     definition="A synthetic field the tests look up.",
     kind_definition="Which synthetic field.",
     kinds=dict.fromkeys(

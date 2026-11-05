@@ -31,7 +31,7 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
         toy_set,
     ]
     toy = listed.filter(pl.col("catalogue") == toy_set).row(0, named=True)
-    assert (toy["has_requirements"], toy["entries"]) == (True, 22)
+    assert (toy["prefix"], toy["has_requirements"], toy["entries"]) == ("toy", True, 22)
 
 
 def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> None:
@@ -114,6 +114,28 @@ def _toy_copy(
 _HEADERS = {"key_qualifiers": "set,key,qualifier,value"}
 
 
+@pytest.mark.parametrize(
+    ("name", "prefix", "message"),
+    [
+        ("prefix_vendor", "v", "reserved for the vendor's own column"),
+        ("prefix_upper", "C", "does not match"),
+        ("prefix_packaged", "c", r"share the prefixes \['c'\]"),
+    ],
+)
+def test_a_plugin_set_has_a_prefix_of_its_own(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str, prefix: str, message: str
+) -> None:
+    """The vendor's ``v``, a prefix out of pattern and a packaged set's prefix: all refused."""
+    folder = tmp_path / "toy_set"
+    folder.mkdir()
+    for found in (TESTS / "toy_set").glob("*.csv"):
+        text = found.read_text("utf-8").replace("\ntoy,toy,", f"\n{name},{prefix},")
+        (folder / found.name).write_text(text.replace("\ntoy,", f"\n{name},"), "utf-8")
+    monkeypatch.setattr("apb_catalog.source._plugin_folders", lambda: {name: folder})
+    with pytest.raises(ValueError, match=message):
+        catalogue_set(name)
+
+
 def test_a_plugin_key_fixes_a_qualifier_of_its_own_set(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -132,7 +154,7 @@ def test_a_plugin_key_fixes_a_qualifier_of_its_own_set(
         ("key_qualifiers", "group,kind,charge", "fixes the kind of 'group'"),
         ("qualifiers", "kind,Which synthetic field.", "qualifiers.csv declares 'kind'"),
         ("qualifier_values", "flavour,sweet,A taste.", "defines 'sweet' of no qualifier"),
-        ("sets", "Again.,Again.,Again.,tests", r"sets.csv repeats the keys"),
+        ("sets", "again,Again.,Again.,Again.,tests", r"sets.csv repeats the keys"),
         ("keys", "charm,charm,", "key 'charm': the set does not admit the kind 'charm'"),
     ],
 )

@@ -48,18 +48,18 @@ peak_qc = "peak_qc_app.catalogue"
 
 A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogues both for DIA-NN and FragPipe, in eight files in the package folder `peak_qc_app/catalogue/`. Every row of every file starts with the set's name, `peak_qc`; the tables leave that column out, and the CSV file under each table has it.
 
-`sets.csv` holds the set's one row: what its fields are, what its kinds name, its purpose and its users.
+`sets.csv` holds the set's one row: its prefix, what its fields are, what its kinds name, its purpose and its users. The prefix asks this set alone, as `pqc:retention_time`; `v` is reserved, and no two sets share one.
 
-| `definition` | `kind_definition` | `purpose` | `used_by` |
-| --- | --- | --- | --- |
-| Retention time and peak width of an ion in one run. | Which quantity the value is. | Peak-shape QC: where each ion eluted, and how wide its peak was. | peak-qc app |
+| `prefix` | `definition` | `kind_definition` | `purpose` | `used_by` |
+| --- | --- | --- | --- | --- |
+| `pqc` | Retention time and peak width of an ion in one run. | Which quantity the value is. | Peak-shape QC: where each ion eluted, and how wide its peak was. | peak-qc app |
 
 <details markdown>
 <summary>The CSV file: <code>sets.csv</code></summary>
 
 ```csv
-set,definition,kind_definition,purpose,used_by
-peak_qc,Retention time and peak width of an ion in one run.,Which quantity the value is.,"Peak-shape QC: where each ion eluted, and how wide its peak was.",peak-qc app
+set,prefix,definition,kind_definition,purpose,used_by
+peak_qc,pqc,Retention time and peak width of an ion in one run.,Which quantity the value is.,"Peak-shape QC: where each ion eluted, and how wide its peak was.",peak-qc app
 ```
 
 </details>

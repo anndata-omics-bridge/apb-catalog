@@ -434,8 +434,12 @@
     },
     "SetVocabulary": {
       "additionalProperties": false,
-      "description": "What one set's entries mean: its kinds, and the qualifiers that refine a kind.\n\nAn entry has one kind and a value for every qualifier; ``unknown`` is among the kinds and\namong every qualifier's values.",
+      "description": "What one set's entries mean: its kinds, and the qualifiers that refine a kind.\n\nAn entry has one kind and a value for every qualifier; ``unknown`` is among the kinds and\namong every qualifier's values. ``prefix`` asks the set alone, as ``c:q_value``.",
       "properties": {
+        "prefix": {
+          "title": "Prefix",
+          "type": "string"
+        },
         "definition": {
           "title": "Definition",
           "type": "string"
@@ -460,6 +464,7 @@
         }
       },
       "required": [
+        "prefix",
         "definition",
         "kind_definition",
         "kinds",

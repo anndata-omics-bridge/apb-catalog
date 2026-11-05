@@ -6,7 +6,7 @@ The CSV tables under `src/apb_catalog/data/` are the source of truth, one file p
 | --- | --- |
 | `entries.csv` | One row per catalogued field: its set, its source (the conversion software, with every column its APB2 rule writes; an app such as apb-fasta; or `annotation:<convention>` for sample-annotation fields found by column prefix), the software version patterns it holds for, where it lives, its kind and its evidence |
 | `entry_qualifiers.csv` | Each entry's qualifiers besides its kind |
-| `sets.csv` | One row per set: what its fields are, what its kinds name, its purpose and its users |
+| `sets.csv` | One row per set: its prefix, which asks the set alone as `c:q_value`, what its fields are, what its kinds name, its purpose and its users |
 | `kinds.csv` | Each set's kinds, `unknown` among them: what an entry or a key stands for |
 | `qualifiers.csv` | Each set's qualifiers, which refine a kind, such as `normalization` or `unit`; never `kind` |
 | `qualifier_values.csv` | The values each qualifier admits, `unknown` among them |
@@ -67,7 +67,7 @@ Each entry has exactly one key: the one whose kind and fixed values it carries; 
 
 ## Adding a set
 
-1. Add its row, with its definition, what its kinds name, its purpose and its users, to `sets.csv`; its kinds, `unknown` among them, to `kinds.csv`; and any qualifiers to `qualifiers.csv`, with their values, `unknown` among them, in `qualifier_values.csv`
+1. Add its row, with a prefix no other set has (lowercase, not `v`), its definition, what its kinds name, its purpose and its users, to `sets.csv`; its kinds, `unknown` among them, to `kinds.csv`; and any qualifiers to `qualifiers.csv`, with their values, `unknown` among them, in `qualifier_values.csv`
 2. Add its keys to `keys.csv`: one per kind, or one per kind and value of a qualifier that changes the meaning, with that value in `key_qualifiers.csv`
 3. Add its entries to `entries.csv` and their qualifiers to `entry_qualifiers.csv`
 4. Add its requirement rows, if any, to `requirements.csv`
@@ -99,6 +99,7 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 | `test_entries_name_fields_the_rules_retain` | An entry names a field the rule of one of its version patterns does not keep |
 | `test_packaged_catalogues_load_against_the_vocabulary` | A qualifier is missing or not admitted, a table's columns differ from `datapackage.json`, a key repeats, or an entry names a software or version `versions.csv` does not list |
 | `test_every_packaged_set_states_its_purpose_and_users` | `entries.csv` and `sets.csv` disagree |
+| `test_a_plugin_set_has_a_prefix_of_its_own` | A set's prefix is `v`, is not lowercase letters, digits and `_`, or is another set's |
 | `test_domain_sets_hold_no_apb2_columns` | A set other than `apb` names an APB2 `ProForma_*` column |
 | `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | A vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
 | `test_abundance_entries_are_the_layers_apb2_marks_abundance` | The `abundance` set and the layers APB2 marks `abundance` differ |

@@ -357,7 +357,8 @@ def _keys(answer: Callable[[], tuple[str, ...]]) -> dict[str, JsonValue]:
 def requests(sources: SourceCatalogues, level: str) -> list[Request]:
     """Every request a set's entries and requirement rows on one level ask, without repeats.
 
-    Each entry asks for its key once with the qualifiers its key leaves open and once alone.
+    Each entry asks for its key once with the qualifiers its key leaves open and once alone; each
+    request is asked again with the set's prefix, as ``c:q_value``.
     """
     found: dict[str, Request] = {}
 
@@ -382,6 +383,28 @@ def requests(sources: SourceCatalogues, level: str) -> list[Request]:
     for row in sources.requirements:
         if row.level == level:
             add(row.location, row.key, {})
+    plain = list(found.values())
+    prefix = sources.vocabulary.prefix
+    return [
+        *plain,
+        *((at, location, f"{prefix}:{key}", qualifiers) for at, location, key, qualifiers in plain),
+    ]
+
+
+def vendor_requests(sources: SourceCatalogues, level: str) -> list[Request]:
+    """A ``v:`` request for the own name of every entry on one level outside ``varm``."""
+    found: dict[tuple[Location, str], Request] = {}
+    for source in sources.sources():
+        for entry in source.entries:
+            reference = entry.reference
+            if reference.level not in (level, ANY) or reference.location == "varm":
+                continue
+            if reference.name is None:
+                continue
+            location: Location = reference.location
+            found.setdefault(
+                (location, reference.name), (level, location, f"v:{reference.name}", {})
+            )
     return list(found.values())
 
 
@@ -492,7 +515,11 @@ def data_catalog_cases(
                 catalog = DataCatalog(parsed, name, enforce=enforce)
                 asked: list[Request]
                 if enforce is None:
-                    asked = [request for level in levels for request in requests(sources, level)]
+                    asked = [
+                        request
+                        for level in levels
+                        for request in (*requests(sources, level), *vendor_requests(sources, level))
+                    ]
                 else:
                     asked = [
                         (row.level, row.location, row.key, {})
@@ -521,6 +548,7 @@ def table_cases(sets: Mapping[str, SourceCatalogues]) -> dict[str, JsonValue]:
         [
             {
                 "catalogue": name,
+                "prefix": sources.vocabulary.prefix,
                 "purpose": sources.description.purpose,
                 "used_by": list(sources.description.used_by),
                 "has_requirements": bool(sources.requirements),

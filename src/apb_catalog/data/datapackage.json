@@ -47,6 +47,7 @@
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The catalogue set."},
+          {"name": "prefix", "type": "string", "description": "What a lookup writes before ':' to ask this set alone, as c:q_value; v is reserved for the vendor's own column.", "constraints": {"pattern": "^[a-z][a-z0-9_]*$", "unique": true}},
           {"name": "definition", "type": "string", "description": "What the set's fields are."},
           {"name": "kind_definition", "type": "string", "description": "What a kind names in this set."},
           {"name": "purpose", "type": "string", "description": "What the set is for."},

@@ -2,7 +2,10 @@
 
 ``DataCatalog(result, "abundance").levels["protein"].layers["maxlfq"]`` is the protein level's
 MaxLFQ matrix, observations by variables. A name is looked up as one of the catalog's keys first,
-then as the level's own name in that slot, and raises :class:`KeyError` when it is neither. As
+then as the level's own name in that slot, and raises :class:`KeyError` when it is neither. A
+prefix makes the lookup exact: a set's prefix asks that set alone, ``c:q_value`` the confidence
+set's q-value and never a column of that name; ``v:`` asks the level's own name alone,
+``v:q_value`` the vendor's column and never the catalog. As
 AnnData, ``X`` and the layers are numpy matrices; ``var`` and ``obs`` columns are polars Series,
 and a list of names, ``obs[["group"]]``, reads every column they name as a polars DataFrame.
 ``layers.get("pep")`` returns ``None`` where ``[...]`` raises, and ``layers.name("pep")`` the
@@ -24,6 +27,7 @@ from apb2.api import ParsedLevel
 
 from apb_catalog.rules import Location
 from apb_catalog.source import Reference
+from apb_catalog.vocabulary import VENDOR
 
 type Matrix = np.ndarray[tuple[int, int], np.dtype[np.generic]]
 
@@ -41,6 +45,8 @@ class Lookup:
     """The keys a level offers at a location."""
     known: frozenset[str]
     """Every key of the catalog."""
+    sets: Mapping[str, Lookup]
+    """One set's lookup alone, by the set's prefix; none in such a lookup itself."""
 
 
 def field_name(reference: Reference) -> str:
@@ -126,7 +132,8 @@ class Slot[Value]:
 
     As cf_xarray's accessor: ``keys()`` and ``in`` know the catalog's keys only; the level's own
     names are read but not listed. ``get`` and ``name`` take further qualifiers, such as
-    ``unit="minute"``, which ``[...]`` cannot.
+    ``unit="minute"``, which ``[...]`` cannot. A set's prefix, ``c:q_value``, asks that set
+    alone; ``v:Score`` the level's own name alone.
     """
 
     __slots__ = ("_level", "_location", "_lookup", "_named", "_read")
@@ -151,6 +158,7 @@ class Slot[Value]:
         Raises:
             KeyError: The name is neither a key the level answers nor one of its own names.
             UnresolvedField: The key names several fields, or one the catalogue cannot decide.
+            ValueError: The prefix is no composed set's, or its set has no such key.
         """
         return self._read(self._found(name, {}))
 
@@ -160,7 +168,8 @@ class Slot[Value]:
 
         Raises:
             UnresolvedField: The key names several fields, or one the catalogue cannot decide.
-            ValueError: Qualifiers with a name that is no key, or a qualifier the key fixes.
+            ValueError: Qualifiers with a name that is no key, a qualifier the key fixes, or
+                qualifiers on a ``v:`` name; a prefix of no composed set, or a key its set lacks.
         """
         reference = self._reference(key, qualifiers)
         return None if reference is None else self._read(reference)
@@ -172,22 +181,54 @@ class Slot[Value]:
         Raises:
             KeyError: The name is neither a key the level answers nor one of its own names.
             UnresolvedField: The key names several fields, or one the catalogue cannot decide.
-            ValueError: Qualifiers with a name that is no key, or a qualifier the key fixes.
+            ValueError: Qualifiers with a name that is no key, a qualifier the key fixes, or
+                qualifiers on a ``v:`` name; a prefix of no composed set, or a key its set lacks.
         """
         return field_name(self._found(key, qualifiers))
 
     def __contains__(self, name: object) -> bool:
-        """Whether the level offers this key here."""
-        return name in self.keys()
+        """Whether the level offers this key here; for ``v:``, whether it has this own name.
+
+        Raises:
+            ValueError: The prefix is no composed set's.
+        """
+        if not isinstance(name, str):
+            return False
+        lookup, key, _ = self._route(name)
+        if lookup is None:
+            return key in self._named
+        return key in lookup.offered(self._level, self._location)
 
     def keys(self) -> set[str]:
         """The keys the level offers in this slot."""
         return set(self._lookup.offered(self._level, self._location))
 
-    def _reference(self, key: str, qualifiers: Mapping[str, str]) -> Reference | None:
-        if key in self._lookup.known or qualifiers:
-            found = self._lookup.field(self._level, self._location, key, qualifiers)
-            if found is not None:
+    def _route(self, name: str) -> tuple[Lookup | None, str, bool]:
+        """The lookup a name asks, the key it asks for, and whether the level's own name answers
+        when the lookup does not: a plain name asks every set, then the own name; a set's prefix
+        that set alone; ``v:`` the own name alone, with no lookup.
+
+        Raises:
+            ValueError: The prefix is no composed set's.
+        """
+        prefix, colon, key = name.partition(":")
+        if not colon:
+            return self._lookup, name, True
+        if prefix == VENDOR:
+            return None, key, True
+        found = self._lookup.sets.get(prefix)
+        if found is None:
+            prefixes = sorted([VENDOR, *self._lookup.sets])
+            raise ValueError(f"unknown prefix {prefix!r} in {name!r}; prefixes: {prefixes}")
+        return found, key, False
+
+    def _reference(self, name: str, qualifiers: Mapping[str, str]) -> Reference | None:
+        lookup, key, own = self._route(name)
+        if lookup is None and qualifiers:
+            raise ValueError(f"{name!r} names the level's own field, which takes no qualifiers")
+        if lookup is not None and (key in lookup.known or qualifiers or not own):
+            found = lookup.field(self._level, self._location, key, qualifiers)
+            if found is not None or not own:
                 return found
         return self._own(key)
 
@@ -238,6 +279,7 @@ class Columns[Value, Frame](Slot[Value]):
         Raises:
             KeyError: A name is neither a key the level answers nor one of its own names.
             UnresolvedField: A key may name a field the catalogue cannot decide.
+            ValueError: A prefix is no composed set's, or its set has no such key.
         """
         if isinstance(name, str):
             return super().__getitem__(name)
@@ -249,14 +291,15 @@ class Columns[Value, Frame](Slot[Value]):
         )
 
     def _fields(self, name: str) -> tuple[Reference, ...]:
-        if name in self._lookup.known:
-            found = self._lookup.fields(self._level, self._location, name)
+        lookup, key, own = self._route(name)
+        if lookup is not None and (key in lookup.known or not own):
+            found = lookup.fields(self._level, self._location, key)
             if found:
                 return found
-        own = self._own(name)
-        if own is None:
+        reference = self._own(key) if own else None
+        if reference is None:
             raise self._missing(name)
-        return (own,)
+        return (reference,)
 
 
 def _frame(columns: Sequence[tuple[str, pl.Series]]) -> pl.DataFrame:

@@ -47,6 +47,7 @@ row without a key."""
 
 CATALOGUES_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
     "catalogue": pl.String,
+    "prefix": pl.String,
     "purpose": pl.String,
     "used_by": pl.List(pl.String),
     "has_requirements": pl.Boolean,
@@ -57,13 +58,15 @@ _SEVERITY: dict[str, Verdict] = {"required": "fail", "recommended": "warn", "opt
 
 
 def catalogues() -> pl.DataFrame:
-    """List every packaged and plugin catalogue set: purpose, users, and entry count."""
+    """List every packaged and plugin catalogue set: the prefix that asks it alone, purpose,
+    users, and entry count."""
     rows: list[dict[str, object]] = []
     for name, description in catalogue_descriptions().items():
         sources = catalogue_set(name)
         rows.append(
             {
                 "catalogue": name,
+                "prefix": sources.vocabulary.prefix,
                 "purpose": description.purpose,
                 "used_by": list(description.used_by),
                 "has_requirements": bool(sources.requirements),

@@ -41,13 +41,14 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 | `keys()` on a slot | `set[str]`: the keys the level offers there | same | same |
 
 - Lookup follows cf_xarray: a key first, then the level's own name in that slot, else `KeyError`; `UnresolvedField` when the key names several fields or one the catalogue cannot decide
+- A prefix makes the lookup exact, since a vendor may name a column as a key is named: a set's prefix asks that set alone, so `c:q_value` is the confidence set's q-value or nothing, never Sage's own `q_value` column; `v:` asks the level's own name alone, so `v:q_value` is that column, never the catalog. `catalogues()` lists each set's `prefix`; `v` is reserved
 - A list reads every field a key names, as cf_xarray's `ds.cf[["name"]]`: both contaminant flags where the vendor and apb-fasta each set one, every prolfquapp `group` column; it still raises `UnresolvedField` for a field the catalogue cannot decide
 - `keys()` and `in` know keys only; vendor names are read, not listed
 - Every key `keys()` lists reads: an app's keys, such as apb-fasta's `fasta_matches_contaminant`, appear once the app has run; before, asking for one raises `UnresolvedField` naming what to run
 - A key may name the primary layer and then answers `X`; `layers` holds the other layers, as in AnnData
 - A matrix is built once per level and shared by every later answer
 
-`Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"].layers["intensity"]` is `'Precursor_Quantity'`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`.
+`Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"].layers["intensity"]` is `'Precursor_Quantity'`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`, and so does every `v:` name.
 
 ## pandas
 
@@ -66,7 +67,7 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 | `None` | From `get`: the level's software version was reviewed and has no such field, or the name is neither a key nor the level's own; an absent level is not in `levels` |
 | `KeyError` | From `[...]` and `name` where `get` returns `None` |
 | `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or a plugin set's later producer, such as `apb-fasta verify-peptides`, has not run; names the reason and candidates |
-| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, or a version no packaged rule admits |
+| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, a prefix of no composed set or a key its set lacks, qualifiers on a `v:` name, or a version no packaged rule admits |
 
 ## Requirements and `enforce`
 
