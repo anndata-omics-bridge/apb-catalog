@@ -22,8 +22,8 @@ def test_without_arguments_every_catalogue_is_listed(
     """One line per set, packaged or plugin, saying whether it sets requirements."""
     assert _run() == 0
     output = capsys.readouterr().out
-    assert f"{toy_set}: 22 entries, requirements" in output
-    assert "confidence: 26 entries, coverage only" in output
+    assert f"{toy_set} (toy:): 22 entries, requirements" in output
+    assert "confidence (c:): 26 entries, coverage only" in output
 
 
 def test_check_fails_when_a_level_misses_a_required_field(

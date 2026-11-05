@@ -24,10 +24,10 @@ _LABELS = {"fail": "FAIL", "warn": "WARN", "pass": "PASS"}
 
 @app.default
 def overview() -> int:
-    """List every catalogue set, its entries, and whether it sets requirements."""
+    """List every catalogue set, its prefix, its entries, and whether it sets requirements."""
     for row in catalogues().iter_rows(named=True):
         checked = "requirements" if row["has_requirements"] else "coverage only"
-        print(f"{row['catalogue']}: {row['entries']} entries, {checked}")
+        print(f"{row['catalogue']} ({row['prefix']}:): {row['entries']} entries, {checked}")
         print(f"    {row['purpose']}")
     return 0
 
