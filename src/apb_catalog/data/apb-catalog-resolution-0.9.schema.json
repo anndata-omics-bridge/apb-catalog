@@ -97,7 +97,7 @@
     },
     "FieldRequest": {
       "additionalProperties": false,
-      "description": "A consumer's question: one level, constrained by a kind and accepted qualifier values.\n\n``key`` names the access key asked for and ``kind`` the kind it stands for, ``None`` when the\nrequest spans every key; ``qualifiers`` hold the values the key fixes, plus any further\nqualifiers the caller asked for. Qualifiers left out accept any value. An entry whose\nreviewer could not establish its kind or a qualifier is undecided unless the request\naccepts ``unknown`` there. A ``var`` request also reads feature-aligned ``varm`` tables.",
+      "description": "A consumer's question: one level, constrained by a kind and accepted qualifier values.\n\n``key`` names the access key asked for and ``kind`` the kind it stands for, ``None`` when the\nrequest spans every key; ``qualifiers`` hold the values the key fixes, plus any further\nqualifiers the caller asked for. Qualifiers left out accept any value. A request for a key\nanswers with that key's entries; an entry of another key only keeps it undecided. An entry whose\nreviewer could not establish a qualifier is undecided unless the request accepts ``unknown``\nthere. A ``var`` request also reads feature-aligned ``varm`` tables.",
       "properties": {
         "level": {
           "title": "Level",
@@ -252,7 +252,7 @@
     },
     "Qualifier": {
       "additionalProperties": false,
-      "description": "One dimension of a set's meanings and the meanings of its admitted values, ``unknown``\namong them.",
+      "description": "One dimension of a set's meanings and the meanings of its admitted values, ``unknown``\namong them once it has any.",
       "properties": {
         "definition": {
           "title": "Definition",
@@ -338,7 +338,7 @@
     },
     "Resolution": {
       "additionalProperties": false,
-      "description": "The answer to one request; only ``resolved`` carries a reference.\n\n``requirement`` records the requirement a missing field had when the lookup enforced it.",
+      "description": "The answer to one request; only ``resolved`` carries a reference.\n\n``requirement`` records the requirement a missing field had when the catalog enforced it at\ninit.",
       "properties": {
         "request": {
           "$ref": "#/$defs/FieldRequest"
@@ -434,7 +434,7 @@
     },
     "SetVocabulary": {
       "additionalProperties": false,
-      "description": "What one set's entries mean: its kinds, and the qualifiers that refine a kind.\n\nAn entry has one kind and a value for every qualifier; ``unknown`` is among the kinds and\namong every qualifier's values. ``prefix`` asks the set alone, as ``c:q_value``.",
+      "description": "What one set's entries mean: its kinds, and the qualifiers that refine a kind.\n\nAn entry has one kind and a value for every qualifier; ``unknown`` is among every qualifier's\nvalues once there are any. A set declared without kinds is being planned: it loads, with\nnothing to answer. ``prefix`` asks the set alone, as ``c:q_value``.",
       "properties": {
         "prefix": {
           "title": "Prefix",
@@ -475,7 +475,7 @@
     },
     "SourceEntry": {
       "additionalProperties": false,
-      "description": "The reviewed meaning of one retained field for the listed software version patterns.\n\n``kind`` is what the field is and ``qualifiers`` hold a value for every other qualifier of\nthe set; ``key`` is the set's access key whose kind and fixed values the entry carries.",
+      "description": "The reviewed meaning of one retained field for the listed software version patterns.\n\n``key`` is the access key the entry names; ``kind`` is that key's kind, and ``qualifiers``\nhold the entry's value for every other qualifier of the set, the key's fixed value included.",
       "properties": {
         "entry_id": {
           "title": "Entry Id",

@@ -16,7 +16,6 @@ from apb_catalog.source import (
     SourceCatalogue,
     SourceCatalogues,
     SourceEntry,
-    key_of,
     packaged_catalogues,
     packaged_descriptions,
 )
@@ -30,8 +29,8 @@ from tests.packaged_rules import (
     rule_of,
 )
 
-CONFIDENCE = packaged_catalogues("confidence").vocabulary
-KEYS = packaged_catalogues("confidence").keys
+CONFIDENCE = packaged_catalogues("confidence_alpha").vocabulary
+KEYS = packaged_catalogues("confidence_alpha").keys
 DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
 
 ION = RuleVariant(level="peptidoform_ion", software_version_pattern="^1\\.")
@@ -132,7 +131,7 @@ def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
     """A new abundance layer in an APB2 rule fails here until a reviewer catalogues it."""
     catalogued = {
         (rule_of(catalogue.software_name, pattern, entry.reference.level), level, name)
-        for catalogue in _catalogues("abundance")
+        for catalogue in _catalogues("abundance_alpha")
         for entry in catalogue.entries
         for pattern in entry.software_version_pattern
         for level, name in [(entry.reference.level, entry.reference.name)]
@@ -147,12 +146,14 @@ def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
 
 
 @pytest.mark.parametrize(
-    "name", ("abundance", "confidence", "proteobench_entrapment", "chromatography")
+    "name",
+    ("abundance_alpha", "confidence_alpha", "proteobench_entrapment_alpha", "chromatography_alpha"),
 )
-def test_a_key_has_at_most_one_vendor_entry_per_rule_level(name: str) -> None:
-    """The catalog picks one field per key, location and software version."""
-    seen: dict[tuple[str, str, str, str, str], str | None] = {}
-    repeated: list[tuple[str, str, str, str, str, str | None, str | None]] = []
+def test_fields_sharing_a_key_on_a_rule_level_differ_in_a_qualifier(name: str) -> None:
+    """A key and its qualifiers pick one field per location and software version; DIA-NN 1.x's
+    protein PG_Normalised and PG_MaxLFQ share intensity_norm_settings and differ in aggregation."""
+    seen: dict[tuple[object, ...], str | None] = {}
+    repeated: list[tuple[object, ...]] = []
     for catalogue in _catalogues(name):
         for entry in catalogue.entries:
             for pattern in entry.software_version_pattern:
@@ -163,6 +164,7 @@ def test_a_key_has_at_most_one_vendor_entry_per_rule_level(name: str) -> None:
                     reference.level,
                     reference.location,
                     entry.key,
+                    tuple(sorted(entry.qualifiers.items())),
                 )
                 if slot in seen:
                     repeated.append((*slot, seen[slot], entry.reference.name))
@@ -171,27 +173,33 @@ def test_a_key_has_at_most_one_vendor_entry_per_rule_level(name: str) -> None:
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_every_entry_has_exactly_one_key(name: str) -> None:
-    """Each entry's kind and qualifiers match one key of its set, the key it records."""
+def test_every_entry_is_described_by_its_key(name: str) -> None:
+    """Each entry carries the kind and the fixed values of the key it records."""
     sources = packaged_catalogues(name)
     mismatched = [
         entry.entry_id
         for source in sources.sources()
         for entry in source.entries
-        if key_of(sources.keys, entry.kind, entry.qualifiers) != [entry.key]
+        if not sources.key(entry.key).describes(entry.kind, entry.qualifiers)
     ]
     assert mismatched == []
 
 
-def test_an_entry_must_match_exactly_one_key() -> None:
-    """An entry whose qualifiers no key stands for, or two keys stand for, is refused."""
+def test_an_entry_must_carry_its_keys_meaning() -> None:
+    """An entry whose key the set lacks, or whose key fixes another value, is refused; a second
+    key that also describes it is not."""
     open_pep = Key(key="any_pep", kind="pep")
-    with pytest.raises(ValueError, match="matches"):
+    other_stage = Key(key="pep", kind="pep", fixed={"stage": "quantification"})
+    with pytest.raises(ValueError, match="does not describe it"):
         SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=())
-    with pytest.raises(ValueError, match="matches"):
+    with pytest.raises(ValueError, match="does not describe it"):
         SourceCatalogues(
-            CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=(*KEYS, open_pep)
+            CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=(other_stage,)
         )
+    both = SourceCatalogues(
+        CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=(*KEYS, open_pep)
+    )
+    assert both.key("any_pep").describes("pep", {"stage": "identification"})
 
 
 def test_a_key_names_admitted_values_once() -> None:
@@ -312,7 +320,7 @@ def test_a_bound_prefix_entry_takes_its_columns_id() -> None:
     """A prolfquapp ``group*`` entry bound to the column ``group_x`` names that column."""
     prefixed = next(
         entry
-        for annotation in packaged_catalogues("apb").annotations
+        for annotation in packaged_catalogues("obs_annotation_alpha").annotations
         for entry in annotation.entries
         if entry.reference.prefix == "group"
     )
@@ -328,7 +336,7 @@ def test_an_entry_of_every_level_takes_the_level_it_answers_on() -> None:
     assert entry_id("annotation:prolfquapp/*/*/obs/-/subject*").level == "*"
     every = next(
         entry
-        for annotation in packaged_catalogues("apb").annotations
+        for annotation in packaged_catalogues("obs_annotation_alpha").annotations
         for entry in annotation.entries
         if entry.reference.prefix == "group"
     )
@@ -395,8 +403,8 @@ def test_a_varm_reference_names_its_table() -> None:
         Reference(level="peptidoform_ion", location="var", name="flag", table="fasta_validation")
 
 
-DOMAIN_SETS = tuple(name for name in packaged_descriptions() if name != "apb")
-"""The sets that catalogue the vendors' own columns; ``apb`` catalogues the columns APB2 writes."""
+DOMAIN_SETS = tuple(name for name in packaged_descriptions() if name != "apb_alpha")
+"""The sets that catalogue the vendors' own columns; ``apb_alpha`` catalogues the columns APB2 writes."""
 
 
 @pytest.mark.parametrize("name", DOMAIN_SETS)
@@ -433,7 +441,7 @@ def _apb_columns() -> set[tuple[str, str, str, str, str]]:
     """Every (software, pattern, level, column, kind) the apb set catalogues."""
     return {
         (catalogue.software_name, pattern, entry.reference.level, name, entry.kind)
-        for catalogue in _catalogues("apb")
+        for catalogue in _catalogues("apb_alpha")
         for entry in catalogue.entries
         for pattern in entry.software_version_pattern
         for name in [entry.reference.name or ""]

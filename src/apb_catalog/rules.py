@@ -128,7 +128,8 @@ def rule_levels() -> tuple[RuleLevel, ...]:
     """Every level a packaged entry names for a software version: versions in ``versions.csv``'s
     order, each version's levels in the order the entries first name them; ``*`` names every
     version of its source."""
-    ids = [named for row in _rows("entries") if (named := entry_id(row["entry_id"])).level != ANY]
+    named_ids = (f"{row['software']}/{row['location']}/{row['name']}" for row in _rows("catalog"))
+    ids = [named for found in named_ids if (named := entry_id(found)).level != ANY]
     found: list[RuleLevel] = []
     for version in versions():
         for named in ids:

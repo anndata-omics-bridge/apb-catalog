@@ -1,5 +1,7 @@
 set,qualifier,definition
-abundance,normalization,Whether the producing software normalizes the value across runs; which method a run used is not catalogued.
-confidence,stage,Which decision the value qualifies.
-proteobench_entrapment,stage,Which decision the value qualifies.
-chromatography,unit,"Time unit or scale of the retained numeric value, before any consumer conversion. Unknown means the source does not establish one unit for this field."
+abundance_alpha,normalization,Whether the producing software normalizes the value across runs; which method a run used is not catalogued.
+abundance_alpha,aggregation,"How the value combines the signals of lower-level features, such as precursors into a protein group; none for a value measured on the feature's own signal."
+abundance_alpha,ms_level,"The MS level the value is measured on: the precursor's MS1 signal, or its MS2 fragments' signals."
+confidence_alpha,stage,Which decision the value qualifies.
+proteobench_entrapment_alpha,stage,Which decision the value qualifies.
+chromatography_alpha,unit,"Time unit or scale of the retained numeric value, before any consumer conversion. Unknown means the source does not establish one unit for this field."

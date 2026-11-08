@@ -1,0 +1,7 @@
+set,location,key,kind,qualifier,value,requirement,psi_ms,definition
+toy,peptidoform_ion/var,charge,charge,,,required,,
+toy,peptidoform_ion/var,group,group,,,required,,
+toy,peptidoform_ion/var,decoy,decoy,,,optional,,
+toy,peptidoform_ion/var,contaminant,contaminant,,,,,
+toy,peptidoform_ion/varm,contaminant,contaminant,,,,,
+toy,peptidoform_ion/var,peptidoform,peptidoform,,,,,

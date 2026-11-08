@@ -24,7 +24,7 @@ from tests.packaged_rules import declared_rule_json
     ],
 )
 def test_reviewed_rt_names_and_units(software: str, version: str, column: str, unit: str) -> None:
-    catalog = Catalog(software, version, "chromatography")
+    catalog = Catalog(software, version, "chromatography_alpha")
     assert catalog.levels["peptidoform_ion"].layers.get("retention_time", unit=unit) == column
     other = "second" if unit == "minute" else "minute"
     assert catalog.levels["peptidoform_ion"].layers.get("retention_time", unit=other) is None
@@ -56,42 +56,42 @@ def _result(include_rt: bool) -> ParsedLevels:
 
 def test_data_catalog_returns_original_values_without_converting() -> None:
     parsed = _result(True)
-    catalog = DataCatalog(parsed, "chromatography")
+    catalog = DataCatalog(parsed, "chromatography_alpha")
     layers = catalog.levels["peptidoform_ion"].layers
     assert layers.name("retention_time", unit="minute") == "RT"
     found = layers.get("retention_time", unit="minute")
     assert found is not None
     assert found[:, 0].tolist() == [0.0, 12.5], "zero RT and original minutes are preserved"
     snapshot = catalog.snapshot().model_dump(mode="json")
-    assert snapshot["catalogue"] == "chromatography"
+    assert snapshot["catalogue"] == "chromatography_alpha"
 
 
 def test_a_level_narrows_by_qualifiers_through_get_and_name() -> None:
     """``[...]`` takes no keywords; ``get`` and ``name`` take the qualifiers a key leaves open."""
-    layers = DataCatalog(_result(True), "chromatography").levels["peptidoform_ion"].layers
+    layers = DataCatalog(_result(True), "chromatography_alpha").levels["peptidoform_ion"].layers
     assert layers.name("retention_time", unit="minute") == "RT"
     assert layers.get("retention_time", unit="second") is None
     found = layers.get("retention_time", unit="minute")
     assert found is not None and found.shape == (2, 2)
     with pytest.raises(ValueError, match="unknown key 'RT'"):
         layers.get("RT", unit="minute")
-    names = Catalog("DIA-NN", "2.3.0", "chromatography").levels["peptidoform_ion"].layers
+    names = Catalog("DIA-NN", "2.3.0", "chromatography_alpha").levels["peptidoform_ion"].layers
     assert names.get("retention_time", unit="minute") == "RT"
     assert names.get("retention_time", unit="second") is None
 
 
 def test_rt_is_optional_in_a_reviewed_result() -> None:
-    catalog = DataCatalog(_result(False), "chromatography")
+    catalog = DataCatalog(_result(False), "chromatography_alpha")
     assert catalog.levels["peptidoform_ion"].layers.get("retention_time", unit="minute") is None
 
 
 def test_an_older_rule_without_retained_rt_answers_missing() -> None:
-    catalog = Catalog("AlphaDIA", "1.10.0", "chromatography")
+    catalog = Catalog("AlphaDIA", "1.10.0", "chromatography_alpha")
     assert catalog.levels["peptidoform_ion"].layers.get("retention_time") is None
 
 
 def test_feature_average_rt_is_distinct_from_per_run_rt() -> None:
-    catalog = Catalog("MaxQuant", "2.4.0.0", "chromatography")
+    catalog = Catalog("MaxQuant", "2.4.0.0", "chromatography_alpha")
     assert (
         catalog.levels["peptidoform"].var.get("retention_time", unit="minute") == "Retention_time"
     )
@@ -99,7 +99,7 @@ def test_feature_average_rt_is_distinct_from_per_run_rt() -> None:
 
 
 def test_instrument_dependent_units_are_not_assumed() -> None:
-    catalog = Catalog("FragPipe", "22.0", "chromatography")
+    catalog = Catalog("FragPipe", "22.0", "chromatography_alpha")
     assert (
         catalog.levels["peptidoform_ion"].layers.get("retention_time", unit="unknown")
         == "Apex_Retention_Time"
@@ -161,7 +161,7 @@ def test_measured_aligned_predicted_and_library_rt_are_separate_kinds(
     column: str,
     unit: str,
 ) -> None:
-    catalog = Catalog(software, version, "chromatography")
+    catalog = Catalog(software, version, "chromatography_alpha")
     level = catalog.levels["peptidoform_ion"]
     found = (level.layers if location == "layers" else level.var).get(kind, unit=unit)
     assert found == column
@@ -187,5 +187,5 @@ def test_measured_aligned_predicted_and_library_rt_are_separate_kinds(
 def test_peak_bounds_widths_and_scan_times_are_their_own_kinds(
     software: str, version: str, kind: str, column: str, unit: str
 ) -> None:
-    layers = Catalog(software, version, "chromatography").levels["peptidoform_ion"].layers
+    layers = Catalog(software, version, "chromatography_alpha").levels["peptidoform_ion"].layers
     assert layers.get(kind, unit=unit) == column

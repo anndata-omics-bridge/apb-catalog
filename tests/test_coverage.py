@@ -159,18 +159,18 @@ def test_requirements_must_name_the_sets_keys() -> None:
 
 def test_a_requirement_row_matches_its_key() -> None:
     """The abundance set's recommended row asks for an un-normalized intensity, not any intensity."""
-    coverage = rule_coverage("abundance").filter(pl.col("software") == "FragPipe")
+    coverage = rule_coverage("abundance_alpha").filter(pl.col("software") == "FragPipe")
     missing = coverage.filter(pl.col("column").is_null())
     assert missing.select("key", "kind", "qualifiers", "requirement").rows() == [
         ("intensity", "intensity", "normalization=none", "recommended")
     ]
-    assert "intensity_unknown_normalization" in coverage.get_column("key").to_list()
+    assert "intensity_norm_settings" in coverage.get_column("key").to_list()
     assert set(coverage.get_column("verdict")) == {"warn"}
 
 
 def test_a_set_without_requirements_reports_coverage_only() -> None:
     """Confidence catalogues judge nothing; a level without entries still has one row."""
-    coverage = rule_coverage("confidence")
+    coverage = rule_coverage("confidence_alpha")
     assert coverage.get_column("verdict").is_null().all()
     assert not coverage.filter(pl.col("kind").is_null()).is_empty()
 
@@ -179,13 +179,16 @@ def test_every_packaged_set_is_listed() -> None:
     """The abundance and apb sets set requirements; every set has entries."""
     listed = catalogues()
     assert listed.get_column("catalogue").to_list() == [
-        "abundance",
-        "confidence",
-        "proteobench_entrapment",
-        "apb",
-        "chromatography",
+        "abundance_alpha",
+        "confidence_alpha",
+        "proteobench_entrapment_alpha",
+        "apb_alpha",
+        "obs_annotation_alpha",
+        "apb_fasta_alpha",
+        "chromatography_alpha",
     ]
-    assert listed.get_column("has_requirements").to_list() == [True, False, False, True, False]
+    requirements = [True, False, False, True, False, False, False]
+    assert listed.get_column("has_requirements").to_list() == requirements
     assert (listed.get_column("entries") > 0).all()
 
 
@@ -197,7 +200,7 @@ def test_an_unknown_set_is_refused() -> None:
 
 def test_every_packaged_rule_level_carries_the_apb_must_fields() -> None:
     """The apb set reviews every packaged rule level; none fails."""
-    coverage = rule_coverage("apb")
+    coverage = rule_coverage("apb_alpha")
     assert coverage.filter(pl.col("verdict") == "fail").is_empty()
     checked = set(coverage.select("software", "software_version_pattern", "level").iter_rows())
     assert checked == {

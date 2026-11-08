@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -28,6 +29,8 @@ from apb_catalog.vocabulary import FrozenModel, Qualifier, SetVocabulary
 
 type Requirement = Literal["required", "recommended", "optional"]
 type Convention = Literal["sdrf", "prolfquapp"]
+
+logger = logging.getLogger(__name__)
 
 READS: dict[Location, tuple[Location, ...]] = {
     "obs": ("obs",),
@@ -83,8 +86,8 @@ class Evidence(FrozenModel):
 class SourceEntry(FrozenModel):
     """The reviewed meaning of one retained field for the listed software version patterns.
 
-    ``kind`` is what the field is and ``qualifiers`` hold a value for every other qualifier of
-    the set; ``key`` is the set's access key whose kind and fixed values the entry carries.
+    ``key`` is the access key the entry names; ``kind`` is that key's kind, and ``qualifiers``
+    hold the entry's value for every other qualifier of the set, the key's fixed value included.
     """
 
     entry_id: str
@@ -427,7 +430,8 @@ def _check_keys(
     vocabulary: SetVocabulary, keys: Sequence[Key], entries: Sequence[SourceEntry]
 ) -> None:
     """Require every key to name admitted values and every entry to carry admitted qualifiers
-    and have exactly the one key it records."""
+    and the kind and fixed values of the key it records; another key may describe it too."""
+    by_key = {found.key: found for found in keys}
     for found in keys:
         try:
             vocabulary.check_predicate(found.kind, found.accepted())
@@ -438,15 +442,9 @@ def _check_keys(
             vocabulary.check_description(entry.kind, entry.qualifiers)
         except ValueError as error:
             raise ValueError(f"{entry.entry_id}: {error}") from error
-        matching = key_of(keys, entry.kind, entry.qualifiers)
-        if matching != [entry.key]:
-            raise ValueError(f"{entry.entry_id} has the key {entry.key!r}; matches {matching}")
-
-
-def key_of(keys: Sequence[Key], kind: str, qualifiers: Mapping[str, str], /) -> list[str]:
-    """The keys an entry of this kind with these qualifiers has: exactly one in a consistent
-    set."""
-    return [found.key for found in keys if found.describes(kind, qualifiers)]
+        key = by_key.get(entry.key)
+        if key is None or not key.describes(entry.kind, entry.qualifiers):
+            raise ValueError(f"{entry.entry_id}: its key {entry.key!r} does not describe it")
 
 
 class CatalogueDescription(FrozenModel):
@@ -457,15 +455,12 @@ class CatalogueDescription(FrozenModel):
 
 
 TABLES = (
-    "entries",
-    "entry_qualifiers",
     "sets",
+    "terms",
     "kinds",
     "qualifiers",
     "qualifier_values",
-    "keys",
-    "key_qualifiers",
-    "requirements",
+    "catalog",
     "producers",
 )
 """The CSV tables a catalogue folder holds, each named ``<table>.csv``; ``datapackage.json``
@@ -565,17 +560,17 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
     description, vocabulary = _vocabulary(
         name, rows("sets"), rows("kinds"), rows("qualifiers"), rows("qualifier_values")
     )
-    keys = _keys(name, vocabulary, rows("keys"), rows("key_qualifiers"))
-    qualifiers: dict[tuple[str, str], dict[str, str]] = {}
-    for row in rows("entry_qualifiers"):
-        qualifiers.setdefault((row["entry_id"], row["kind"]), {})[row["qualifier"]] = row["value"]
+    keys, requirements = _terms(name, vocabulary, rows("terms"))
+    by_key = {found.key: found for found in keys}
+    _check_mapped(name, rows("catalog"), rows("terms"), by_key)
+    fields: dict[tuple[str, str], list[Row]] = {}
+    for row in rows("catalog"):
+        fields.setdefault((_entry_id(row), row["key"]), []).append(row)
     by_source: dict[str, list[SourceEntry]] = {}
-    for row in rows("entries"):
-        named = entry_id(row["entry_id"])
-        entry = _entry(row, named, qualifiers.pop((row["entry_id"], row["kind"]), {}), keys)
+    for (found, key), field in fields.items():
+        named = entry_id(found)
+        entry = _entry(name, field, named, by_key[key])
         by_source.setdefault(named.source, []).append(entry)
-    if qualifiers:
-        raise ValueError(f"{name}: entry_qualifiers.csv qualifies no entry {sorted(qualifiers)}")
     runs = {row["producer"]: row for row in rows("producers")}
     vendors: dict[str, tuple[SourceEntry, ...]] = {}
     producers: list[ProducerCatalogue] = []
@@ -607,12 +602,7 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
         description,
         tuple(producers),
         tuple(annotations),
-        tuple(
-            RequirementRow.model_validate(
-                {key: value for key, value in row.items() if key != "set"}
-            )
-            for row in rows("requirements")
-        ),
+        requirements,
         keys,
     )
 
@@ -663,53 +653,180 @@ def _description(head: Row) -> CatalogueDescription:
     return CatalogueDescription(purpose=head["purpose"], used_by=tuple(head["used_by"].split(";")))
 
 
-def _keys(
-    name: str, vocabulary: SetVocabulary, rows: Sequence[Row], qualifiers: Sequence[Row]
-) -> tuple[Key, ...]:
-    """A set's keys from their ``keys.csv`` rows and the values ``key_qualifiers.csv`` fixes; a
-    qualifier without a row stays open.
-
-    The values are checked here, before any entry is matched to its key.
+def _check_mapped(
+    name: str, rows: Sequence[Row], terms: Sequence[Row], keys: Mapping[str, Key], /
+) -> None:
+    """Require every ``catalog.csv`` row to map a term ``terms.csv`` defines at its location and
+    to agree with the term's key: its kind and PSI-MS terms, and ``fixed`` true exactly on the
+    qualifiers the key fixes, with the value it fixes. Log a warning for each term no row maps
+    yet; a row of every level (``*``) maps the term on each level.
 
     Raises:
-        ValueError: A ``key_qualifiers.csv`` row fixes the kind, which ``keys.csv`` holds, or
-            names no key; or a key names a kind or value the vocabulary does not admit.
+        ValueError: A row maps no term, is no valid qualifier pair, or disagrees with its key.
     """
-    fixed: dict[str, dict[str, str]] = {}
-    for row in qualifiers:
-        if row["qualifier"] == "kind":
-            raise ValueError(
-                f"{name}: key_qualifiers.csv fixes the kind of {row['key']!r}; keys.csv holds it"
-            )
-        fixed.setdefault(row["key"], {})[row["qualifier"]] = row["value"]
-    keys = tuple(
-        Key(
-            key=row["key"],
-            kind=row["kind"],
-            fixed=fixed.pop(row["key"], {}),
-            psi_ms=tuple(row["psi_ms"].split(";")) if row["psi_ms"] else (),
+    places = {(row["key"], row["location"]) for row in terms}
+    stray = sorted({(row["key"], row["location"]) for row in rows} - places)
+    if stray:
+        raise ValueError(f"{name}: catalog.csv maps terms terms.csv does not define: {stray}")
+    for row in rows:
+        _check_row(f"{name}: {_entry_id(row)}", row, keys[row["key"]])
+    mapped = {(row["key"], row["location"]) for row in rows}
+    everywhere = {
+        (key, location.partition("/")[2]) for key, location in mapped if location.startswith("*/")
+    }
+    unmapped = [
+        term
+        for term in dict.fromkeys((row["key"], row["location"]) for row in terms)
+        if term not in mapped and (term[0], term[1].partition("/")[2]) not in everywhere
+    ]
+    if unmapped:
+        logger.warning("%s: no catalog.csv row maps the terms %s yet", name, unmapped)
+
+
+def _check_row(label: str, row: Row, key: Key, /) -> None:
+    """Require one ``catalog.csv`` row to agree with its key.
+
+    Raises:
+        ValueError: The row is no valid qualifier pair, or its kind, PSI-MS terms or ``fixed``
+            differ from what its key states.
+    """
+    pair = _pair(label, row)
+    psi_ms = ";".join(key.psi_ms)
+    if (row["kind"], row["psi_ms"]) != (key.kind, psi_ms):
+        raise ValueError(
+            f"catalog.csv: {label} has the kind {row['kind']!r} and the PSI-MS terms "
+            f"{row['psi_ms']!r}; its key {key.key!r} has {key.kind!r} and {psi_ms!r}"
         )
-        for row in rows
-    )
-    if fixed:
-        raise ValueError(f"{name}: key_qualifiers.csv qualifies no key {sorted(fixed)}")
+    fixes = row["fixed"] == "true"
+    if fixes != (row["qualifier"] in key.fixed) or (
+        fixes and not pair.items() <= key.fixed.items()
+    ):
+        raise ValueError(
+            f"catalog.csv: {label} has fixed {row['fixed']!r} for {pair}; its key {key.key!r} "
+            f"fixes {key.fixed}"
+        )
+
+
+def _entry_id(row: Row, /) -> str:
+    """A ``catalog.csv`` row's entry id, its software, location and name joined by ``/``."""
+    return f"{row['software']}/{row['location']}/{row['name']}"
+
+
+def _pair(label: str, row: Row, /) -> dict[str, str]:
+    """A row's qualifier and value as one mapping, empty when the row has neither.
+
+    Raises:
+        ValueError: The row has a qualifier without a value or a value without a qualifier, its
+            qualifier is ``kind``, or its ``fixed`` is neither ``true`` nor ``false``, or
+            ``true`` without a qualifier.
+    """
+    qualifier, value, fixed = row["qualifier"], row["value"], row["fixed"]
+    if bool(qualifier) != bool(value):
+        raise ValueError(f"catalog.csv: {label} has a qualifier and a value only together")
+    if qualifier == "kind":
+        raise ValueError(f"catalog.csv: {label} qualifies the kind, which its kind column holds")
+    if fixed not in ("true", "false") or (fixed == "true" and not qualifier):
+        raise ValueError(
+            f"catalog.csv: {label} has fixed {fixed!r}; true on a row with a qualifier, else false"
+        )
+    return {qualifier: value} if qualifier else {}
+
+
+def _terms(
+    name: str, vocabulary: SetVocabulary, rows: Sequence[Row]
+) -> tuple[tuple[Key, ...], Requirements]:
+    """A set's keys and requirements from its ``terms.csv`` rows. A term is one key at one
+    location, with one row per qualifier value its key fixes, or one row with neither; its
+    requirement, if any, is the same on all its rows.
+
+    Raises:
+        ValueError: A key is inconsistent (see :func:`_key`) or names a kind or value the
+            vocabulary does not admit, or a term has two requirements or one not admitted.
+    """
+    by_key: dict[str, list[Row]] = {}
+    by_term: dict[tuple[str, str], list[Row]] = {}
+    for row in rows:
+        by_key.setdefault(row["key"], []).append(row)
+        by_term.setdefault((row["key"], row["location"]), []).append(row)
+    keys = tuple(_key(name, key, found) for key, found in by_key.items())
     for found in keys:
         try:
             vocabulary.check_predicate(found.kind, found.accepted())
         except ValueError as error:
             raise ValueError(f"{name}: key {found.key!r}: {error}") from error
-    return keys
+    requirements: list[RequirementRow] = []
+    for (key, location), found in by_term.items():
+        needs = sorted({row["requirement"] for row in found})
+        if len(needs) != 1:
+            raise ValueError(f"{name}: term {key!r} at {location} has the requirements {needs}")
+        if needs[0]:
+            level, _, attribute = location.partition("/")
+            requirements.append(
+                RequirementRow.model_validate(
+                    {"level": level, "location": attribute, "key": key, "requirement": needs[0]}
+                )
+            )
+    return keys, tuple(requirements)
 
 
-def _entry(
-    row: Row, named: EntryId, qualifiers: Mapping[str, str], keys: Sequence[Key]
-) -> SourceEntry:
-    """One entry from its ``entries.csv`` row and parsed id, its other qualifiers and the key
-    they match.
+def _key(name: str, key: str, rows: Sequence[Row], /) -> Key:
+    """One key from its ``terms.csv`` rows: one kind and one PSI-MS term list on every row, and
+    the same qualifier values fixed at every location.
 
     Raises:
-        ValueError: The entry matches no key, or more than one.
+        ValueError: The key has two kinds or PSI-MS term lists, a row has half a qualifier pair
+            or qualifies the kind, a term mixes a row without a pair with pair rows, or two
+            locations fix different values.
     """
+    kinds = sorted({row["kind"] for row in rows})
+    terms = sorted({row["psi_ms"] for row in rows})
+    if len(kinds) != 1 or len(terms) != 1:
+        raise ValueError(
+            f"{name}: key {key!r} has the kinds {kinds} and the PSI-MS terms {terms}; every row "
+            "of a key has one of each"
+        )
+    by_location: dict[str, list[tuple[str, str]]] = {}
+    for row in rows:
+        qualifier, value = row["qualifier"], row["value"]
+        if bool(qualifier) != bool(value) or qualifier == "kind":
+            raise ValueError(
+                f"terms.csv: {name}: {key!r} at {row['location']} has the qualifier "
+                f"{qualifier!r} and the value {value!r}; a pair names a qualifier other than kind"
+            )
+        by_location.setdefault(row["location"], []).append((qualifier, value))
+    fixes: set[tuple[tuple[str, str], ...]] = set()
+    for location, pairs in by_location.items():
+        if ("", "") in pairs and len(pairs) > 1:
+            raise ValueError(f"terms.csv: {name}: {key!r} at {location} has a row without a pair")
+        fixes.add(tuple(sorted(pair for pair in pairs if pair != ("", ""))))
+    if len(fixes) != 1:
+        raise ValueError(
+            f"{name}: key {key!r} fixes {sorted(fixes)} at different locations; a key fixes the "
+            "same values everywhere"
+        )
+    return Key(
+        key=key,
+        kind=kinds[0],
+        fixed=dict(fixes.pop()),
+        psi_ms=tuple(terms[0].split(";")) if terms[0] else (),
+    )
+
+
+def _entry(name: str, rows: Sequence[Row], named: EntryId, key: Key) -> SourceEntry:
+    """One entry from its ``catalog.csv`` rows, one per qualifier, its parsed id and its key;
+    the table's primary key keeps a qualifier to one row.
+
+    Raises:
+        ValueError: The rows differ in basis or evidence.
+    """
+    label = f"{name}: {_entry_id(rows[0])}"
+    qualifiers = {
+        qualifier: value for row in rows for qualifier, value in _pair(label, row).items()
+    }
+    evidence = {(row["basis"], row["evidence_url"]) for row in rows}
+    if len(evidence) != 1:
+        raise ValueError(f"catalog.csv: {label} has two bases or evidence URLs; one per field")
+    basis, url = evidence.pop()
     prefix = named.name.removesuffix("*") if named.name.endswith("*") else None
     reference = Reference(
         level=named.level,
@@ -718,17 +835,14 @@ def _entry(
         name=None if prefix is not None else named.name,
         prefix=prefix,
     )
-    matching = key_of(keys, row["kind"], qualifiers)
-    if len(matching) != 1:
-        raise ValueError(f"{row['entry_id']}: matches the keys {matching}, not exactly one")
     return SourceEntry(
-        entry_id=row["entry_id"],
+        entry_id=_entry_id(rows[0]),
         software_version_pattern=version_patterns(named.source, named.version),
         reference=reference,
-        key=matching[0],
-        kind=row["kind"],
-        qualifiers=dict(qualifiers),
-        evidence=Evidence(basis=row["basis"], source=row["evidence_url"] or None),
+        key=key.key,
+        kind=key.kind,
+        qualifiers=qualifiers,
+        evidence=Evidence(basis=basis, source=url or None),
     )
 
 

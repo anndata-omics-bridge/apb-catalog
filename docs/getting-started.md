@@ -17,7 +17,7 @@ from apb2.api import read_parsed_levels
 from apb_catalog.api import DataCatalog
 
 diann = read_parsed_levels(Path("diann.h5mu"))   # any APB2 result: h5ad, h5mu, Parquet, DuckDB
-confidence = DataCatalog(diann, "confidence")
+confidence = DataCatalog(diann, "confidence_alpha")
 ```
 
 The second argument names the set; [Catalogues](catalogues.md) lists them all.
@@ -47,7 +47,7 @@ confidence.fields().select("level", "location", "name", "key", "qualifier.stage"
 ```python
 ion = confidence.levels["peptidoform_ion"]
 ion.layers.keys()   # {'pep', 'q_value'}
-ion.var.keys()      # {'library_q_value', 'q_value', ...}: apb's keys too, as apb is always in
+ion.var.keys()      # {'library_q_value', 'q_value'}: only the sets named answer
 ```
 
 ## Get the data
@@ -94,10 +94,10 @@ if pep is None:
 
 ## Read a level as AnnData does
 
-Name several sets; `apb`, APB's own fields, is always in:
+Name several sets. Only the sets named answer: `apb_alpha` holds the fields `apb2 convert` writes, such as `peptidoform_ion`, and answers only when named:
 
 ```python
-catalog = DataCatalog(diann, "abundance", "confidence")
+catalog = DataCatalog(diann, "abundance_alpha", "confidence_alpha", "apb_alpha")
 ion = catalog.levels["peptidoform_ion"]
 
 ion.layers                         # key -> numpy matrix, runs by precursors
@@ -105,14 +105,13 @@ ion.var                            # key -> polars Series, one value per precurs
 ion.layers["q_value"].shape        # (6, 18182): runs by precursors, numpy, as AnnData's layers
 ion.var["peptidoform_ion"].name    # 'ProForma_ion', a polars Series
 ion.layers["Q_Value"]              # not a key: the level's own layer of that name
-ion.layers.keys()                  # the keys it offers: {'intensity', 'normalized_intensity', 'q_value', ...}
-ion.obs[["group", "Run"]]          # a polars DataFrame: every group column, then Run
+ion.layers.keys()                  # the keys it offers: {'intensity', 'intensity_norm_settings', 'q_value', ...}
 ion.layers.name("q_value")         # 'Q_Value': the field the key reads
 ion.layers.get("library_q_value")  # None: DIA-NN's library q-value is in var
 ion.var.get("library_q_value").name  # 'Lib_Q_Value'
 ```
 
-`get` returns `None` where `[...]` raises `KeyError`, and takes the qualifiers a key leaves open, as `ion.layers.get("retention_time", unit="minute")` with the `chromatography` set.
+`get` returns `None` where `[...]` raises `KeyError`, and takes the qualifiers a key leaves open, as `ion.layers.get("retention_time", unit="minute")` with the `chromatography_alpha` set.
 
 A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray's `ds.cf[...]` does. A vendor may name a column as a key is named, so a prefix makes the lookup exact:
 
@@ -122,7 +121,7 @@ A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray
 | `c:q_value` | the set whose prefix is `c`, confidence, alone; never a field of that name | the same |
 | `v:Q_Value` | the level's own field of that name alone; never the catalog | the same |
 
-`catalogues()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns, `obs["group"]` raises `UnresolvedField` and the list `obs[["group"]]` reads them all.
+`catalogues()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns with `obs_annotation_alpha` named on an annotated result, `obs["group"]` raises `UnresolvedField` and the list `obs[["group", "Run"]]` reads them all, then `Run`.
 
 ## Read the AnnData object with pandas
 
@@ -133,7 +132,7 @@ import mudata
 from apb_catalog.api_pandas import DataCatalog
 
 mdata = mudata.read_h5mu("result.h5mu")
-ion = DataCatalog(mdata, "abundance", "confidence").levels["peptidoform_ion"]
+ion = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["peptidoform_ion"]
 
 ion.layers                                # key -> the matrix AnnData holds, runs by precursors
 ion.var                                   # key -> pandas Series, one value per precursor
@@ -143,15 +142,17 @@ ion.var[["q_value", "peptidoform_ion"]]   # a pandas DataFrame
 
 An `.h5ad` read with `anndata.read_h5ad` is the one level it holds. `UnresolvedField` comes from `apb_catalog.api`.
 
+`as_mudata()` converts: a new MuData of the catalogued fields alone, each under its key, which `write_h5mu` writes. See [A result named by catalog keys](keyed.md).
+
 ## Keys stand for a kind and its qualifiers
 
-Each set lists its keys; a key names one meaning, a kind with the qualifier values it fixes. In the `abundance` set the key says whether the software normalizes the value across runs, as PSI-MS names raw and normalized values apart.
+Each set lists its keys; a key names one meaning, a kind with the qualifier values it fixes. In the `abundance_alpha` set the key says whether the software normalizes the value across runs, as PSI-MS names raw and normalized values apart.
 
 | Call | Key stands for | Returns |
 | --- | --- | --- |
 | `layers.get("intensity")` | `intensity`, normalization `none` | DIA-NN `Precursor_Quantity`, MaxQuant `Intensity` |
-| `layers.get("normalized_intensity")` | `intensity`, normalization `run_setting` | DIA-NN `Precursor_Normalised`: whatever normalization the run chose, possibly none |
-| `layers.get("intensity_unknown_normalization")` | `intensity`, normalization `unknown` | FragPipe, Sage `Intensity`: nobody documented whether it is normalized |
+| `layers.get("intensity_norm_settings")` | `intensity`, normalization `run_setting` | DIA-NN `Precursor_Normalised`: whatever normalization the run chose, possibly none |
+| `layers.get("intensity_norm_unknown")` | `intensity`, normalization `unknown` | FragPipe, Sage `Intensity`: nobody documented whether it is normalized |
 | `var.get("quantification_q_value")` | `q_value`, stage `quantification` | Sage `Q_Value`, the q-value of its MS1 peak |
 
 - Asking `intensity` where the normalization is unknown raises `UnresolvedField`: the layer may or may not be normalized
@@ -164,9 +165,9 @@ A qualifier the key leaves open is a keyword of `get` and `name`; [Catalogues](c
 
 | Set | Call on the `peptidoform_ion` level | Returns |
 | --- | --- | --- |
-| `chromatography` | `layers.get("retention_time", unit="minute")` | DIA-NN `RT` |
-| `chromatography` | `layers.get("retention_time", unit="second")` | DIA-NN `None`: its RT is in minutes |
-| `chromatography` | `layers.get("aligned_retention_time")` | MaxQuant `Calibrated_retention_time` |
+| `chromatography_alpha` | `layers.get("retention_time", unit="minute")` | DIA-NN `RT` |
+| `chromatography_alpha` | `layers.get("retention_time", unit="second")` | DIA-NN `None`: its RT is in minutes |
+| `chromatography_alpha` | `layers.get("aligned_retention_time")` | MaxQuant `Calibrated_retention_time` |
 
 - A keyword the key already fixes, such as `stage` with `q_value`, raises `ValueError`
 - `[...]` takes no keywords
@@ -178,29 +179,29 @@ A qualifier the key leaves open is a keyword of `get` and `name`; [Catalogues](c
 ```python
 from apb_catalog.api import Catalog
 
-ion = Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"]
+ion = Catalog("DIA-NN", "2.6.0", "abundance_alpha").levels["peptidoform_ion"]
 ion.layers["intensity"]            # 'Precursor_Quantity'
-apb = Catalog("DIA-NN", "2.6.0", "apb").levels["peptidoform_ion"]
+apb = Catalog("DIA-NN", "2.6.0", "apb_alpha").levels["peptidoform_ion"]
 apb.var[["peptidoform_ion", "protein_assignment"]]  # ('ProForma_ion', 'Protein_Group')
 ```
 
-`get` returns the name or `None` and takes qualifiers too: `Catalog("DIA-NN", "2.6.0", "chromatography").levels["peptidoform_ion"].layers.get("retention_time", unit="minute")` is `'RT'`.
+`get` returns the name or `None` and takes qualifiers too: `Catalog("DIA-NN", "2.6.0", "chromatography_alpha").levels["peptidoform_ion"].layers.get("retention_time", unit="minute")` is `'RT'`.
 
 ## When there is no single answer
 
 | Call | Raises |
 | --- | --- |
-| Spectronaut `abundance.levels["protein"].layers.get("normalized_intensity")` | `UnresolvedField`, unknown: `PG_Quantity` leaves kind unknown |
+| Spectronaut `abundance.levels["protein"].layers.get("intensity_norm_settings", aggregation="sum")` | `UnresolvedField`, unknown: `PG_Quantity` leaves aggregation unknown |
 | `layers.get("intensity", normalization="none")` | `ValueError`: the key `intensity` fixes normalization |
 | `layers["intensities"]` | `KeyError`: no key or field `intensities`; `get` returns `None`, as `dict.get` |
-| `Catalog("DIA-NN", "3.0", "confidence")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |
+| `Catalog("DIA-NN", "3.0", "confidence_alpha")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |
 
 ```python
 from apb_catalog.api import UnresolvedField
 
-abundance = DataCatalog(spectronaut, "abundance")
+abundance = DataCatalog(spectronaut, "abundance_alpha")
 try:
-    layer = abundance.levels["protein"].layers.get("normalized_intensity")
+    layer = abundance.levels["protein"].layers.get("intensity_norm_settings")
 except UnresolvedField as error:
     print(error)   # names the reason and the candidate fields
 ```
@@ -215,7 +216,7 @@ confidence.levels["peptidoform_ion"].layers.get("q_value")
 annotated = attach_snapshot(diann, confidence.snapshot())
 write_parsed_levels(annotated, Path("annotated.h5mu"))
 
-record = read_parsed_levels(Path("annotated.h5mu")).metadata["catalog"]["confidence"]["result"]
+record = read_parsed_levels(Path("annotated.h5mu")).metadata["catalog"]["confidence_alpha"]["result"]
 stored = ResolutionSnapshot.model_validate(record)
 [(r.request.level, r.status, r.reference.name) for r in stored.resolutions]
 # [('peptidoform_ion', 'resolved', 'Q_Value')]

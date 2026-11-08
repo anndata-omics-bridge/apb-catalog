@@ -111,8 +111,8 @@ SPECTRONAUT = ("spectronaut/rules.json", ["FG_Quantity", "EG_PEP", "EG_Qvalue", 
 
 def test_the_same_call_returns_each_vendors_layer() -> None:
     """Callers never name ``PEP`` or ``EG_PEP``; the catalogue does."""
-    maxquant = DataCatalog(_result(*MAXQUANT), "confidence").levels["peptidoform_ion"]
-    spectronaut = DataCatalog(_result(*SPECTRONAUT), "confidence").levels["peptidoform_ion"]
+    maxquant = DataCatalog(_result(*MAXQUANT), "confidence_alpha").levels["peptidoform_ion"]
+    spectronaut = DataCatalog(_result(*SPECTRONAUT), "confidence_alpha").levels["peptidoform_ion"]
     assert maxquant.layers.name("pep") == "PEP"
     assert spectronaut.layers.name("pep") == "EG_PEP"
 
@@ -120,14 +120,14 @@ def test_the_same_call_returns_each_vendors_layer() -> None:
 def test_only_the_fields_the_consumer_needs_are_catalogued() -> None:
     """Spectronaut's EG and FG q-values agree; aggregation is given the EG one only."""
     parsed = _result(*SPECTRONAUT)
-    layers = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].layers
+    layers = DataCatalog(parsed, "confidence_alpha").levels["peptidoform_ion"].layers
     assert layers.name("q_value") == "EG_Qvalue"
 
 
 def test_a_vendor_without_the_field_returns_none() -> None:
     """DIA-NN without its PEP layer is a reviewed absence, not an error."""
     parsed = _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"])
-    catalog = DataCatalog(parsed, "confidence")
+    catalog = DataCatalog(parsed, "confidence_alpha")
     assert catalog.levels["peptidoform_ion"].layers.get("pep") is None
     assert catalog.levels["peptidoform_ion"].layers.name("q_value") == "Q_Value"
 
@@ -136,7 +136,7 @@ def test_quantification_confidence_is_found_only_when_asked_for() -> None:
     """Sage's q-value rates the MS1 peak, one value per feature; the confidence set's
     ``q_value``, asked with its prefix, is no such value."""
     parsed = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
-    var = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].var
+    var = DataCatalog(parsed, "confidence_alpha").levels["peptidoform_ion"].var
     assert var.get("c:q_value") is None
     column = var.get("quantification_q_value")
     assert column is not None
@@ -149,7 +149,7 @@ def test_a_prefix_tells_a_key_from_the_vendor_column_of_its_name() -> None:
     """Sage names its column ``q_value``: a plain name falls back to it, ``c:`` never reads it
     and ``v:`` always does."""
     parsed = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
-    var = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].var
+    var = DataCatalog(parsed, "confidence_alpha", "apb_alpha").levels["peptidoform_ion"].var
     assert var.name("q_value") == "q_value"
     assert var.name("v:q_value") == "q_value"
     assert var.name("c:quantification_q_value") == "q_value"
@@ -169,18 +169,20 @@ def test_a_plain_key_reads_the_catalog_where_it_answers_and_v_the_vendor() -> No
         ["qval", "intensity"],
         {"decoy": [0, 1], "apb_Decoy": [False, True]},
     )
-    level = DataCatalog(parsed, "abundance").levels["peptidoform_ion"]
+    level = DataCatalog(parsed, "abundance_alpha", "apb_alpha").levels["peptidoform_ion"]
     assert (level.var.name("decoy"), level.var.name("apb:decoy")) == ("apb_Decoy", "apb_Decoy")
     assert level.var.name("v:decoy") == "decoy"
     assert level.layers.get("a:intensity") is None
     assert level.layers.name("v:intensity") == level.layers.name("intensity") == "intensity"
+    unnamed = DataCatalog(parsed, "abundance_alpha").levels["peptidoform_ion"]
+    assert unnamed.var.name("decoy") == "decoy", "without apb_alpha, decoy is the vendor's own"
 
 
 def test_a_prefix_of_no_composed_set_or_a_qualified_vendor_name_is_refused() -> None:
     """A prefix names one of the composed sets, a key of that set; ``v:`` takes no qualifiers."""
     parsed = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
-    var = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].var
-    with pytest.raises(ValueError, match=r"unknown prefix 'a'.*\['apb', 'c', 'v'\]"):
+    var = DataCatalog(parsed, "confidence_alpha").levels["peptidoform_ion"].var
+    with pytest.raises(ValueError, match=r"unknown prefix 'a'.*\['c', 'v'\]"):
         var.get("a:intensity")
     with pytest.raises(ValueError, match="unknown key 'intensity'"):
         var.get("c:intensity")
@@ -286,7 +288,7 @@ def test_an_unknown_catalogue_set_is_rejected() -> None:
 def test_an_unreviewed_level_raises() -> None:
     """Without a reviewed rule the catalogue cannot even claim absence."""
     with pytest.raises(UnresolvedField, match=r"unknown.*rule_json"):
-        DataCatalog(_result(None, ["Intensity"]), "confidence").levels[
+        DataCatalog(_result(None, ["Intensity"]), "confidence_alpha").levels[
             "peptidoform_ion"
         ].layers.get("pep")
 
@@ -294,7 +296,7 @@ def test_an_unreviewed_level_raises() -> None:
 def test_an_unreviewed_software_version_is_unknown() -> None:
     """A software version no catalogue variant names answers unknown."""
     with pytest.raises(UnresolvedField, match="no source catalogue reviewed"):
-        DataCatalog(_edited_maxquant(software_version_pattern="^99\\."), "confidence").levels[
+        DataCatalog(_edited_maxquant(software_version_pattern="^99\\."), "confidence_alpha").levels[
             "peptidoform_ion"
         ].layers.get("pep")
 
@@ -302,13 +304,13 @@ def test_an_unreviewed_software_version_is_unknown() -> None:
 def test_an_edited_rule_keeps_its_entries() -> None:
     """Levels bind by software and version, so editing a rule within a version changes nothing."""
     parsed = _edited_maxquant(file_version=-1)
-    layers = DataCatalog(parsed, "confidence").levels["peptidoform_ion"].layers
+    layers = DataCatalog(parsed, "confidence_alpha").levels["peptidoform_ion"].layers
     assert layers.name("pep") == "PEP"
 
 
 def test_an_absent_level_is_not_in_levels() -> None:
     """A level the result lacks has no entry in ``levels``."""
-    catalog = DataCatalog(_result(*MAXQUANT), "confidence")
+    catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha")
     assert "peptide" not in catalog.levels
     assert list(catalog.levels) == ["peptidoform_ion"]
 
@@ -316,7 +318,7 @@ def test_an_absent_level_is_not_in_levels() -> None:
 def test_an_unknown_key_is_rejected() -> None:
     """A misspelling raises through ``[...]`` and with qualifiers; ``get`` reads it as absent,
     as ``dict.get`` does."""
-    layers = DataCatalog(_result(*MAXQUANT), "confidence").levels["peptidoform_ion"].layers
+    layers = DataCatalog(_result(*MAXQUANT), "confidence_alpha").levels["peptidoform_ion"].layers
     with pytest.raises(KeyError, match="pepp"):
         layers["pepp"]
     assert layers.get("pepp") is None
@@ -326,53 +328,52 @@ def test_an_unknown_key_is_rejected() -> None:
 
 def test_keys_lists_what_a_level_offers() -> None:
     """``keys`` says what a level holds at one location."""
-    maxquant = DataCatalog(_result(*MAXQUANT), "confidence").levels["peptidoform_ion"]
+    maxquant = DataCatalog(_result(*MAXQUANT), "confidence_alpha").levels["peptidoform_ion"]
     assert maxquant.layers.keys() == {"pep"}
-    spectronaut = DataCatalog(_result(*SPECTRONAUT), "confidence").levels["peptidoform_ion"]
+    spectronaut = DataCatalog(_result(*SPECTRONAUT), "confidence_alpha").levels["peptidoform_ion"]
     assert spectronaut.layers.keys() == {"pep", "q_value"}
     dia_nn = DataCatalog(
-        _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"]), "confidence"
+        _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"]), "confidence_alpha"
     ).levels["peptidoform_ion"]
     assert dia_nn.layers.keys() == {"q_value"}
-    assert dia_nn.var.keys() == {"peptidoform_ion"}, "apb's, always in"
+    assert dia_nn.var.keys() == set(), "apb_alpha's keys only when it is named"
     sage = _result("sage/rules.json", ["Intensity"], {"q_value": [0.001, 0.002]})
-    assert DataCatalog(sage, "confidence").levels["peptidoform_ion"].var.keys() == {
-        "peptidoform_ion",
-        "quantification_q_value",
-    }
+    sage_ion = DataCatalog(sage, "confidence_alpha", "apb_alpha").levels["peptidoform_ion"]
+    assert sage_ion.var.keys() == {"peptidoform_ion", "quantification_q_value"}
 
 
 def test_listing_keys_on_an_unreviewed_level() -> None:
     """An unreviewed level cannot say which keys it offers."""
     with pytest.raises(UnresolvedField, match="unknown"):
-        DataCatalog(_result(None, ["Intensity"]), "confidence").levels[
+        DataCatalog(_result(None, ["Intensity"]), "confidence_alpha").levels[
             "peptidoform_ion"
         ].layers.keys()
 
 
 def test_listing_keys_is_not_recorded_as_a_lookup() -> None:
     """Only lookups that return data enter the snapshot."""
-    catalog = DataCatalog(_result(*MAXQUANT), "confidence")
+    catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha")
     catalog.levels["peptidoform_ion"].layers.keys()
     assert catalog.snapshot().resolutions == ()
 
 
 def test_fields_lists_what_the_result_holds() -> None:
     """One row per catalogued field of every composed set, readable without knowing the vendor."""
-    fields = DataCatalog(_result(*MAXQUANT), "confidence").fields().filter(pl.col("present"))
+    catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha", "apb_alpha")
+    fields = catalog.fields().filter(pl.col("present"))
     assert fields.select("set", "location", "name", "kind").rows() == [
-        ("confidence", "layers", "PEP", "pep"),
-        ("apb", "var", "ProForma_ion", "peptidoform_ion"),
+        ("confidence_alpha", "layers", "PEP", "pep"),
+        ("apb_alpha", "var", "ProForma_ion", "peptidoform_ion"),
     ]
 
 
 def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
     """Every lookup is kept for the persisted record."""
-    catalog = DataCatalog(_result(*MAXQUANT), "confidence")
+    catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha")
     catalog.levels["peptidoform_ion"].layers.get("pep")
     catalog.levels["peptidoform_ion"].layers.get("q_value")
     snapshot = catalog.snapshot()
-    assert snapshot.catalogue == "confidence"
+    assert snapshot.catalogue == "confidence_alpha"
     assert [resolution.status for resolution in snapshot.resolutions] == ["resolved", "missing"]
     binding = snapshot.levels[0]
     assert isinstance(binding, ReviewedBinding)
@@ -380,19 +381,19 @@ def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
         "MaxQuant",
         "^(1\\.5|1\\.6|2\\.)",
     )
-    unreviewed = DataCatalog(_result(None, ["Intensity"]), "confidence").snapshot()
+    unreviewed = DataCatalog(_result(None, ["Intensity"]), "confidence_alpha").snapshot()
     assert isinstance(unreviewed.levels[0], UnreviewedBinding)
 
 
 def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     """Attaching one set's snapshot keeps the other's, and the input stays unchanged."""
     parsed = _result(*MAXQUANT)
-    confidence = DataCatalog(parsed, "confidence").snapshot()
-    entrapment = DataCatalog(parsed, "proteobench_entrapment").snapshot()
+    confidence = DataCatalog(parsed, "confidence_alpha").snapshot()
+    entrapment = DataCatalog(parsed, "proteobench_entrapment_alpha").snapshot()
     attached = attach_snapshot(attach_snapshot(parsed, confidence), entrapment)
     assert METADATA_KEY not in parsed.metadata
-    assert _stored(attached, "confidence") == confidence
-    assert _stored(attached, "proteobench_entrapment") == entrapment
+    assert _stored(attached, "confidence_alpha") == confidence
+    assert _stored(attached, "proteobench_entrapment_alpha") == entrapment
     assert attached.levels["peptidoform_ion"].layers is parsed.levels["peptidoform_ion"].layers
     assert METADATA_KEY not in attached.levels["peptidoform_ion"].metadata, (
         "no request, no level summary"
@@ -412,13 +413,13 @@ def _with_namespace(parsed: ParsedLevels, namespace: JsonValue) -> ParsedLevels:
 def test_attaching_keeps_unrelated_namespace_entries() -> None:
     """Attaching adds this catalogue's snapshot and leaves every other entry as it was."""
     parsed = _with_namespace(_result(*MAXQUANT), {"other": {"contract": "elsewhere"}})
-    snapshot = DataCatalog(parsed, "confidence").snapshot()
+    snapshot = DataCatalog(parsed, "confidence_alpha").snapshot()
 
     attached = attach_snapshot(parsed, snapshot)
 
     assert attached.metadata[METADATA_KEY] == {
         "other": {"contract": "elsewhere"},
-        "confidence": {"result": snapshot.model_dump(mode="json")},
+        "confidence_alpha": {"result": snapshot.model_dump(mode="json")},
     }
     assert parsed.metadata[METADATA_KEY] == {"other": {"contract": "elsewhere"}}
 
@@ -427,7 +428,7 @@ def test_attaching_keeps_unrelated_namespace_entries() -> None:
 def test_a_malformed_namespace_raises_instead_of_being_replaced(namespace: JsonValue) -> None:
     """A present namespace that is not an object is never read as absent or overwritten."""
     parsed = _with_namespace(_result(*MAXQUANT), namespace)
-    snapshot = DataCatalog(parsed, "confidence").snapshot()
+    snapshot = DataCatalog(parsed, "confidence_alpha").snapshot()
 
     with pytest.raises(ValueError, match="not snapshots by catalogue"):
         attach_snapshot(parsed, snapshot)
@@ -440,7 +441,7 @@ def test_a_stored_malformed_namespace_still_raises(tmp_path: Path, suffix: str) 
     target = tmp_path / f"result{suffix}"
     write_parsed_levels(_with_namespace(_result(*MAXQUANT), ["prior-evidence"]), target)
     restored = read_parsed_levels(target)
-    snapshot = DataCatalog(restored, "confidence").snapshot()
+    snapshot = DataCatalog(restored, "confidence_alpha").snapshot()
 
     with pytest.raises(ValueError, match="not snapshots by catalogue"):
         attach_snapshot(restored, snapshot)
@@ -451,7 +452,7 @@ def test_a_stored_malformed_namespace_still_raises(tmp_path: Path, suffix: str) 
 def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) -> None:
     """Stored snapshots read back identically and leave the scientific data untouched."""
     parsed = _result(*MAXQUANT)
-    catalog = DataCatalog(parsed, "confidence")
+    catalog = DataCatalog(parsed, "confidence_alpha")
     catalog.levels["peptidoform_ion"].layers.get("pep")
     snapshot = catalog.snapshot()
     target = tmp_path / f"result{suffix}"
@@ -459,7 +460,7 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
 
     restored = read_parsed_levels(target)
 
-    assert _stored(restored, "confidence") == snapshot
+    assert _stored(restored, "confidence_alpha") == snapshot
     for name, table in parsed.levels["peptidoform_ion"].layers.items():
         assert_frame_equal(restored.levels["peptidoform_ion"].layers[name].wide(), table.wide())
 
@@ -467,7 +468,7 @@ def test_snapshots_round_trip_every_storage_format(tmp_path: Path, suffix: str) 
 def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     """Consumers can follow the contract with apb2 and the standard library alone."""
     parsed = _result(*MAXQUANT)
-    catalog = DataCatalog(parsed, "confidence")
+    catalog = DataCatalog(parsed, "confidence_alpha")
     catalog.levels["peptidoform_ion"].layers.get("pep")
     target = tmp_path / "result.h5mu"
     write_parsed_levels(attach_snapshot(parsed, catalog.snapshot()), target)
@@ -475,7 +476,7 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
     namespace: dict[str, Any] = json.loads(
         json.dumps(read_parsed_levels(target).metadata["catalog"])
     )
-    stored = namespace["confidence"]["result"]
+    stored = namespace["confidence_alpha"]["result"]
 
     assert stored["contract"] == "apb-catalog-resolution"
     answer = stored["resolutions"][0]
@@ -493,7 +494,7 @@ def test_a_stored_snapshot_is_readable_as_plain_json(tmp_path: Path) -> None:
 
 def test_every_packaged_set_states_its_purpose_and_users() -> None:
     """Each set with entries has a description, and each description entries."""
-    text = resources.files("apb_catalog").joinpath("data", "entries.csv").read_text("utf-8")
+    text = resources.files("apb_catalog").joinpath("data", "catalog.csv").read_text("utf-8")
     described = {row["set"] for row in csv.DictReader(io.StringIO(text))}
     descriptions = packaged_descriptions()
     assert set(descriptions) == described
@@ -502,7 +503,7 @@ def test_every_packaged_set_states_its_purpose_and_users() -> None:
 
 def test_snapshot_embeds_the_set_description() -> None:
     """A snapshot reader learns what the set is for without the package."""
-    catalog = DataCatalog(_result(*MAXQUANT), "confidence")
+    catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha")
     assert catalog.snapshot().description == catalog.description
     assert "apb-aggregate" in catalog.description.used_by[0]
 
@@ -519,13 +520,9 @@ def test_proteobench_entrapment_offers_each_precursor_q_value_by_key_and_locatio
         ["Precursor_Normalised", "Q_Value", "PEP"],
         var={"Lib_Q_Value": library, "Global_Q_Value": [0.01, 0.03]},
     )
-    catalog = DataCatalog(parsed, "proteobench_entrapment")
+    catalog = DataCatalog(parsed, "proteobench_entrapment_alpha")
     assert catalog.levels["peptidoform_ion"].layers.keys() == {"q_value"}
-    assert catalog.levels["peptidoform_ion"].var.keys() == {
-        "library_q_value",
-        "peptidoform_ion",
-        "q_value",
-    }
+    assert catalog.levels["peptidoform_ion"].var.keys() == {"library_q_value", "q_value"}
     found = catalog.levels["peptidoform_ion"].var.get("library_q_value")
     assert found is not None
     assert (found.name, found.to_list()) == ("Lib_Q_Value", library)
@@ -533,7 +530,7 @@ def test_proteobench_entrapment_offers_each_precursor_q_value_by_key_and_locatio
     assert experiment is not None
     assert experiment.name == "Global_Q_Value"
     assert catalog.levels["peptidoform_ion"].layers.get("pep") is None, "PEP is not ranked by"
-    maxquant = DataCatalog(_result(*MAXQUANT), "proteobench_entrapment")
+    maxquant = DataCatalog(_result(*MAXQUANT), "proteobench_entrapment_alpha")
     assert maxquant.levels["peptidoform_ion"].layers.keys() == set()
 
 
@@ -541,37 +538,52 @@ def test_abundance_finds_the_un_normalized_layer_where_one_exists() -> None:
     """DIA-NN writes its precursor quantity before and after normalization; PEAKS only after."""
     layers = ["Precursor_Normalised", "Precursor_Quantity", "Ms1_Area", "Ms1_Normalised"]
     parsed = _result("diann/v1_8/rules.json", layers)
-    catalog = DataCatalog(parsed, "abundance")
+    catalog = DataCatalog(parsed, "abundance_alpha")
     ion = catalog.levels["peptidoform_ion"].layers
     assert ion.name("intensity") == "Precursor_Quantity"
-    assert ion.name("normalized_intensity") == "Precursor_Normalised"
-    peaks = DataCatalog(_result("peaks/rules.json", ["Normalized_Area"]), "abundance")
+    assert ion.name("intensity_norm_settings") == "Precursor_Normalised"
+    peaks = DataCatalog(_result("peaks/rules.json", ["Normalized_Area"]), "abundance_alpha")
     assert peaks.levels["peptidoform_ion"].layers.get("intensity") is None
 
 
 def test_an_undocumented_normalization_has_its_own_key() -> None:
     """A layer nobody documented the normalization of is not offered as an un-normalized one:
     asking for that is unknown, and its own key finds it."""
-    catalog = DataCatalog(_result("fragpipe/rules.json", ["Intensity"]), "abundance")
+    catalog = DataCatalog(_result("pb_custom/rules.json", ["Intensity"]), "abundance_alpha")
     layers = catalog.levels["peptidoform_ion"].layers
-    assert layers.keys() == {"intensity_unknown_normalization"}
+    assert layers.keys() == {"intensity_norm_unknown"}
     with pytest.raises(UnresolvedField, match="leaves normalization unknown"):
         layers.get("intensity")
-    assert layers.name("intensity_unknown_normalization") == "Intensity"
+    assert layers.name("intensity_norm_unknown") == "Intensity"
+
+
+def test_a_qualifier_picks_one_of_the_fields_a_key_names() -> None:
+    """DIA-NN 1.8's protein groups have two normalized intensities; the key alone is ambiguous,
+    and aggregation tells them apart."""
+    rule = ("diann/v1_8/rules.json", ["PG_Normalised", "PG_MaxLFQ"])
+    layers = (
+        DataCatalog(_result(*rule, level="protein"), "abundance_alpha").levels["protein"].layers
+    )
+    with pytest.raises(UnresolvedField, match="ambiguous"):
+        layers.get("intensity_norm_settings")
+    assert layers.name("intensity_norm_settings", aggregation="maxlfq") == "PG_MaxLFQ"
+    assert layers.name("intensity_norm_settings", aggregation="top_n") == "PG_Normalised"
 
 
 def test_a_key_fixes_its_kind_and_qualifiers() -> None:
     """The key names the normalization, so a qualifier keyword may not restate or contradict it."""
-    catalog = DataCatalog(_result("diann/v1_8/rules.json", ["Precursor_Quantity"]), "abundance")
+    catalog = DataCatalog(
+        _result("diann/v1_8/rules.json", ["Precursor_Quantity"]), "abundance_alpha"
+    )
     with pytest.raises(ValueError, match="intensity fixes normalization"):
         catalog.levels["peptidoform_ion"].layers.get("intensity", normalization="none")
     with pytest.raises(ValueError, match="fixes kind"):
-        catalog.levels["peptidoform_ion"].layers.get("maxlfq", kind="maxlfq")
+        catalog.levels["peptidoform_ion"].layers.get("intensity_norm_settings", kind="intensity")
 
 
 def test_each_level_counts_the_requests_its_snapshot_answered() -> None:
     """A level record says how many lookups resolved, were missing, or stayed unresolved."""
-    catalog = DataCatalog(_result(*MAXQUANT), "confidence")
+    catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha")
     catalog.levels["peptidoform_ion"].layers.get("pep")
     catalog.levels["peptidoform_ion"].layers.get("q_value")
 
@@ -580,7 +592,7 @@ def test_each_level_counts_the_requests_its_snapshot_answered() -> None:
     records = cast(dict[str, Any], attached.levels["peptidoform_ion"].metadata[METADATA_KEY])
     assert [
         (entry["name"], entry["value"], entry["status"])
-        for entry in records["confidence"]["summary"]
+        for entry in records["confidence_alpha"]["summary"]
     ] == [
         ("resolved_requests", 1, "ok"),
         ("missing_requests", 1, "ok"),
@@ -598,7 +610,7 @@ def _levels() -> tuple[ParsedLevels, DataCatalog]:
         ["Precursor_Normalised", "Precursor_Quantity", "Q_Value"],
         DIANN_LEVEL,
     )
-    return parsed, DataCatalog(parsed, "abundance", "confidence")
+    return parsed, DataCatalog(parsed, "abundance_alpha", "confidence_alpha")
 
 
 def test_a_level_answers_a_key_with_the_matrix_anndata_holds() -> None:
@@ -611,16 +623,17 @@ def test_a_level_answers_a_key_with_the_matrix_anndata_holds() -> None:
     assert intensity.shape == (3, 2)
     np.testing.assert_array_equal(intensity, expected)
     assert level.layers["intensity"] is intensity
-    assert level.layers["normalized_intensity"] is level.X, "the primary layer is X"
+    assert level.layers["intensity_norm_settings"] is level.X, "the primary layer is X"
 
 
 def test_a_name_that_is_no_key_reads_the_levels_own_field() -> None:
     """As cf_xarray: a key first, then the level's own name, else KeyError."""
-    _, catalog = _levels()
+    parsed, catalog = _levels()
     level = catalog.levels["peptidoform_ion"]
     assert level.layers["Q_Value"] is level.layers["q_value"]
     assert level.var["Precursor_Charge"].to_list() == [2, 3]
-    assert level.var["peptidoform_ion"].to_list() == ["PEPTIDE/2", "PEPTIDEK/3"], "apb's key"
+    named = DataCatalog(parsed, "abundance_alpha", "apb_alpha").levels["peptidoform_ion"]
+    assert named.var["peptidoform_ion"].to_list() == ["PEPTIDE/2", "PEPTIDEK/3"], "apb's key"
     with pytest.raises(KeyError, match="nonsense"):
         level.layers["nonsense"]
     with pytest.raises(KeyError, match="Precursor_Normalised"):
@@ -631,10 +644,10 @@ def test_keys_and_in_know_the_catalogs_keys_only() -> None:
     """Vendor names are read but not listed, as cf_xarray's keys()."""
     _, catalog = _levels()
     level = catalog.levels["peptidoform_ion"]
-    assert level.layers.keys() == {"intensity", "normalized_intensity", "q_value"}
+    assert level.layers.keys() == {"intensity", "intensity_norm_settings", "q_value"}
     assert "intensity" in level.layers
     assert "Q_Value" not in level.layers
-    assert level.var.keys() == {"peptidoform_ion"}
+    assert level.var.keys() == set()
 
 
 def test_obs_and_var_names_join_the_key_columns() -> None:
@@ -646,25 +659,29 @@ def test_obs_and_var_names_join_the_key_columns() -> None:
     assert level.obs_names.len() == level.X.shape[0]
 
 
-def test_apb_is_always_in() -> None:
-    """A data catalog of one set still answers APB's own fields."""
-    _, catalog = _levels()
-    assert (
-        DataCatalog(_levels()[0], "confidence").levels["peptidoform_ion"].var.get("peptidoform_ion")
-        is not None
-    )
-    assert catalog.snapshot().catalogue == "abundance", "the first set named"
-    assert catalog.snapshot("apb").catalogue == "apb"
+def test_only_the_sets_named_are_composed() -> None:
+    """``apb_alpha`` answers only when named; the first set named gives the default snapshot,
+    and a catalog of no set reads the level's own names."""
+    parsed, catalog = _levels()
+    assert catalog.levels["peptidoform_ion"].var.get("peptidoform_ion") is None
+    named = DataCatalog(parsed, "confidence_alpha", "apb_alpha")
+    assert named.levels["peptidoform_ion"].var.get("peptidoform_ion") is not None
+    assert catalog.snapshot().catalogue == "abundance_alpha", "the first set named"
+    assert named.snapshot("apb_alpha").catalogue == "apb_alpha"
+    with pytest.raises(KeyError, match="apb_alpha"):
+        catalog.snapshot("apb_alpha")
+    unnamed = DataCatalog(parsed)
+    assert unnamed.levels["peptidoform_ion"].var["Precursor_Charge"].to_list() == [2, 3]
+    with pytest.raises(ValueError, match="no catalogue set named"):
+        unnamed.snapshot()
 
 
-def test_an_apps_keys_are_listed_once_it_has_run() -> None:
-    """As AnnData's keys(): every key listed reads; apb-fasta's wait for its run, and a lookup
-    says what to run."""
-    before = DataCatalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "apb")
-    level = before.levels["peptidoform_ion"]
-    assert "fasta_matches_contaminant" not in level.var
-    with pytest.raises(UnresolvedField, match="apb-fasta verify-peptides"):
-        level.var["fasta_matches_contaminant"]
+def test_an_apps_set_opens_once_the_app_has_run() -> None:
+    """``apb_fasta_alpha`` answers nothing before apb-fasta runs, so opening it says what to run;
+    once it has run, every key listed reads, as AnnData's keys()."""
+    unverified = _result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION)
+    with pytest.raises(ValueError, match=r"apb-fasta has not run.*apb-fasta verify-peptides"):
+        DataCatalog(unverified, "apb_fasta_alpha")
     ran = _result(
         "diann/v2/rules.json",
         ["Ms1_Normalised"],
@@ -672,7 +689,7 @@ def test_an_apps_keys_are_listed_once_it_has_run() -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    level = DataCatalog(ran, "apb").levels["peptidoform_ion"]
+    level = DataCatalog(ran, "apb_fasta_alpha").levels["peptidoform_ion"]
     assert "fasta_matches_contaminant" in level.var
     assert level.var["fasta_matches_contaminant"].to_list() == [True, False]
 
@@ -724,7 +741,7 @@ def test_get_answers_none_where_a_name_reads_no_field() -> None:
 
 
 def test_a_varm_fields_name_is_its_table_and_column() -> None:
-    """``get`` reads the varm column, ``name`` names it; before apb-fasta runs, both raise."""
+    """``get`` reads the varm column, ``name`` names it."""
     ran = _result(
         "diann/v2/rules.json",
         ["Ms1_Normalised"],
@@ -732,13 +749,10 @@ def test_a_varm_fields_name_is_its_table_and_column() -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    var = DataCatalog(ran, "apb").levels["peptidoform_ion"].var
+    var = DataCatalog(ran, "apb_fasta_alpha").levels["peptidoform_ion"].var
     assert var.name("fasta_matches_contaminant") == "fasta_validation/fasta_matches_contaminant"
     flag = var.get("fasta_matches_contaminant")
     assert flag is not None and flag.to_list() == [True, False]
-    before = DataCatalog(_result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION), "apb")
-    with pytest.raises(UnresolvedField, match="apb-fasta verify-peptides"):
-        before.levels["peptidoform_ion"].var.get("fasta_matches_contaminant")
 
 
 def test_get_then_name_records_one_lookup() -> None:
@@ -747,5 +761,5 @@ def test_get_then_name_records_one_lookup() -> None:
     layers = catalog.levels["peptidoform_ion"].layers
     layers.get("q_value")
     layers.name("q_value")
-    keys = [found.request.key for found in catalog.snapshot("confidence").resolutions]
+    keys = [found.request.key for found in catalog.snapshot("confidence_alpha").resolutions]
     assert keys == ["q_value"]

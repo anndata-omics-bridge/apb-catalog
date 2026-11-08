@@ -23,7 +23,7 @@ def test_without_arguments_every_catalogue_is_listed(
     assert _run() == 0
     output = capsys.readouterr().out
     assert f"{toy_set} (toy:): 22 entries, requirements" in output
-    assert "confidence (c:): 26 entries, coverage only" in output
+    assert "confidence_alpha (c:): 26 entries, coverage only" in output
 
 
 def test_check_fails_when_a_level_misses_a_required_field(
@@ -38,7 +38,7 @@ def test_check_fails_when_a_level_misses_a_required_field(
 
 def test_a_set_without_requirements_never_fails(capsys: pytest.CaptureFixture[str]) -> None:
     """Coverage-only sets list their levels without a verdict."""
-    assert _run("check", "confidence") == 0
+    assert _run("check", "confidence_alpha") == 0
     assert "----  DIA-NN 2.x peptidoform_ion" in capsys.readouterr().out
 
 
@@ -58,18 +58,18 @@ def test_software_shows_every_field_and_its_column(
 def test_meaning_prints_the_column_of_every_meaning_per_rule_level(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """One row per rule level and field, with its key, kind and the set's qualifier as columns."""
-    assert _run("meaning", "abundance") == 0
+    """One row per rule level and field, with its key, kind and the set's qualifiers as columns."""
+    assert _run("meaning", "abundance_alpha") == 0
     lines = capsys.readouterr().out.splitlines()
-    header = ["software", "version", "level", "column", "key", "kind", "normalization"]
-    assert lines[0].split() == header
-    row = ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Normalised", "normalized_intensity"]
-    assert [*row, "intensity", "run_setting"] in [line.split() for line in lines]
+    header = ["software", "version", "level", "column", "key", "kind"]
+    assert lines[0].split() == [*header, "aggregation", "ms_level", "normalization"]
+    row = ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Normalised", "intensity_norm_settings"]
+    assert [*row, "intensity", "none", "ms2", "run_setting"] in [line.split() for line in lines]
 
 
 def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str]) -> None:
     """CSV has the text table's columns and one row per field of the rule check."""
-    assert _run("meaning", "abundance", "--format", "csv") == 0
+    assert _run("meaning", "abundance_alpha", "--format", "csv") == 0
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
     assert table.columns == [
         "software",
@@ -78,14 +78,16 @@ def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str])
         "column",
         "key",
         "kind",
+        "aggregation",
+        "ms_level",
         "normalization",
     ]
-    assert table.height == rule_coverage("abundance").height
+    assert table.height == rule_coverage("abundance_alpha").height
 
 
 def test_a_level_without_an_entry_names_none(capsys: pytest.CaptureFixture[str]) -> None:
     """A rule level the set has no entry for still gets a row, its column ``none``."""
-    _run("meaning", "confidence", "--format", "csv")
+    _run("meaning", "confidence_alpha", "--format", "csv")
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
     assert not table.filter(pl.col("column") == "none").is_empty()
 
@@ -102,9 +104,9 @@ def test_meaning_names_who_writes_a_column(
 
 @pytest.mark.parametrize(
     "argv",
-    [("check", "nope"), ("check", "confidence", "nope"), ("meaning", "nope")],
+    [("check", "nope"), ("check", "confidence_alpha", "nope"), ("meaning", "nope")],
 )
 def test_unknown_names_exit_2(argv: tuple[str, ...], capsys: pytest.CaptureFixture[str]) -> None:
     """An unknown set or software names what exists."""
     assert _run(*argv) == 2
-    assert "confidence" in capsys.readouterr().err
+    assert "confidence_alpha" in capsys.readouterr().err

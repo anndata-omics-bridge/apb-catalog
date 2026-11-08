@@ -19,9 +19,10 @@ class FieldRequest(FrozenModel):
 
     ``key`` names the access key asked for and ``kind`` the kind it stands for, ``None`` when the
     request spans every key; ``qualifiers`` hold the values the key fixes, plus any further
-    qualifiers the caller asked for. Qualifiers left out accept any value. An entry whose
-    reviewer could not establish its kind or a qualifier is undecided unless the request
-    accepts ``unknown`` there. A ``var`` request also reads feature-aligned ``varm`` tables.
+    qualifiers the caller asked for. Qualifiers left out accept any value. A request for a key
+    answers with that key's entries; an entry of another key only keeps it undecided. An entry whose
+    reviewer could not establish a qualifier is undecided unless the request accepts ``unknown``
+    there. A ``var`` request also reads feature-aligned ``varm`` tables.
     """
 
     level: str
@@ -43,12 +44,18 @@ class FieldRequest(FrozenModel):
         return self.location is None or entry.reference.location in READS[self.location]
 
     def admits(self, entry: SourceEntry) -> bool:
-        """Whether an entry answers this request apart from qualifiers it leaves unknown."""
-        return self.selects(entry) and not self.mismatched(entry)
+        """Whether an entry answers this request apart from qualifiers it leaves unknown: an
+        entry of the key asked for, or of another key when it leaves unknown what the request
+        asks."""
+        return (
+            self.selects(entry)
+            and not self.mismatched(entry)
+            and (self.key is None or entry.key == self.key or bool(self.undecided(entry)))
+        )
 
     def mismatched(self, entry: SourceEntry, /) -> tuple[str, ...]:
-        """Return what the request asks that an entry's known kind or values contradict."""
-        kind = self.kind is not None and entry.kind not in (UNKNOWN, self.kind)
+        """Return what the request asks that an entry's kind or known values contradict."""
+        kind = self.kind is not None and entry.kind != self.kind
         return (
             *(("kind",) if kind else ()),
             *(
@@ -59,15 +66,12 @@ class FieldRequest(FrozenModel):
         )
 
     def undecided(self, entry: SourceEntry, /) -> tuple[str, ...]:
-        """Return what the request asks that an entry leaves unknown: its kind or qualifiers."""
-        kind = self.kind not in (None, UNKNOWN) and entry.kind == UNKNOWN
-        return (
-            *(("kind",) if kind else ()),
-            *(
-                name
-                for name, accepted in self.qualifiers.items()
-                if entry.qualifiers[name] == UNKNOWN and UNKNOWN not in accepted
-            ),
+        """Return what the request asks that an entry leaves unknown: its qualifiers with the value
+        ``unknown``. A kind is always known."""
+        return tuple(
+            name
+            for name, accepted in self.qualifiers.items()
+            if entry.qualifiers[name] == UNKNOWN and UNKNOWN not in accepted
         )
 
 
@@ -85,7 +89,8 @@ class Candidate(FrozenModel):
 class Resolution(FrozenModel):
     """The answer to one request; only ``resolved`` carries a reference.
 
-    ``requirement`` records the requirement a missing field had when the lookup enforced it.
+    ``requirement`` records the requirement a missing field had when the catalog enforced it at
+    init.
     """
 
     request: FieldRequest

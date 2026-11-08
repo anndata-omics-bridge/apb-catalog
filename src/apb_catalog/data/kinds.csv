@@ -1,61 +1,53 @@
 set,kind,definition
-abundance,intensity,"A measured signal of the level's feature, summed, integrated or at apex, at the MS level the software quantifies on."
-abundance,ms1_intensity,"A measured MS1 signal, reported beside the software's fragment-based quantity."
-abundance,maxlfq,A MaxLFQ estimate: delayed normalization and maximal peptide-ratio extraction (Cox et al. 2014).
-abundance,ibaq,Intensity-based absolute quantification: summed intensity divided by the number of theoretically observable peptides.
-abundance,directlfq,A directLFQ estimate (Ammar et al. 2023).
-abundance,unknown,The reviewer could not establish this.
-confidence,pep,Posterior error probability: the probability that this single identification is wrong; lower is better.
-confidence,q_value,"The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better. In layers per run; in var across the whole experiment."
-confidence,library_q_value,"The q-value of the identification's spectral-library entry, built across all runs; lower is better."
-confidence,unknown,The reviewer could not establish this.
-proteobench_entrapment,pep,Posterior error probability: the probability that this single identification is wrong; lower is better.
-proteobench_entrapment,q_value,"The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better. In layers per run; in var across the whole experiment."
-proteobench_entrapment,library_q_value,"The q-value of the identification's spectral-library entry, built across all runs; lower is better."
-proteobench_entrapment,unknown,The reviewer could not establish this.
-apb,peptide,"The plain amino-acid sequence: ProForma_peptide (PSI-MS MS:1000888, stripped peptide sequence)."
-apb,peptidoform,"The sequence with its modifications in ProForma notation: ProForma_peptidoform (PSI-MS MS:1003169, proforma peptidoform sequence)."
-apb,peptidoform_unlocalized,"The sequence with modifications whose positions the vendor does not report, as ProForma unknown-position groups: ProForma_peptidoform_unlocalized, which MaxQuant's peptidoform level writes instead of ProForma_peptidoform."
-apb,peptidoform_ion,"The peptidoform with its charge: ProForma_ion (PSI-MS MS:1003270, proforma peptidoform ion notation)."
-apb,peptidoform_fragment,"A fragment of a peptidoform ion: ProForma_ion with the fragment label, ProForma_fragment."
-apb,decoy,Whether the vendor marks the feature as a decoy: apb_Decoy.
-apb,contaminant,Whether the vendor marks the feature as a contaminant it flags or adds itself: apb_Contaminant.
-apb,protein_assignment,The protein or protein group the vendor assigns the feature to: the var column the level's rule marks with the role protein_assignment.
-apb,fasta_accessions,The FASTA accessions the vendor lists for the feature: the var column the level's rule marks with the role fasta_accessions.
-apb,group,"The experimental group a sample belongs to: prolfqua's group, MSstats' Condition."
-apb,subject,"The biological subject a sample comes from; one value across groups marks a repeated subject: prolfqua's subject, MSstats' BioReplicate."
-apb,unknown,The reviewer could not establish this.
-apb,peptide_in_fasta,apb-fasta's peptide verification: The stripped sequence occurs in at least one FASTA protein.
-apb,fasta_match_site_count,apb-fasta's peptide verification: Total match sites of the sequence across the FASTA.
-apb,fasta_matching_protein_count,apb-fasta's peptide verification: Distinct FASTA proteins containing the sequence.
-apb,fasta_matching_protein_ids,apb-fasta's peptide verification: The ';'-joined FASTA ids of the matching proteins.
-apb,fasta_matching_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the matching proteins, e.g. HUMAN;YEAST."
-apb,fasta_matches_contaminant,apb-fasta's peptide verification: A matching FASTA protein is a contaminant.
-apb,reported_member_count,apb-fasta's peptide verification: Protein-group members the result reported; null when the level reports no protein group.
-apb,reported_members_in_fasta_count,apb-fasta's peptide verification: Reported members found in the FASTA; null when the level reports no protein group.
-apb,reported_member_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the reported members found; null when the level reports no protein group."
-apb,reported_members_contaminant,apb-fasta's peptide verification: A reported member found in the FASTA is a contaminant; null when the level reports no protein group.
-apb,peptide_in_reported_protein,apb-fasta's peptide verification: The sequence occurs in a reported member; null when the level reports no protein group.
-apb,fasta_il_only,apb-fasta's peptide verification: peptide_in_fasta or peptide_in_reported_protein holds only for another I/L spelling.
-apb,is_protein_group_specific,apb-fasta's peptide verification: Every FASTA protein the peptide matches is a member of its own protein group (protein_assignment).
-apb,is_proteotypic,apb-fasta's peptide verification: The peptide matches exactly one FASTA protein.
-apb,reported_leading_id,"apb-fasta's peptide verification: FASTA id of the leading protein, the first member of protein_assignment."
-apb,reported_leading_accession,apb-fasta's peptide verification: The leading protein's accession.
-apb,reported_leading_description,apb-fasta's peptide verification: The leading protein's header text after the id.
-apb,reported_leading_gene_name,apb-fasta's peptide verification: The leading protein's gene name.
-apb,reported_leading_protein_length,apb-fasta's peptide verification: The leading protein's sequence length.
-apb,reported_leading_tryptic_peptides,"apb-fasta's peptide verification: The leading protein's tryptic peptides of 7 to 29 residues, cleaved after K or R unless P follows."
-chromatography,retention_time,"Where the feature eluted in this run, measured on the run's own time axis: the apex or centre of its elution peak."
-chromatography,aligned_retention_time,"The measured retention time, moved by the software's alignment onto a scale shared by all runs: a reference run's time axis or the library's iRT scale."
-chromatography,predicted_retention_time,"Where the software expects the feature to elute in this run, from its library or prediction model calibrated to the run; not a measurement."
-chromatography,library_retention_time,"The spectral library's reference retention time, the same in every run."
-chromatography,mean_apex_retention_time,A mean of apex times the software reports beside its apex retention time; what it averages over is not established.
-chromatography,ms2_retention_time,"The time of the MS/MS spectrum that identified the feature, rather than the apex of its elution peak."
-chromatography,peak_start,"Where the feature's elution peak begins, on the run's own time axis."
-chromatography,peak_end,"Where the feature's elution peak ends, on the run's own time axis."
-chromatography,aligned_peak_start,"Where the elution peak begins, on the aligned scale of aligned_retention_time."
-chromatography,aligned_peak_end,"Where the elution peak ends, on the aligned scale of aligned_retention_time."
-chromatography,peak_fwhm,The width of the elution peak at half its maximum height.
-chromatography,aligned_peak_fwhm,"The width at half maximum, on the aligned scale of aligned_retention_time."
-chromatography,peak_width,"The full width of the elution peak, from its start to its end."
-chromatography,unknown,The reviewer could not establish this.
+abundance_alpha,intensity,"A measured signal of the level's feature, summed, integrated or at apex, or a value combined from lower-level features' signals, as aggregation says; ms_level says whether it is measured on MS1 or on MS2."
+abundance_alpha,ibaq,Intensity-based absolute quantification: summed intensity divided by the number of theoretically observable peptides.
+confidence_alpha,pep,Posterior error probability: the probability that this single identification is wrong; lower is better.
+confidence_alpha,q_value,"The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better. In layers per run; in var across the whole experiment."
+confidence_alpha,library_q_value,"The q-value of the identification's spectral-library entry, built across all runs; lower is better."
+proteobench_entrapment_alpha,pep,Posterior error probability: the probability that this single identification is wrong; lower is better.
+proteobench_entrapment_alpha,q_value,"The smallest false discovery rate at which this identification, or quantified signal, is accepted; lower is better. In layers per run; in var across the whole experiment."
+proteobench_entrapment_alpha,library_q_value,"The q-value of the identification's spectral-library entry, built across all runs; lower is better."
+apb_alpha,peptide,"The plain amino-acid sequence: ProForma_peptide (PSI-MS MS:1000888, stripped peptide sequence)."
+apb_alpha,peptidoform,"The sequence with its modifications in ProForma notation: ProForma_peptidoform (PSI-MS MS:1003169, proforma peptidoform sequence)."
+apb_alpha,peptidoform_unlocalized,"The sequence with modifications whose positions the vendor does not report, as ProForma unknown-position groups: ProForma_peptidoform_unlocalized, which MaxQuant's peptidoform level writes instead of ProForma_peptidoform."
+apb_alpha,peptidoform_ion,"The peptidoform with its charge: ProForma_ion (PSI-MS MS:1003270, proforma peptidoform ion notation)."
+apb_alpha,peptidoform_fragment,"A fragment of a peptidoform ion: ProForma_ion with the fragment label, ProForma_fragment."
+apb_alpha,decoy,Whether the vendor marks the feature as a decoy: apb_Decoy.
+apb_alpha,contaminant,Whether the vendor marks the feature as a contaminant it flags or adds itself: apb_Contaminant.
+apb_alpha,protein_assignment,The protein or protein group the vendor assigns the feature to: the var column the level's rule marks with the role protein_assignment.
+apb_alpha,fasta_accessions,The FASTA accessions the vendor lists for the feature: the var column the level's rule marks with the role fasta_accessions.
+obs_annotation_alpha,group,"The experimental group a sample belongs to: prolfqua's group, MSstats' Condition."
+obs_annotation_alpha,subject,"The biological subject a sample comes from; one value across groups marks a repeated subject: prolfqua's subject, MSstats' BioReplicate."
+apb_fasta_alpha,peptide_in_fasta,apb-fasta's peptide verification: The stripped sequence occurs in at least one FASTA protein.
+apb_fasta_alpha,fasta_match_site_count,apb-fasta's peptide verification: Total match sites of the sequence across the FASTA.
+apb_fasta_alpha,fasta_matching_protein_count,apb-fasta's peptide verification: Distinct FASTA proteins containing the sequence.
+apb_fasta_alpha,fasta_matching_protein_ids,apb-fasta's peptide verification: The ';'-joined FASTA ids of the matching proteins.
+apb_fasta_alpha,fasta_matching_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the matching proteins, e.g. HUMAN;YEAST."
+apb_fasta_alpha,fasta_matches_contaminant,apb-fasta's peptide verification: A matching FASTA protein is a contaminant.
+apb_fasta_alpha,reported_member_count,apb-fasta's peptide verification: Protein-group members the result reported; null when the level reports no protein group.
+apb_fasta_alpha,reported_members_in_fasta_count,apb-fasta's peptide verification: Reported members found in the FASTA; null when the level reports no protein group.
+apb_fasta_alpha,reported_member_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the reported members found; null when the level reports no protein group."
+apb_fasta_alpha,reported_members_contaminant,apb-fasta's peptide verification: A reported member found in the FASTA is a contaminant; null when the level reports no protein group.
+apb_fasta_alpha,peptide_in_reported_protein,apb-fasta's peptide verification: The sequence occurs in a reported member; null when the level reports no protein group.
+apb_fasta_alpha,fasta_il_only,apb-fasta's peptide verification: peptide_in_fasta or peptide_in_reported_protein holds only for another I/L spelling.
+apb_fasta_alpha,is_protein_group_specific,apb-fasta's peptide verification: Every FASTA protein the peptide matches is a member of its own protein group (protein_assignment).
+apb_fasta_alpha,is_proteotypic,apb-fasta's peptide verification: The peptide matches exactly one FASTA protein.
+apb_fasta_alpha,reported_leading_id,"apb-fasta's peptide verification: FASTA id of the leading protein, the first member of protein_assignment."
+apb_fasta_alpha,reported_leading_accession,apb-fasta's peptide verification: The leading protein's accession.
+apb_fasta_alpha,reported_leading_description,apb-fasta's peptide verification: The leading protein's header text after the id.
+apb_fasta_alpha,reported_leading_gene_name,apb-fasta's peptide verification: The leading protein's gene name.
+apb_fasta_alpha,reported_leading_protein_length,apb-fasta's peptide verification: The leading protein's sequence length.
+apb_fasta_alpha,reported_leading_tryptic_peptides,"apb-fasta's peptide verification: The leading protein's tryptic peptides of 7 to 29 residues, cleaved after K or R unless P follows."
+chromatography_alpha,retention_time,"Where the feature eluted in this run, measured on the run's own time axis: the apex or centre of its elution peak."
+chromatography_alpha,aligned_retention_time,"The measured retention time, moved by the software's alignment onto a scale shared by all runs: a reference run's time axis or the library's iRT scale."
+chromatography_alpha,predicted_retention_time,"Where the software expects the feature to elute in this run, from its library or prediction model calibrated to the run; not a measurement."
+chromatography_alpha,library_retention_time,"The spectral library's reference retention time, the same in every run."
+chromatography_alpha,mean_apex_retention_time,A mean of apex times the software reports beside its apex retention time; what it averages over is not established.
+chromatography_alpha,ms2_retention_time,"The time of the MS/MS spectrum that identified the feature, rather than the apex of its elution peak."
+chromatography_alpha,peak_start,"Where the feature's elution peak begins, on the run's own time axis."
+chromatography_alpha,peak_end,"Where the feature's elution peak ends, on the run's own time axis."
+chromatography_alpha,aligned_peak_start,"Where the elution peak begins, on the aligned scale of aligned_retention_time."
+chromatography_alpha,aligned_peak_end,"Where the elution peak ends, on the aligned scale of aligned_retention_time."
+chromatography_alpha,peak_fwhm,The width of the elution peak at half its maximum height.
+chromatography_alpha,aligned_peak_fwhm,"The width at half maximum, on the aligned scale of aligned_retention_time."
+chromatography_alpha,peak_width,"The full width of the elution peak, from its start to its end."

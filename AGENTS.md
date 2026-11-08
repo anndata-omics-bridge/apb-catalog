@@ -28,6 +28,12 @@ The closest `AGENTS.md` wins. Explicit user instructions override this file.
 - Use Google-style docstrings for public APIs and the configured 100-character
   line length.
 
+## Lookup behaviour
+
+- The catalog is scverse AnnData plus a mapping layer, nothing new: a name is tried as a catalog key, then as the level's own field, and otherwise answers exactly as AnnData does. `get` returns `None` where `adata.var.get` and `adata.layers.get` do; `[...]` raises `KeyError` where AnnData raises it
+- Add no errors, defaults or guards of the catalog's own for a name it cannot map; the API user handles `None`
+- Before calling a lookup behaviour a problem, check what AnnData does; only a deviation from AnnData is one. The full contract is in [docs/api.md](docs/api.md)
+
 ## Dependency rules
 
 ### Required

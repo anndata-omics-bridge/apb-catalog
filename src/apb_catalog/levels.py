@@ -1,7 +1,7 @@
 """A result's levels read through a catalog: AnnData's slots, looked up by key as cf_xarray does.
 
-``DataCatalog(result, "abundance").levels["protein"].layers["maxlfq"]`` is the protein level's
-MaxLFQ matrix, observations by variables. A name is looked up as one of the catalog's keys first,
+``DataCatalog(result, "abundance_alpha").levels["protein"].layers["intensity"]`` is the protein level's
+intensity matrix, observations by variables. A name is looked up as one of the catalog's keys first,
 then as the level's own name in that slot, and raises :class:`KeyError` when it is neither. A
 prefix makes the lookup exact: a set's prefix asks that set alone, ``c:q_value`` the confidence
 set's q-value and never a column of that name; ``v:`` asks the level's own name alone,
@@ -11,7 +11,7 @@ and a list of names, ``obs[["group"]]``, reads every column they name as a polar
 ``layers.get("pep")`` returns ``None`` where ``[...]`` raises, and ``layers.name("pep")`` the
 field's name; both take the qualifiers a key leaves open.
 
-``Catalog("DIA-NN", "1.9.2", "abundance").levels["peptidoform_ion"].layers["intensity"]`` is
+``Catalog("DIA-NN", "1.9.2", "abundance_alpha").levels["peptidoform_ion"].layers["intensity"]`` is
 ``'Precursor_Quantity'``: the same slots without data hold names.
 """
 

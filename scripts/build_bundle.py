@@ -21,6 +21,7 @@ import sys
 import tarfile
 import tempfile
 from collections.abc import Callable, Mapping
+from dataclasses import replace
 from importlib import metadata, resources
 from importlib.resources.abc import Traversable
 from pathlib import Path
@@ -280,10 +281,24 @@ DIANN = "diann/v2/rules.json"
 
 
 def _edge_results() -> dict[str, ParsedLevels]:
-    """Results that exercise an unreviewed level and both annotation conventions."""
+    """Results that exercise an unreviewed level, both annotation conventions and apb-fasta's
+    verification."""
     ion = "peptidoform_ion"
     two_levels = {level: synthetic_level(DIANN, level) for level in (ion, "protein")}
+    verified = replace(
+        synthetic_level(DIANN, ion),
+        varm={
+            "fasta_validation": pl.DataFrame(
+                {
+                    "peptide_in_fasta": [True, True, False],
+                    "fasta_matches_contaminant": [False, True, False],
+                    "fasta_matching_organisms": ["HUMAN", "HUMAN;BOVIN", ""],
+                }
+            )
+        },
+    )
     return {
+        "edge-fasta": _one(ion, verified, {"fasta": {"provenance": {"peptide_verification": {}}}}),
         "edge-unreviewed": _one(ion, synthetic_level(MAXQUANT, ion, stored=False)),
         "edge-sdrf": _one(
             ion,
@@ -317,7 +332,8 @@ def _one(
 
 
 class _Warnings(logging.Handler):
-    """Collects the warnings a lookup logs for a missing field it does not raise for."""
+    """Collects the warning a catalog logs when it opens, for missing fields it does not raise
+    for."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -329,22 +345,38 @@ class _Warnings(logging.Handler):
 
 
 def _outcome(answer: Callable[[], str | None]) -> dict[str, JsonValue]:
-    """What one lookup gives: the field's name, ``null``, or the class of the error it raises."""
-    handler = _Warnings()
-    logger = logging.getLogger("apb_catalog")
-    logger.addHandler(handler)
+    """What one lookup gives: the field's name, ``null``, or the ``UnresolvedField`` it raises."""
     try:
         found = answer()
     except UnresolvedField as error:
         return {"error": "UnresolvedField", "status": error.resolution.status}
+    return {"name": found}
+
+
+def _opened(
+    parsed: ParsedLevels, name: str, enforce: Enforce
+) -> tuple[DataCatalog | None, dict[str, JsonValue]]:
+    """The catalog, or what opening it raises: the error's class with every missing field or its
+    message; and whether it logged a ``MissingRequiredField`` warning."""
+    handler = _Warnings()
+    logger = logging.getLogger("apb_catalog")
+    logger.addHandler(handler)
+    opened: dict[str, JsonValue] = {}
+    catalog: DataCatalog | None = None
+    try:
+        catalog = DataCatalog(parsed, name, enforce=enforce)
     except MissingRequiredField as error:
-        return {"error": type(error).__name__}
+        opened["error"] = type(error).__name__
+        opened["missing"] = [
+            [row.level, row.location, row.key, row.requirement] for _, row in error.missing
+        ]
+    except ValueError as error:
+        opened |= {"error": type(error).__name__, "message": str(error)}
     finally:
         logger.removeHandler(handler)
-    outcome: dict[str, JsonValue] = {"name": found}
     if handler.records:
-        outcome["warning"] = "MissingRequiredField"
-    return outcome
+        opened["warning"] = "MissingRequiredField"
+    return catalog, opened
 
 
 def _keys(answer: Callable[[], tuple[str, ...]]) -> dict[str, JsonValue]:
@@ -457,7 +489,7 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
             )
     cases.append(
         {
-            "catalogue": "abundance",
+            "catalogue": "abundance_alpha",
             "software": "DIA-NN",
             "version": "99.0",
             "error": "ValueError",
@@ -503,7 +535,8 @@ def _keys_cases(levels: Mapping[str, Level | LevelNames]) -> list[JsonValue]:
 def data_catalog_cases(
     sets: Mapping[str, SourceCatalogues], results: Mapping[str, ParsedLevels]
 ) -> list[JsonValue]:
-    """``DataCatalog`` answers for every synthetic result and set, with and without ``enforce``."""
+    """``DataCatalog`` answers for every synthetic result and set, with and without ``enforce``;
+    a catalog that cannot open records what it raises instead."""
     cases: list[JsonValue] = []
     for result, parsed in results.items():
         levels = list(parsed.levels)
@@ -512,7 +545,10 @@ def data_catalog_cases(
                 (None, "required", "recommended") if sources.requirements else (None,)
             )
             for enforce in enforced:
-                catalog = DataCatalog(parsed, name, enforce=enforce)
+                catalog, opened = _opened(parsed, name, enforce)
+                if catalog is None:
+                    cases.append({"result": result, "catalogue": name, "enforce": enforce} | opened)
+                    continue
                 asked: list[Request]
                 if enforce is None:
                     asked = [
@@ -535,6 +571,7 @@ def data_catalog_cases(
                         for request in asked
                     ],
                 }
+                case |= opened
                 if enforce is None:
                     case["keys"] = _keys_cases(catalog.levels)
                     case["fields"] = _records(catalog.fields())

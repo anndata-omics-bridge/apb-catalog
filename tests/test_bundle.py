@@ -94,11 +94,15 @@ def test_the_bundle_carries_the_packaged_versions(bundle: Path) -> None:
 
 
 def test_every_outcome_is_among_the_expected_answers(test_bundle: Path) -> None:
-    """The cases exercise each way a lookup can end."""
+    """The cases exercise each way a lookup can end, and each way opening a catalog can: a set
+    that answers nothing, a missing required field, a warning for a recommended one."""
     cases = _rows(test_bundle / "cases" / "data_catalog.json")
     outcomes = {
-        request["outcome"].get("error") or request["outcome"].get("warning") or "answer"
+        request["outcome"].get("error") or "answer"
         for case in cases
         for request in case.get("requests", [])
     }
-    assert outcomes == {"answer", "UnresolvedField", "MissingRequiredField"}
+    assert outcomes == {"answer", "UnresolvedField"}
+    opened = {case.get("error") or case.get("warning") or "opened" for case in cases}
+    assert opened == {"opened", "ValueError", "MissingRequiredField"}
+    assert any(case.get("warning") == "MissingRequiredField" for case in cases)

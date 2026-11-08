@@ -50,15 +50,19 @@ type Enforce = Literal["required", "recommended"] | None
 
 
 class MissingRequiredField(LookupError):
-    """A field the set requires is absent from the rule or the result, under ``enforce``."""
+    """Fields the named sets require are absent from the rule or the result, under ``enforce``."""
 
-    def __init__(self, resolution: Resolution, row: RequirementRow) -> None:
-        super().__init__(
-            f"{row.requirement} field {resolution.request.wanted()} on {row.level} is missing: "
-            f"{'; '.join(resolution.reasons)}"
-        )
-        self.resolution = resolution
-        self.row = row
+    def __init__(self, missing: tuple[tuple[Resolution, RequirementRow], ...]) -> None:
+        super().__init__("\n".join(_missing_line(resolution, row) for resolution, row in missing))
+        self.missing = missing
+
+
+def _missing_line(resolution: Resolution, row: RequirementRow) -> str:
+    """One missing field: its requirement, what was asked, on which level, and why it is absent."""
+    return (
+        f"{row.requirement} field {resolution.request.wanted()} on {row.level} is missing: "
+        f"{'; '.join(resolution.reasons)}"
+    )
 
 
 def _bind(entry: SourceEntry, obs_columns: tuple[str, ...]) -> tuple[SourceEntry, ...]:
@@ -130,17 +134,14 @@ def level_view(
 class _Lookups:
     """The requests, answers and snapshot both catalogues share for one set."""
 
-    __slots__ = ("catalogues", "enforce", "name", "resolutions", "views")
+    __slots__ = ("catalogues", "name", "resolutions", "views")
 
     def __init__(
-        self, name: str, catalogues: SourceCatalogues, views: dict[str, LevelView], enforce: Enforce
+        self, name: str, catalogues: SourceCatalogues, views: dict[str, LevelView]
     ) -> None:
-        if enforce is not None and not catalogues.requirements:
-            raise ValueError(f"catalogue {name!r} sets no requirements, so nothing to enforce")
         self.name = name
         self.catalogues = catalogues
         self.views = views
-        self.enforce = enforce
         self.resolutions: list[Resolution] = []
 
     def request(
@@ -183,23 +184,23 @@ class _Lookups:
     def lookup(
         self, level: str, location: Location, key: str, qualifiers: Mapping[str, str]
     ) -> Resolution:
-        """The recorded answer; a missing required field raises or warns as ``enforce`` says."""
-        request = self.request(level, location, key, qualifiers)
-        resolution = self.answer(request)
-        row = (
-            self.catalogues.requirement_for(level, location, key)
-            if resolution.status == "missing" and self.enforce is not None
-            else None
-        )
-        if row is None or row.requirement == "optional":
+        """The recorded answer to one key; requirements were checked when the catalog opened."""
+        return self.resolve(self.request(level, location, key, qualifiers))
+
+    def missing(self) -> list[tuple[Resolution, RequirementRow]]:
+        """Every required or recommended field a bound level lacks, recorded with its
+        requirement; a field the catalogue cannot decide is not missing."""
+        found: list[tuple[Resolution, RequirementRow]] = []
+        for row in self.catalogues.requirements:
+            if row.requirement == "optional" or row.level not in self.views:
+                continue
+            resolution = self.answer(self.request(row.level, row.location, row.key, {}))
+            if resolution.status != "missing":
+                continue
+            resolution = resolution.model_copy(update={"requirement": row.requirement})
             self.record(resolution)
-            return resolution
-        resolution = resolution.model_copy(update={"requirement": row.requirement})
-        self.record(resolution)
-        if row.requirement == "required" or self.enforce == "recommended":
-            raise MissingRequiredField(resolution, row)
-        _LOG.warning(str(MissingRequiredField(resolution, row)))
-        return resolution
+            found.append((resolution, row))
+        return found
 
     def find(
         self, level: str, location: Location, key: str, qualifiers: Mapping[str, str]
@@ -291,14 +292,17 @@ def _catalogued(catalogues: SourceCatalogues, level: str) -> set[Address]:
 class Catalog:
     """Which column one software version reports for each meaning, without any data.
 
-    ``Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"].layers["intensity"]`` is
+    ``Catalog("DIA-NN", "2.6.0", "abundance_alpha").levels["peptidoform_ion"].layers["intensity"]`` is
     ``'Precursor_Quantity'``: the slots of :class:`DataCatalog`'s levels, holding names. The
     packaged rule levels whose version pattern admits ``version`` give the levels; the set's
     entries for that pattern give each level's fields. A slot's ``get`` returns the name or
-    ``None`` and takes further qualifiers, such as ``unit="minute"``.
+    ``None`` and takes further qualifiers, such as ``unit="minute"``. ``enforce`` checks the
+    set's requirements against the rule's levels once, here.
 
     Raises:
-        ValueError: No packaged rule of the software admits the version.
+        ValueError: No packaged rule of the software admits the version, or ``enforce`` is set
+            and the set has no requirements.
+        MissingRequiredField: Under ``enforce``, the rule lacks fields the set requires.
     """
 
     __slots__ = ("_lookups", "levels")
@@ -328,7 +332,8 @@ class Catalog:
                 retained=_catalogued(catalogues, found.level),
                 ran=lambda producer: not producer.requires,
             )
-        self._lookups = _Lookups(catalog, catalogues, views, enforce)
+        self._lookups = _Lookups(catalog, catalogues, views)
+        _enforce((self._lookups,), enforce)
         lookup = Lookup(
             field=self._key_field,
             fields=self._lookups.find_all,
@@ -380,9 +385,14 @@ class LevelFields:
 
 
 class ComposedSets:
-    """The sets one result's levels are bound to, with ``apb`` always in: a key routes to the
-    sets that define it, and two sets naming different fields for one key on one level is an
-    error."""
+    """The sets one result's levels are bound to, the named ones alone: a key routes to the sets
+    that define it, and two sets naming different fields for one key on one level is an error.
+
+    Raises:
+        ValueError: A named set can answer nothing on the result, two sets name different fields
+            for one key, or ``enforce`` is set and no named set has requirements.
+        MissingRequiredField: Under ``enforce``, a field the named sets require is missing.
+    """
 
     __slots__ = ("known", "sets")
 
@@ -393,16 +403,14 @@ class ComposedSets:
         catalogs: tuple[str, ...],
         enforce: Enforce,
     ) -> None:
-        names = list(dict.fromkeys((*catalogs, BASE)))
-        self.sets = {name: _data_lookups(levels, metadata, name, enforce) for name in names}
-        if enforce is not None and not any(
-            lookups.catalogues.requirements for lookups in self.sets.values()
-        ):
-            raise ValueError(f"catalogues {names} set no requirements, so nothing to enforce")
+        self.sets = {
+            name: _data_lookups(levels, metadata, name) for name in dict.fromkeys(catalogs)
+        }
         _check_shared_keys(self.sets)
         self.known = frozenset(
             found.key for lookups in self.sets.values() for found in lookups.catalogues.keys
         )
+        _enforce(tuple(self.sets.values()), enforce)
 
     def lookup(self) -> Lookup:
         """How the levels answer keys."""
@@ -418,6 +426,13 @@ class ComposedSets:
         )
 
     def first(self) -> _Lookups:
+        """The first set named.
+
+        Raises:
+            ValueError: No set was named.
+        """
+        if not self.sets:
+            raise ValueError("no catalogue set named")
         return next(iter(self.sets.values()))
 
     def defining(self, key: str, qualifiers: Mapping[str, str] | None = None) -> list[_Lookups]:
@@ -463,9 +478,12 @@ class ComposedSets:
 class DataCatalog:
     """What one APB result's fields mean to its consumers, with the data handed back directly.
 
-    ``DataCatalog(result, "abundance", "confidence")`` composes those sets with ``apb``, which is
-    always in, so obs and var answer whatever else is named. A key routes to the sets that
-    define it; two sets naming different fields for one key on one level is an error.
+    ``DataCatalog(result, "abundance_alpha", "confidence_alpha")`` composes those sets alone;
+    ``apb_alpha``, the fields apb2 convert writes, answers only when named. A key routes to the
+    sets that define it; two sets naming different fields for one key on one level is an error.
+    With no set named, every name is the level's own. The first set named supplies
+    :attr:`description` and the default :meth:`snapshot`. Requirements are checked once, here:
+    ``enforce`` raises :class:`MissingRequiredField` listing every missing field.
 
     ``levels["peptidoform_ion"].layers["pep"]`` is MaxQuant's ``PEP`` or Spectronaut's
     ``EG_PEP`` matrix, as AnnData returns it; a name that is no key reads the level's own field
@@ -527,19 +545,50 @@ class DataCatalog:
         return (self._sets.first() if catalog is None else self._sets.sets[catalog]).snapshot()
 
 
-BASE = "apb"
-"""The set every data catalog composes: APB's own fields, so obs and var always answer."""
+def _enforce(sets: tuple[_Lookups, ...], enforce: Enforce) -> None:
+    """Check the named sets' requirements once, when the catalog opens; every missing field is
+    recorded in its set's snapshot.
+
+    Under ``"required"`` a missing recommended field is logged in one warning; under
+    ``"recommended"`` it raises with the required ones.
+
+    Raises:
+        ValueError: ``enforce`` is set, but no named set has requirement rows.
+        MissingRequiredField: Fields the sets require are missing, every one listed.
+    """
+    if enforce is None:
+        return
+    binding = [lookups for lookups in sets if lookups.catalogues.requirements]
+    if not binding:
+        names = [lookups.name for lookups in sets]
+        raise ValueError(f"catalogues {names} set no requirements, so nothing to enforce")
+    missing = [found for lookups in binding for found in lookups.missing()]
+    raising = tuple(
+        found for found in missing if enforce == "recommended" or found[1].requirement == "required"
+    )
+    warned = tuple(
+        found for found in missing if enforce == "required" and found[1].requirement != "required"
+    )
+    if warned:
+        _LOG.warning(str(MissingRequiredField(warned)))
+    if raising:
+        raise MissingRequiredField(raising)
 
 
 def _data_lookups(
-    levels: Mapping[str, LevelFields], metadata: Mapping[str, object], name: str, enforce: Enforce
+    levels: Mapping[str, LevelFields], metadata: Mapping[str, object], name: str
 ) -> _Lookups:
-    """One set bound to every level of a result; ``enforce`` applies where the set has
-    requirements."""
+    """One set bound to every level of a result.
+
+    Raises:
+        ValueError: The set has no vendor catalogue, none of its apps has run on the result and
+            the result records none of its annotation conventions, so it can answer nothing.
+    """
     catalogues = catalogue_set(name)
     annotations = tuple(
         annotation for annotation in catalogues.annotations if annotation.applies(metadata)
     )
+    _check_answers(name, catalogues, metadata, annotations)
     views: dict[str, LevelView] = {}
     for level_name, level in levels.items():
         software, pattern, rule_level = level.rule or (None, None, None)
@@ -554,7 +603,36 @@ def _data_lookups(
             ran=lambda producer: producer.ran(metadata),
             annotations=annotations,
         )
-    return _Lookups(name, catalogues, views, enforce if catalogues.requirements else None)
+    return _Lookups(name, catalogues, views)
+
+
+def _check_answers(
+    name: str,
+    catalogues: SourceCatalogues,
+    metadata: Mapping[str, object],
+    annotations: tuple[AnnotationCatalogue, ...],
+) -> None:
+    """Require a set without vendor catalogues to have a source the result answers from: an app
+    that has run or an annotation convention the result records.
+
+    Raises:
+        ValueError: The set can answer nothing; the message says what to run.
+    """
+    if (
+        catalogues.needs_review
+        or annotations
+        or any(producer.ran(metadata) for producer in catalogues.producers)
+    ):
+        return
+    reasons = [producer.pending_reason() for producer in catalogues.producers]
+    if catalogues.annotations:
+        conventions = ", ".join(sorted(found.convention for found in catalogues.annotations))
+        reasons.append(
+            f"the result records no sample annotation ({conventions}); run apb2 annotate"
+        )
+    raise ValueError(
+        f"{name}: {'; '.join(reasons) or 'no source of the set applies to the result'}"
+    )
 
 
 def _check_shared_keys(sets: Mapping[str, _Lookups]) -> None:
@@ -681,8 +759,8 @@ def _with_level_summary(
 ) -> dict[str, JsonValue]:
     """One level's metadata with its count of resolved, missing and unresolved requests.
 
-    A missing field the lookup required but did not raise for, a recommended field under
-    ``enforce="required"``, needs attention. A level the snapshot answered no request for keeps its
+    A missing field the catalog's ``enforce`` check recorded but did not raise for, a recommended
+    field under ``enforce="required"``, needs attention. A level the snapshot answered no request for keeps its
     metadata unchanged.
     """
     answered = [

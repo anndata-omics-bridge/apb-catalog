@@ -1,14 +1,23 @@
 set,qualifier,value,definition
-abundance,normalization,none,The software never normalizes this column.
-abundance,normalization,run_setting,"The column carries whatever cross-run normalization the run's settings chose, possibly none, as DIA-NN's Normalised columns do."
-abundance,normalization,unknown,The reviewer could not establish this.
-confidence,stage,identification,Whether the level's entity is correctly identified.
-confidence,stage,quantification,"Whether the signal quantified for it, such as its MS1 peak, belongs to it."
-confidence,stage,unknown,The reviewer could not establish this.
-proteobench_entrapment,stage,identification,Whether the level's entity is correctly identified.
-proteobench_entrapment,stage,quantification,"Whether the signal quantified for it, such as its MS1 peak, belongs to it."
-proteobench_entrapment,stage,unknown,The reviewer could not establish this.
-chromatography,unit,second,Seconds; multiply by 1 to express the value in QPX seconds.
-chromatography,unit,minute,Minutes; multiply by 60 to express the value in QPX seconds.
-chromatography,unit,irt,Indexed retention time: the dimensionless scale of the software's library or reference peptides. It is not a physical time and cannot be converted to seconds.
-chromatography,unit,unknown,The reviewer could not establish this.
+abundance_alpha,normalization,none,The software never normalizes this column.
+abundance_alpha,normalization,run_setting,"The column carries whatever cross-run normalization the run's settings chose, possibly none, as DIA-NN's Normalised columns do."
+abundance_alpha,normalization,unknown,The reviewer could not establish this.
+abundance_alpha,aggregation,none,"Measured on the feature's own signal, such as a precursor's peak area; nothing is combined."
+abundance_alpha,aggregation,sum,"The sum of the lower-level features' signals, as MaxQuant's Intensity columns."
+abundance_alpha,aggregation,top_n,"From the most intense lower-level features, as DIA-NN's Top N (default N = 1, the most intense precursor)."
+abundance_alpha,aggregation,maxlfq,MaxLFQ: delayed normalization and maximal peptide-ratio extraction (Cox et al. 2014).
+abundance_alpha,aggregation,directlfq,directLFQ (Ammar et al. 2023).
+abundance_alpha,aggregation,unknown,The reviewer could not establish this.
+abundance_alpha,ms_level,ms1,"Measured on the precursor's MS1 signal, as DDA tools quantify."
+abundance_alpha,ms_level,ms2,"Measured on MS2 fragment signals, as DIA tools quantify."
+abundance_alpha,ms_level,unknown,The reviewer could not establish this.
+confidence_alpha,stage,identification,Whether the level's entity is correctly identified.
+confidence_alpha,stage,quantification,"Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+confidence_alpha,stage,unknown,The reviewer could not establish this.
+proteobench_entrapment_alpha,stage,identification,Whether the level's entity is correctly identified.
+proteobench_entrapment_alpha,stage,quantification,"Whether the signal quantified for it, such as its MS1 peak, belongs to it."
+proteobench_entrapment_alpha,stage,unknown,The reviewer could not establish this.
+chromatography_alpha,unit,second,Seconds; multiply by 1 to express the value in QPX seconds.
+chromatography_alpha,unit,minute,Minutes; multiply by 60 to express the value in QPX seconds.
+chromatography_alpha,unit,irt,Indexed retention time: the dimensionless scale of the software's library or reference peptides. It is not a physical time and cannot be converted to seconds.
+chromatography_alpha,unit,unknown,The reviewer could not establish this.

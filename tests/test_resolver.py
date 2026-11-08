@@ -159,7 +159,7 @@ def test_a_resolution_carries_a_reference_exactly_when_resolved() -> None:
 
 def test_request_predicates_are_checked_against_the_vocabulary() -> None:
     """A request may name only declared qualifiers and admitted values."""
-    vocabulary = packaged_catalogues("confidence").vocabulary
+    vocabulary = packaged_catalogues("confidence_alpha").vocabulary
     vocabulary.check_predicate("pep", {"stage": ("identification", "unknown")})
     vocabulary.check_predicate(None, {})
     with pytest.raises(ValueError, match="unknown qualifier"):
@@ -171,24 +171,27 @@ def test_request_predicates_are_checked_against_the_vocabulary() -> None:
 
 
 def test_a_vocabulary_keeps_its_kinds_apart_from_its_qualifiers() -> None:
-    """The kinds include ``unknown``, and no qualifier is named ``kind``."""
-    unknown = {"unknown": "The reviewer could not establish this."}
-    with pytest.raises(ValueError, match="defines the kind 'unknown'"):
-        SetVocabulary(
-            prefix="t", definition="test", kind_definition="test", kinds={"pep": "a"}, qualifiers={}
-        )
+    """A set needs no kind ``unknown``, and no qualifier is named ``kind``."""
+    planned = SetVocabulary(prefix="t", definition="", kind_definition="", kinds={}, qualifiers={})
+    assert planned.kinds == {}
+    known = SetVocabulary(
+        prefix="t", definition="test", kind_definition="test", kinds={"pep": "a"}, qualifiers={}
+    )
+    assert list(known.kinds) == ["pep"]
     with pytest.raises(ValueError, match="no qualifier"):
         SetVocabulary(
             prefix="t",
             definition="test",
             kind_definition="test",
-            kinds=unknown,
-            qualifiers={"kind": Qualifier(definition="test", values=unknown)},
+            kinds={"pep": "a"},
+            qualifiers={"kind": Qualifier(definition="test", values={})},
         )
 
 
 def test_every_qualifier_defines_unknown() -> None:
-    """``unknown`` is a value of every qualifier, defined like the others."""
+    """``unknown`` is a value of every qualifier with values, defined like the others; a qualifier
+    still being planned has none."""
+    assert Qualifier(definition="test", values={}).values == {}
     with pytest.raises(ValueError, match="defines the value 'unknown'"):
         Qualifier(definition="test", values={"pep": "a posterior error probability"})
 

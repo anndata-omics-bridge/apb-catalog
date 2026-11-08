@@ -1,70 +1,56 @@
 {
   "name": "apb-catalog",
   "title": "APB catalogue sets",
-  "version": "0.17",
+  "version": "0.32",
   "resources": [
-    {
-      "name": "entries",
-      "path": "entries.csv",
-      "description": "One row per catalogued field: where it lives in an APB result and what it means.",
-      "schema": {
-        "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "entry_id", "type": "string", "description": "Where the field lives, as six fields separated by /: <source>/<version>/<level>/<attribute>/<key>/<column>. Read apb-fasta/*/peptidoform_ion/varm/fasta_validation/is_proteotypic as: apb-fasta writes it, for every software version, on the peptidoform_ion level, in varm, in the table fasta_validation, column is_proteotypic. source: the conversion software, an app named in producers, or annotation:<convention>. version: one versions.csv label, or * for every version. level: the quantification level, or * for every level, which only annotation and app entries use. attribute: obs, var, layers or varm. key: the name of a layer or varm table; - for obs and var, which have none. column: a column of obs, var or a varm table; - for a layer, which has none; a trailing * matches every obs column starting with it, as in annotation:sdrf/*/protein/obs/-/factor_value_*.", "constraints": {"pattern": "^[^/]+/[^/]+/[^/]+/(obs|var|layers|varm)/[^/]+/[^/]+$"}},
-          {"name": "kind", "type": "string", "description": "What the field measures; one of the set's kinds."},
-          {"name": "basis", "type": "string", "description": "Why the reviewer assigned this meaning."},
-          {"name": "evidence_url", "type": "string", "description": "Where the basis can be checked; may be empty."}
-        ],
-        "primaryKey": ["set", "entry_id", "kind"],
-        "foreignKeys": [
-          {"fields": ["set", "kind"], "reference": {"resource": "kinds", "fields": ["set", "kind"]}}
-        ]
-      }
-    },
-    {
-      "name": "entry_qualifiers",
-      "path": "entry_qualifiers.csv",
-      "description": "The qualifiers of each entry besides its kind.",
-      "schema": {
-        "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "entry_id", "type": "string", "description": "The entry qualified."},
-          {"name": "kind", "type": "string", "description": "The qualified entry's kind; with entry_id it names one entry."},
-          {"name": "qualifier", "type": "string", "description": "A qualifier of the set's vocabulary."},
-          {"name": "value", "type": "string", "description": "One of the qualifier's values."}
-        ],
-        "primaryKey": ["set", "entry_id", "kind", "qualifier"],
-        "foreignKeys": [
-          {"fields": ["set", "entry_id", "kind"], "reference": {"resource": "entries", "fields": ["set", "entry_id", "kind"]}},
-          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "qualifier_values", "fields": ["set", "qualifier", "value"]}}
-        ]
-      }
-    },
     {
       "name": "sets",
       "path": "sets.csv",
       "description": "One row per catalogue set: what its fields are, what its kinds name, what it is for and who uses it.",
       "schema": {
         "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "prefix", "type": "string", "description": "What a lookup writes before ':' to ask this set alone, as c:q_value; v is reserved for the vendor's own column.", "constraints": {"pattern": "^[a-z][a-z0-9_]*$", "unique": true}},
-          {"name": "definition", "type": "string", "description": "What the set's fields are."},
-          {"name": "kind_definition", "type": "string", "description": "What a kind names in this set."},
-          {"name": "purpose", "type": "string", "description": "What the set is for."},
-          {"name": "used_by", "type": "string", "description": "Who uses the set, separated by ';'."}
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "prefix", "type": "string", "description": "What a lookup writes before ':' to ask this set alone, as c:q_value; v is reserved for the vendor's own column.", "constraints": {"pattern": "^[a-z][a-z0-9_]*$", "unique": true, "required": true}},
+          {"name": "definition", "type": "string", "description": "What the set's fields are.", "constraints": {"required": true}},
+          {"name": "kind_definition", "type": "string", "description": "What a kind names in this set.", "constraints": {"required": true}},
+          {"name": "purpose", "type": "string", "description": "What the set is for.", "constraints": {"required": true}},
+          {"name": "used_by", "type": "string", "description": "Who uses the set, separated by ';'.", "constraints": {"required": true}}
         ],
         "primaryKey": ["set"]
       }
     },
     {
-      "name": "kinds",
-      "path": "kinds.csv",
-      "description": "The kinds of each set, unknown among them: what an entry or key stands for.",
+      "name": "terms",
+      "path": "terms.csv",
+      "description": "The root of a catalogue: the terms each set defines, before any software maps them. A term is a key at one location: what callers ask by, the kind it stands for, the qualifier values it fixes and how strongly consumers need it. One row per term and qualifier value its key fixes; a key that fixes none has one row with neither. catalog.csv maps terms to fields; a term no row maps yet is reported as a warning.",
       "schema": {
         "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "kind", "type": "string", "description": "The kind defined."},
-          {"name": "definition", "type": "string", "description": "What the kind means."}
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "location", "type": "string", "description": "Where the term applies, as <level>/<attribute>: peptidoform_ion/layers. level: the quantification level, or * for every level, which only annotation and app entries use. attribute: obs, var, layers or varm.", "constraints": {"pattern": "^[^/]+/(obs|var|layers|varm)$", "required": true}},
+          {"name": "key", "type": "string", "description": "The name callers ask by.", "constraints": {"required": true}},
+          {"name": "kind", "type": "string", "description": "What the term measures; one of the set's kinds. The same on every row of the key.", "constraints": {"required": true}},
+          {"name": "qualifier", "type": "string", "description": "A qualifier whose value the key fixes, such as normalization; one row per fixed qualifier. Empty with value when the key fixes none."},
+          {"name": "value", "type": "string", "description": "The value the key fixes for that qualifier, as intensity fixes normalization none. A key fixes the same values at every location."},
+          {"name": "requirement", "type": "string", "description": "How strongly the set's consumers need the term at this location: required, recommended or optional; empty when none is stated. The same on every row of the term.", "constraints": {"pattern": "^(required|recommended|optional)?$"}},
+          {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, separated by ';'; may be empty. The same on every row of the key."},
+          {"name": "definition", "type": "string", "description": "What the term means, in words, such as unnormalized ion intensity; may be empty."}
+        ],
+        "primaryKey": ["set", "location", "key", "qualifier"],
+        "foreignKeys": [
+          {"fields": ["set", "kind"], "reference": {"resource": "kinds", "fields": ["set", "kind"]}},
+          {"fields": ["set", "qualifier", "value"], "reference": {"resource": "qualifier_values", "fields": ["set", "qualifier", "value"]}}
+        ]
+      }
+    },
+    {
+      "name": "kinds",
+      "path": "kinds.csv",
+      "description": "The kinds of each set: what an entry or key stands for; a kind is always known. A set declared in sets.csv alone, while planned, has none.",
+      "schema": {
+        "fields": [
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "kind", "type": "string", "description": "The kind defined.", "constraints": {"required": true}},
+          {"name": "definition", "type": "string", "description": "What the kind means.", "constraints": {"required": true}}
         ],
         "primaryKey": ["set", "kind"],
         "foreignKeys": [
@@ -78,9 +64,9 @@
       "description": "The qualifiers of each set that refine a kind, such as normalization or unit.",
       "schema": {
         "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "qualifier", "type": "string", "description": "The qualifier defined; never kind."},
-          {"name": "definition", "type": "string", "description": "What the qualifier records."}
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "qualifier", "type": "string", "description": "The qualifier defined; never kind.", "constraints": {"required": true}},
+          {"name": "definition", "type": "string", "description": "What the qualifier records.", "constraints": {"required": true}}
         ],
         "primaryKey": ["set", "qualifier"],
         "foreignKeys": [
@@ -91,13 +77,13 @@
     {
       "name": "qualifier_values",
       "path": "qualifier_values.csv",
-      "description": "The values each qualifier admits, unknown among them.",
+      "description": "The values each qualifier admits, unknown among them once it admits any.",
       "schema": {
         "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "qualifier", "type": "string", "description": "The qualifier."},
-          {"name": "value", "type": "string", "description": "The value defined."},
-          {"name": "definition", "type": "string", "description": "What the value means."}
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "qualifier", "type": "string", "description": "The qualifier.", "constraints": {"required": true}},
+          {"name": "value", "type": "string", "description": "The value defined.", "constraints": {"required": true}},
+          {"name": "definition", "type": "string", "description": "What the value means.", "constraints": {"required": true}}
         ],
         "primaryKey": ["set", "qualifier", "value"],
         "foreignKeys": [
@@ -106,55 +92,29 @@
       }
     },
     {
-      "name": "keys",
-      "path": "keys.csv",
-      "description": "The access keys of each set, one meaning each: the kind a key stands for, and in key_qualifiers the qualifier values it fixes. An entry has the key whose kind and fixed values it carries.",
+      "name": "catalog",
+      "path": "catalog.csv",
+      "description": "One row per mapping of a term to a field and per qualifier: where the field lives in an APB result, the term's key, and the field's value of one qualifier; a field has one row per qualifier of its set, three in abundance. kind, psi_ms and fixed repeat what terms.csv states for the key, so each row reads alone; a field's basis and evidence_url are the same on all its rows.",
       "schema": {
         "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "key", "type": "string", "description": "The name callers ask by."},
-          {"name": "kind", "type": "string", "description": "The kind the key stands for."},
-          {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, separated by ';'; may be empty."}
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "software", "type": "string", "description": "Who writes the field and for which versions, as <source>/<version>: DIA-NN/2.x. source: the conversion software, an app named in producers, or annotation:<convention>. version: one versions.csv label, or * for every version.", "constraints": {"pattern": "^[^/]+/[^/]+$", "required": true}},
+          {"name": "location", "type": "string", "description": "Where in the result, as <level>/<attribute>: protein/var. level: the quantification level, or * for every level, which only annotation and app entries use. attribute: obs, var, layers or varm.", "constraints": {"pattern": "^[^/]+/(obs|var|layers|varm)$", "required": true}},
+          {"name": "name", "type": "string", "description": "The field, as <key>/<column>: -/Lib_PG_Q_Value, a var column; PG_MaxLFQ/-, a layer; fasta_validation/is_proteotypic, a varm table's column. key: a layer or varm table, - for obs and var. column: an obs, var or varm column, - for a layer; a trailing * matches every obs column starting with it.", "constraints": {"required": true}},
+          {"name": "key", "type": "string", "description": "The term the field answers: a key terms.csv defines at this location.", "constraints": {"required": true}},
+          {"name": "kind", "type": "string", "description": "The kind the key stands for, as terms.csv states it.", "constraints": {"required": true}},
+          {"name": "qualifier", "type": "string", "description": "One qualifier of the set refining the kind, such as normalization or unit; a field has one row per qualifier of its set. Empty with value when the set has none."},
+          {"name": "value", "type": "string", "description": "The field's value of that qualifier."},
+          {"name": "fixed", "type": "boolean", "description": "true where the key fixes this qualifier's value, as terms.csv states, and the row carries that value; false where the key leaves the qualifier open, and on a row without a qualifier.", "constraints": {"required": true}},
+          {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, as terms.csv states them; may be empty."},
+          {"name": "basis", "type": "string", "description": "Why the reviewer assigned this meaning; the same on every row of the field.", "constraints": {"required": true}},
+          {"name": "evidence_url", "type": "string", "description": "Where the basis can be checked; may be empty."}
         ],
-        "primaryKey": ["set", "key"],
+        "primaryKey": ["set", "software", "location", "name", "key", "qualifier"],
         "foreignKeys": [
-          {"fields": ["set", "kind"], "reference": {"resource": "kinds", "fields": ["set", "kind"]}}
-        ]
-      }
-    },
-    {
-      "name": "key_qualifiers",
-      "path": "key_qualifiers.csv",
-      "description": "The qualifier values each key fixes besides its kind, one row each; a qualifier without a row stays open.",
-      "schema": {
-        "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "key", "type": "string", "description": "The key that fixes the value."},
-          {"name": "qualifier", "type": "string", "description": "A qualifier of the set."},
-          {"name": "value", "type": "string", "description": "The value the key fixes."}
-        ],
-        "primaryKey": ["set", "key", "qualifier"],
-        "foreignKeys": [
-          {"fields": ["set", "key"], "reference": {"resource": "keys", "fields": ["set", "key"]}},
+          {"fields": ["set", "key", "location"], "reference": {"resource": "terms", "fields": ["set", "key", "location"]}},
+          {"fields": ["set", "kind"], "reference": {"resource": "kinds", "fields": ["set", "kind"]}},
           {"fields": ["set", "qualifier", "value"], "reference": {"resource": "qualifier_values", "fields": ["set", "qualifier", "value"]}}
-        ]
-      }
-    },
-    {
-      "name": "requirements",
-      "path": "requirements.csv",
-      "description": "How strongly a set's consumer needs one key on one level and location.",
-      "schema": {
-        "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "level", "type": "string", "description": "The quantification level."},
-          {"name": "location", "type": "string", "description": "obs, layers, var or varm."},
-          {"name": "key", "type": "string", "description": "The key required."},
-          {"name": "requirement", "type": "string", "description": "required, recommended or optional."}
-        ],
-        "primaryKey": ["set", "level", "location", "key"],
-        "foreignKeys": [
-          {"fields": ["set", "key"], "reference": {"resource": "keys", "fields": ["set", "key"]}}
         ]
       }
     },
@@ -164,10 +124,10 @@
       "description": "Apps that write fields after conversion, such as apb-fasta, and the run that must record them before their fields exist.",
       "schema": {
         "fields": [
-          {"name": "set", "type": "string", "description": "The catalogue set."},
-          {"name": "producer", "type": "string", "description": "The app, as named in entries' source."},
-          {"name": "requires", "type": "string", "description": "The result metadata path, joined by '.', that records the app's run."},
-          {"name": "instruction", "type": "string", "description": "What to run before the app's fields exist."}
+          {"name": "set", "type": "string", "description": "The catalogue set.", "constraints": {"required": true}},
+          {"name": "producer", "type": "string", "description": "The app, as named in entries' source.", "constraints": {"required": true}},
+          {"name": "requires", "type": "string", "description": "The result metadata path, joined by '.', that records the app's run.", "constraints": {"required": true}},
+          {"name": "instruction", "type": "string", "description": "What to run before the app's fields exist.", "constraints": {"required": true}}
         ],
         "primaryKey": ["set", "producer"]
       }
@@ -178,9 +138,9 @@
       "description": "The software versions APB2 has a rule for, written from APB2's packaged rules when the catalog is written: each version's label, which entries name, and the rule's version pattern, which a converted result stores. A version's levels are the levels its entries name.",
       "schema": {
         "fields": [
-          {"name": "software", "type": "string", "description": "The software name APB2's rule declares."},
-          {"name": "version", "type": "string", "description": "The version range's label, as entries name it."},
-          {"name": "software_version_pattern", "type": "string", "description": "The rule's software version pattern, as a converted result stores it."}
+          {"name": "software", "type": "string", "description": "The software name APB2's rule declares.", "constraints": {"required": true}},
+          {"name": "version", "type": "string", "description": "The version range's label, as entries name it.", "constraints": {"required": true}},
+          {"name": "software_version_pattern", "type": "string", "description": "The rule's software version pattern, as a converted result stores it.", "constraints": {"required": true}}
         ],
         "primaryKey": ["software", "version"]
       }

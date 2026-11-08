@@ -5,12 +5,12 @@ APB Catalog finds a field of an [APB2](https://github.com/anndata-omics-bridge/a
 ```python
 from apb_catalog.api import DataCatalog
 
-pep = DataCatalog(result, "confidence").levels["peptidoform_ion"].layers.get("pep")
+pep = DataCatalog(result, "confidence_alpha").levels["peptidoform_ion"].layers.get("pep")
 ```
 
 `pep` is a numpy matrix, runs × ions as AnnData's layers, or `None` when the vendor reports no PEP; `layers.name("pep")` names the vendor's column.
 
-With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence")`; see [pandas](api.md#pandas).
+With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence_alpha")`; see [pandas](api.md#pandas).
 
 | Page | For |
 | --- | --- |
@@ -22,7 +22,7 @@ With pandas, on the MuData or AnnData object APB2 wrote, the same keys return An
 
 ## Catalogue or rule role?
 
-APB2 rules can mark a column with a [semantic role](https://anndata-omics-bridge.github.io/apb2/rule-based/#semantic-roles) such as `abundance` or `protein_assignment`; the [role policy](https://github.com/anndata-omics-bridge/apb2/blob/main/src/apb2/parserV2/vendor_parse_rules/schema/role_policy.json) owns that vocabulary.
+APB2 rules can mark a column with a [semantic role](https://anndata-omics-bridge.github.io/apb2/rule-based/#semantic-roles) such as `abundance_alpha` or `protein_assignment`; the [role policy](https://github.com/anndata-omics-bridge/apb2/blob/main/src/apb2/parserV2/vendor_parse_rules/schema/role_policy.json) owns that vocabulary.
 
 | Meaning | Lives in |
 | --- | --- |

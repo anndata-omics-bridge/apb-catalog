@@ -6,28 +6,29 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 
 | Constructor | Answers from |
 | --- | --- |
-| `DataCatalog(result, *catalogs, enforce=None)` | An apb2 `ParsedLevels` result: the rule each level was converted with; the named sets composed with `apb`, always in |
+| `DataCatalog(result, *catalogs, enforce=None)` | An apb2 `ParsedLevels` result: the rule each level was converted with; the named sets alone, so `apb_alpha`, the fields `apb2 convert` writes, answers only when named |
 | `Catalog(software, version, catalog, enforce=None)` | The packaged APB2 rule whose version pattern admits `version`; no data |
 
 | Member | `DataCatalog` | `Catalog` |
 | --- | --- | --- |
 | `levels[name]` | one result level with AnnData's slots, looked up by key; see [Levels](#levels) | one rule level with the same slots, holding names |
 | `fields()` | Polars `DataFrame`: the [long table](#the-long-table)'s columns plus `present`, `constant` | same |
-| `snapshot(catalog=None)` | `ResolutionSnapshot` of one set's lookups so far; the first set named by default | — |
+| `snapshot(catalog=None)` | `ResolutionSnapshot` of one set's lookups so far; the first set named by default; `ValueError` when no set is named | — |
 | `resolve(request)` | `Resolution` of one explicit request, recorded for the snapshot: status `resolved`, `missing`, `ambiguous` or `unknown`, with candidates and reasons; an undecided answer is a status, not an `UnresolvedField` | — |
-| `description` | the first set's `purpose` and `used_by` | same |
+| `description` | the first set named: its `purpose` and `used_by` | same |
 
-- A key is one of the set's keys, listed per set in [Catalogues](catalogues.md): a kind with the qualifier values it fixes, such as `normalized_intensity` (kind `intensity`, normalization `run_setting`)
+- A key is one of the set's keys, listed per set in [Catalogues](catalogues.md): a kind with the qualifier values it fixes, such as `intensity_norm_settings` (kind `intensity`, normalization `run_setting`)
 - A slot's `get` and `name` take `**qualifiers`, a qualifier the key leaves open, such as `unit`; `kind`, or a qualifier the key fixes, raises `ValueError`
 - `resolve` takes a request naming a level, optionally a location and a key, and the accepted values of each qualifier; `apb_catalog.api` exports neither its type, `FieldRequest`, nor `Resolution`
-- A level's `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which only plugin sets catalogue
+- A level's `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which `apb_fasta_alpha` catalogues
 - `fields()` lists a field APB2 left out because it held one value with `present` false and that value as `constant`
 - A level answers only for its own entity: `peptidoform_ion` for precursors, `protein` for protein groups
-- Composed sets: a key routes to the sets that define it; two sets naming different fields for one key on one level raise `ValueError` when the catalog is built; a slot's `keys()` and `fields()` cover every set; `enforce` applies each set's requirements
+- Composed sets: a key routes to the sets that define it; two sets naming different fields for one key on one level raise `ValueError` when the catalog is built; a slot's `keys()` and `fields()` cover every set; `enforce` checks each set's requirements when the catalog opens
+- With no set named, every name is the level's own, as in AnnData
 
 ## Levels
 
-`DataCatalog(result, "abundance", "confidence").levels["protein"]` has AnnData's slots and returns what AnnData returns, with polars in place of pandas; the pandas `DataCatalog` returns AnnData's own values, and `Catalog`'s levels hold names:
+`DataCatalog(result, "abundance_alpha", "confidence_alpha").levels["protein"]` has AnnData's slots and returns what AnnData returns, with polars in place of pandas; the pandas `DataCatalog` returns AnnData's own values, and `Catalog`'s levels hold names:
 
 | Slot | `DataCatalog` | pandas `DataCatalog` | `Catalog` |
 | --- | --- | --- | --- |
@@ -41,14 +42,15 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 | `keys()` on a slot | `set[str]`: the keys the level offers there | same | same |
 
 - Lookup follows cf_xarray: a key first, then the level's own name in that slot, else `KeyError`; `UnresolvedField` when the key names several fields or one the catalogue cannot decide
+- Past the mapping, a slot answers as scverse AnnData's does: `get` returns `None` where `adata.var.get` and `adata.layers.get` do, and `[...]` raises `KeyError` where AnnData raises it. The catalog adds no error or default of its own, so a key of a set not named, such as `chromatography_alpha`'s `aligned_peak_end` in a catalog of `confidence_alpha`, is `None` from `get`; the caller handles it
 - A prefix makes the lookup exact, since a vendor may name a column as a key is named: a set's prefix asks that set alone, so `c:q_value` is the confidence set's q-value or nothing, never Sage's own `q_value` column; `v:` asks the level's own name alone, so `v:q_value` is that column, never the catalog. `catalogues()` lists each set's `prefix`; `v` is reserved
 - A list reads every field a key names, as cf_xarray's `ds.cf[["name"]]`: both contaminant flags where the vendor and apb-fasta each set one, every prolfquapp `group` column; it still raises `UnresolvedField` for a field the catalogue cannot decide
 - `keys()` and `in` know keys only; vendor names are read, not listed
-- Every key `keys()` lists reads: an app's keys, such as apb-fasta's `fasta_matches_contaminant`, appear once the app has run; before, asking for one raises `UnresolvedField` naming what to run
+- Every key `keys()` lists reads: an app's keys, such as apb-fasta's `fasta_matches_contaminant`, are there once the app has run. `DataCatalog(result, "apb_fasta_alpha")` on a result apb-fasta has not verified raises `ValueError` when it opens, naming what to run
 - A key may name the primary layer and then answers `X`; `layers` holds the other layers, as in AnnData
 - A matrix is built once per level and shared by every later answer
 
-`Catalog("DIA-NN", "2.6.0", "abundance").levels["peptidoform_ion"].layers["intensity"]` is `'Precursor_Quantity'`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`, and so does every `v:` name.
+`Catalog("DIA-NN", "2.6.0", "abundance_alpha").levels["peptidoform_ion"].layers["intensity"]` is `'Precursor_Quantity'`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`, and so does every `v:` name.
 
 ## pandas
 
@@ -58,6 +60,7 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 - The lookup is `api.DataCatalog`'s: the same keys, names, `None`, `KeyError` and `UnresolvedField`; only the values are AnnData's
 - Own names are APB2's: `layers["a/b"]` reads the layer AnnData stores as `a_b`
 - Levels only: `fields()`, `snapshot()`, `resolve()` and `description` stay on `api.DataCatalog`
+- `as_mudata()`: a new MuData of the catalogued fields alone, each under its key, with `uns["catalog"]` recording each column; `levels[name].as_anndata()` converts one level ([A result named by catalog keys](keyed.md))
 
 ## Answers
 
@@ -66,21 +69,24 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 | a field | Exactly one catalogued field matches |
 | `None` | From `get`: the level's software version was reviewed and has no such field, or the name is neither a key nor the level's own; an absent level is not in `levels` |
 | `KeyError` | From `[...]` and `name` where `get` returns `None` |
-| `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or a plugin set's later producer, such as `apb-fasta verify-peptides`, has not run; names the reason and candidates |
-| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, a prefix of no composed set or a key its set lacks, qualifiers on a `v:` name, or a version no packaged rule admits |
+| `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or an app a plugin set also names has not run, in `Catalog` or in a set with vendor entries too; names the reason and candidates |
+| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, a prefix of no composed set or a key its set lacks, qualifiers on a `v:` name, or a version no packaged rule admits. When `DataCatalog` opens: a named set that can answer nothing on the result, such as `apb_fasta_alpha` before `apb-fasta verify-peptides` runs or `obs_annotation_alpha` on a result `apb2 annotate` never annotated; the message says what to run |
 
 ## Requirements and `enforce`
 
-A set's requirement rows say how strongly a consumer needs a kind on a level. `enforce` makes them binding, like a log level:
+A set's requirement rows say how strongly a consumer needs a kind on a level. `enforce` makes them binding, like a log level, and checks them once, when the catalog opens: `DataCatalog` on the levels the result has, `Catalog` on the levels of the rule its version matches.
 
-| Created with | `required` absent | `recommended` absent | `optional` absent |
+| Opened with | `required` absent | `recommended` absent | `optional` absent |
 | --- | --- | --- | --- |
-| no `enforce` | `None` | `None` | `None` |
-| `enforce="required"` | raises `MissingRequiredField` | `None` and a logged warning | `None` |
-| `enforce="recommended"` | raises | raises | `None` |
+| no `enforce` | opens | opens | opens |
+| `enforce="required"` | raises `MissingRequiredField` | opens, one logged warning | opens |
+| `enforce="recommended"` | raises | raises | opens |
 
-- `enforce` on a set without requirement rows raises `ValueError`
-- `UnresolvedField` raises whatever `enforce` says
+- One `MissingRequiredField` lists every missing field, one line each; its `missing` holds each `(resolution, row)` pair
+- Each missing field is recorded with its requirement in the set's snapshot, so the [snapshot](#snapshots)'s per-level summary counts it
+- Only a field the reviewed software version lacks is missing; a field the catalogue cannot decide stays an `UnresolvedField` at lookup
+- A lookup does not enforce: once the catalog is open, `get` returns `None` for an absent field, as without `enforce`
+- `enforce` raises `ValueError` when none of the named sets has requirement rows
 - [Catalogues](catalogues.md) shows each set's requirements
 
 ## Snapshots

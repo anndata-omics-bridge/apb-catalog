@@ -9,7 +9,7 @@ from typing import NoReturn
 
 import polars as pl
 import pytest
-from apb2.api import ParsedLevel, ParsedLevels, packaged_rule_declarations
+from apb2.api import JsonValue, ParsedLevel, ParsedLevels, packaged_rule_declarations
 from scripts.versions import TABLE, render
 
 from apb_catalog import rules
@@ -73,7 +73,12 @@ def _result() -> ParsedLevels:
             }
         },
     )
-    return ParsedLevels(levels={"peptidoform_ion": level}, uns={})
+    # apb-fasta has run and a sample table is attached, so every packaged set can answer.
+    metadata: dict[str, JsonValue] = {
+        "fasta": {"provenance": {"peptide_verification": {}}},
+        "sdrf": {},
+    }
+    return ParsedLevels(levels={"peptidoform_ion": level}, uns={}, metadata=metadata)
 
 
 def test_every_set_answers_without_apb2s_rule_declarations(
@@ -92,7 +97,10 @@ def test_every_set_answers_without_apb2s_rule_declarations(
     for name in packaged_descriptions():
         assert not catalogue_table(name).is_empty()
         assert not rule_coverage(name).is_empty()
-        assert not Catalog("DIA-NN", "2.6.0", name).fields().is_empty()
+        named = Catalog("DIA-NN", "2.6.0", name).fields()
+        # Without data, only a vendor catalogue names fields: an app's wait for its run and an
+        # annotation's bind to a result's columns.
+        assert not named.is_empty() or not packaged_catalogues(name).needs_review, name
         DataCatalog(result, name).fields()
-    found = DataCatalog(result, "apb").levels["peptidoform_ion"].var.get("protein_assignment")
+    found = DataCatalog(result, "apb_alpha").levels["peptidoform_ion"].var.get("protein_assignment")
     assert found is not None and found.to_list() == ["P1", "P2"]

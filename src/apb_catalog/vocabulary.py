@@ -8,8 +8,9 @@ from collections.abc import Mapping
 from pydantic import BaseModel, ConfigDict, model_validator
 
 UNKNOWN = "unknown"
-"""The kind or qualifier value recording that a reviewer could not establish the fact; every set
-defines it as a kind and every qualifier as a value."""
+"""The qualifier value recording that a reviewer could not establish the fact; a qualifier with
+values defines it, one without values is being planned and needs none. A kind is always known: a
+field whose meaning the reviewer could not establish is not catalogued."""
 
 VENDOR = "v"
 """The prefix that asks a level's own column, never a set: ``v:q_value``."""
@@ -26,23 +27,24 @@ class FrozenModel(BaseModel):
 
 class Qualifier(FrozenModel):
     """One dimension of a set's meanings and the meanings of its admitted values, ``unknown``
-    among them."""
+    among them once it has any."""
 
     definition: str
     values: dict[str, str]
 
     @model_validator(mode="after")
     def _defines_unknown(self) -> Qualifier:
-        if UNKNOWN not in self.values:
-            raise ValueError(f"a qualifier defines the value {UNKNOWN!r}")
+        if self.values and UNKNOWN not in self.values:
+            raise ValueError(f"a qualifier with values defines the value {UNKNOWN!r}")
         return self
 
 
 class SetVocabulary(FrozenModel):
     """What one set's entries mean: its kinds, and the qualifiers that refine a kind.
 
-    An entry has one kind and a value for every qualifier; ``unknown`` is among the kinds and
-    among every qualifier's values. ``prefix`` asks the set alone, as ``c:q_value``.
+    An entry has one kind and a value for every qualifier; ``unknown`` is among every qualifier's
+    values once there are any. A set declared without kinds is being planned: it loads, with
+    nothing to answer. ``prefix`` asks the set alone, as ``c:q_value``.
     """
 
     prefix: str
@@ -57,8 +59,6 @@ class SetVocabulary(FrozenModel):
             raise ValueError(f"the prefix {self.prefix!r} does not match {PREFIX_PATTERN}")
         if self.prefix == VENDOR:
             raise ValueError(f"the prefix {VENDOR!r} is reserved for the vendor's own column")
-        if UNKNOWN not in self.kinds:
-            raise ValueError(f"a set defines the kind {UNKNOWN!r}")
         if "kind" in self.qualifiers:
             raise ValueError("a set's kinds are no qualifier; they are its kinds")
         return self
