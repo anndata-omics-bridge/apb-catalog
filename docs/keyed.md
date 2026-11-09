@@ -6,17 +6,21 @@
 import mudata
 from apb_catalog.api_pandas import DataCatalog
 
-mdata = mudata.read_h5mu("diann.h5mu")        # a DIA-NN 1.8 protein level
+mdata = mudata.read_h5mu("diann.h5mu")        # DIA-NN 1.8.1: precursors and protein groups
 keyed = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha").as_mudata()
 keyed.write_h5mu("diann_keyed.h5mu")
 keyed
 ```
 
 ```text
-MuData object with n_obs × n_vars = 2 × 3
+MuData object with n_obs × n_vars = 4 × 12
   uns:	'catalog'
-  1 modality
-    protein:	2 × 3
+  2 modalities
+    peptidoform_ion:	4 × 6
+      var:	'q_value', 'library_q_value', 'peptide', 'peptidoform', 'peptidoform_ion', 'decoy', 'contaminant', 'protein_assignment', 'fasta_accessions'
+      uns:	'catalog'
+      layers:	'intensity', 'intensity_norm_settings', 'q_value', 'pep'
+    protein:	4 × 6
       var:	'library_q_value', 'q_value', 'decoy', 'contaminant', 'protein_assignment', 'fasta_accessions'
       uns:	'catalog'
       layers:	'intensity', 'intensity_norm_settings[aggregation=top_n]', 'intensity_norm_settings[aggregation=maxlfq]', 'q_value'
@@ -41,10 +45,13 @@ DataCatalog(mdata, "abundance_alpha").as_mudata()
 ```
 
 ```text
-MuData object with n_obs × n_vars = 2 × 3
+MuData object with n_obs × n_vars = 4 × 12
   uns:	'catalog'
-  1 modality
-    protein:	2 × 3
+  2 modalities
+    peptidoform_ion:	4 × 6
+      uns:	'catalog'
+      layers:	'intensity', 'intensity_norm_settings'
+    protein:	4 × 6
       uns:	'catalog'
       layers:	'intensity', 'intensity_norm_settings[aggregation=top_n]', 'intensity_norm_settings[aggregation=maxlfq]'
 ```

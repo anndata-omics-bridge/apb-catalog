@@ -161,6 +161,7 @@ peak_qc,FragPipe/*,peptidoform_ion/layers,Retention_Time_FWHM/-,peak_fwhm,peak_f
 
 The app then asks by key:
 
+<!-- not run: peak_qc is the plugin set this page builds, not installed -->
 ```python
 from apb_catalog.api import Catalog
 

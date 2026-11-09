@@ -1,6 +1,6 @@
 # Get started
 
-Every output below is what the call returned on 26 October 2026, on APB2 results of four ProteoBench submissions: DIA-NN 2.6.0, MaxQuant 2.8.1.0, Spectronaut 20 and Sage 0.15.
+Every example runs on a small synthetic DIA-NN 1.8.1 result, four runs by six precursors, and every output shown is what it returns: [tests/test_docs_examples.py](https://github.com/anndata-omics-bridge/apb-catalog/blob/main/tests/test_docs_examples.py) runs this page. Other vendors appear in the prose and tables only.
 
 ## Install
 
@@ -29,8 +29,11 @@ confidence.fields().select("level", "location", "name", "key", "qualifier.stage"
 ```
 
 ```text
+shape: (7, 6)
 ┌─────────────────┬──────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
 │ level           ┆ location ┆ name              ┆ key             ┆ qualifier.stage ┆ present │
+│ ---             ┆ ---      ┆ ---               ┆ ---             ┆ ---             ┆ ---     │
+│ str             ┆ str      ┆ str               ┆ str             ┆ str             ┆ bool    │
 ╞═════════════════╪══════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
 │ peptidoform_ion ┆ layers   ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
 │ peptidoform_ion ┆ layers   ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
@@ -47,8 +50,10 @@ confidence.fields().select("level", "location", "name", "key", "qualifier.stage"
 ```python
 ion = confidence.levels["peptidoform_ion"]
 ion.layers.keys()   # {'pep', 'q_value'}
-ion.var.keys()      # {'library_q_value', 'q_value'}: only the sets named answer
+ion.var.keys()      # {'library_q_value', 'q_value'}
 ```
+
+Only the sets named answer.
 
 ## Get the data
 
@@ -60,28 +65,35 @@ ion.var.keys()      # {'library_q_value', 'q_value'}: only the sets named answer
 | `layers.name(key)`, `var.name(key)`, `obs.name(key)` | the field's name | |
 
 ```python
-pep = ion.layers.get("pep")       # numpy, (6, 18182)
-ion.layers.name("pep")            # 'PEP'; Spectronaut's is 'EG_PEP', MaxQuant's 'PEP'
+pep = ion.layers.get("pep")       # numpy, runs × precursors
+pep.shape                         # (4, 6)
+ion.layers.name("pep")            # 'PEP'
 diann.levels["peptidoform_ion"].layers[ion.layers.name("pep")].wide().head(3)   # apb2's own table
 ```
 
 ```text
-┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-│ obs_0    ┆ obs_1    ┆ obs_2    ┆ obs_3    ┆ obs_4    ┆ obs_5    │
-╞══════════╪══════════╪══════════╪══════════╪══════════╪══════════╡
-│ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.000223 ┆ 0.000128 ┆ 0.000038 │
-│ 0.000002 ┆ 0.000002 ┆ 0.000062 ┆ 0.000041 ┆ 0.000064 ┆ null     │
-│ 0.000224 ┆ 0.000061 ┆ 0.000173 ┆ 0.001122 ┆ 0.000445 ┆ 0.000207 │
-└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+shape: (3, 4)
+┌───────┬───────┬───────┬───────┐
+│ obs_0 ┆ obs_1 ┆ obs_2 ┆ obs_3 │
+│ ---   ┆ ---   ┆ ---   ┆ ---   │
+│ f64   ┆ f64   ┆ f64   ┆ f64   │
+╞═══════╪═══════╪═══════╪═══════╡
+│ 0.01  ┆ 0.02  ┆ 0.03  ┆ 0.04  │
+│ 0.02  ┆ 0.04  ┆ 0.06  ┆ null  │
+│ 0.03  ┆ 0.06  ┆ null  ┆ 0.12  │
+└───────┴───────┴───────┴───────┘
 ```
+
+Spectronaut's PEP is `EG_PEP`, MaxQuant's `PEP`; `layers.name` names whichever the result holds.
 
 The layer has the same runs and features, in the same order, as the level's abundance layer, so it can become weights directly:
 
 ```python
-intensities = ion.X                # (6, 18182), the primary layer
-weights = 1 - pep                  # (6, 18182)
+intensities = ion.X                # the primary layer, runs × precursors
+weights = 1 - pep
+weights.shape == intensities.shape  # True
 
-ion.var.get("q_value").name        # 'Global_Q_Value', 18182 values
+ion.var.get("q_value").name        # 'Global_Q_Value'
 ```
 
 `None` means the vendor reports no such field, or APB2 left it out because it held one value or none. Fall back explicitly:
@@ -102,14 +114,16 @@ ion = catalog.levels["peptidoform_ion"]
 
 ion.layers                         # key -> numpy matrix, runs by precursors
 ion.var                            # key -> polars Series, one value per precursor
-ion.layers["q_value"].shape        # (6, 18182): runs by precursors, numpy, as AnnData's layers
-ion.var["peptidoform_ion"].name    # 'ProForma_ion', a polars Series
+ion.layers["q_value"].shape        # (4, 6)
+ion.var["peptidoform_ion"].name    # 'ProForma_ion'
 ion.layers["Q_Value"]              # not a key: the level's own layer of that name
-ion.layers.keys()                  # the keys it offers: {'intensity', 'intensity_norm_settings', 'q_value', ...}
-ion.layers.name("q_value")         # 'Q_Value': the field the key reads
-ion.layers.get("library_q_value")  # None: DIA-NN's library q-value is in var
+ion.layers.keys()                  # {'intensity', 'intensity_norm_settings', 'pep', 'q_value'}
+ion.layers.name("q_value")         # 'Q_Value'
+ion.layers.get("library_q_value")  # None
 ion.var.get("library_q_value").name  # 'Lib_Q_Value'
 ```
+
+A layer is a numpy matrix, runs by precursors, as AnnData's layers; a `var` column a polars Series. `name` gives the field a key reads. DIA-NN's library q-value is one value per precursor, so it is in `var`, not `layers`.
 
 `get` returns `None` where `[...]` raises `KeyError`, and takes the qualifiers a key leaves open, as `ion.layers.get("retention_time", unit="minute")` with the `chromatography_alpha` set.
 
@@ -131,12 +145,12 @@ A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray
 import mudata
 from apb_catalog.api_pandas import DataCatalog
 
-mdata = mudata.read_h5mu("result.h5mu")
+mdata = mudata.read_h5mu("diann.h5mu")
 ion = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["peptidoform_ion"]
 
 ion.layers                                # key -> the matrix AnnData holds, runs by precursors
 ion.var                                   # key -> pandas Series, one value per precursor
-ion.layers["q_value"]                     # mdata["peptidoform_ion"].layers["Q_Value"] itself
+ion.layers["q_value"] is mdata["peptidoform_ion"].layers["Q_Value"]   # True
 ion.var[["q_value", "peptidoform_ion"]]   # a pandas DataFrame
 ```
 
@@ -191,19 +205,24 @@ apb.var[["peptidoform_ion", "protein_assignment"]]  # ('ProForma_ion', 'Protein_
 
 | Call | Raises |
 | --- | --- |
+| DIA-NN 1.8 `abundance.levels["protein"].layers.get("intensity_norm_settings")` | `UnresolvedField`, ambiguous: `PG_Normalised` and `PG_MaxLFQ` both are; `aggregation="maxlfq"` picks one |
 | Spectronaut `abundance.levels["protein"].layers.get("intensity_norm_settings", aggregation="sum")` | `UnresolvedField`, unknown: `PG_Quantity` leaves aggregation unknown |
 | `layers.get("intensity", normalization="none")` | `ValueError`: the key `intensity` fixes normalization |
 | `layers["intensities"]` | `KeyError`: no key or field `intensities`; `get` returns `None`, as `dict.get` |
 | `Catalog("DIA-NN", "3.0", "confidence_alpha")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |
 
 ```python
-from apb_catalog.api import UnresolvedField
+from apb_catalog.api import DataCatalog, UnresolvedField
 
-abundance = DataCatalog(spectronaut, "abundance_alpha")
+abundance = DataCatalog(diann, "abundance_alpha")
 try:
     layer = abundance.levels["protein"].layers.get("intensity_norm_settings")
 except UnresolvedField as error:
     print(error)   # names the reason and the candidate fields
+```
+
+```text
+intensity_norm_settings (kind=intensity, normalization=run_setting) on protein is ambiguous: 2 entries match: PG_Normalised, PG_MaxLFQ; candidates: PG_Normalised, PG_MaxLFQ
 ```
 
 ## Record what was looked up
@@ -219,7 +238,12 @@ write_parsed_levels(annotated, Path("annotated.h5mu"))
 record = read_parsed_levels(Path("annotated.h5mu")).metadata["catalog"]["confidence_alpha"]["result"]
 stored = ResolutionSnapshot.model_validate(record)
 [(r.request.level, r.status, r.reference.name) for r in stored.resolutions]
-# [('peptidoform_ion', 'resolved', 'Q_Value')]
 ```
+
+```text
+[('peptidoform_ion', 'resolved', 'PEP'), ('peptidoform_ion', 'resolved', 'Global_Q_Value'), ('peptidoform_ion', 'resolved', 'Q_Value')]
+```
+
+The snapshot holds every lookup `confidence` answered on this page, in order.
 
 The snapshot is plain JSON in the result, readable without APB Catalog; [Python API](api.md#snapshots) says where.

@@ -30,6 +30,7 @@ nav:
   - Home: index.md
   - Get started: getting-started.md
   - Named by keys: keyed.md
+  - Writing an exporter: exporters.md
   - Catalogues: catalogues.md
   - Python API: api.md
   - Maintaining: maintaining.md

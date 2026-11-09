@@ -3,8 +3,12 @@
 APB Catalog finds a field of an [APB2](https://github.com/anndata-omics-bridge/apb2) result by what it means, so a consumer never names vendor columns such as MaxQuant's `PEP`, Spectronaut's `EG_PEP` or DIA-NN's `Q_Value`.
 
 ```python
+from pathlib import Path
+
+from apb2.api import read_parsed_levels
 from apb_catalog.api import DataCatalog
 
+result = read_parsed_levels(Path("diann.h5mu"))   # any APB2 result
 pep = DataCatalog(result, "confidence_alpha").levels["peptidoform_ion"].layers.get("pep")
 ```
 
