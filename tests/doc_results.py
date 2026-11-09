@@ -145,7 +145,9 @@ def with_fasta(parsed: ParsedLevels) -> ParsedLevels:
     levels = dict(parsed.levels)
     levels["peptidoform_ion"] = _verified_ion(levels["peptidoform_ion"])
     levels["protein"] = _annotated_protein(levels["protein"])
-    ran: dict[str, JsonValue] = {"fasta": {"provenance": {"peptide_verification": {}}}}
+    ran: dict[str, JsonValue] = {
+        "fasta": {"provenance": {"peptide_verification": {}, "protein_annotation": {}}}
+    }
     return replace(parsed, levels=levels, metadata={**parsed.metadata, **ran})
 
 

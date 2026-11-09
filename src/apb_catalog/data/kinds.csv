@@ -18,26 +18,23 @@ apb_alpha,protein_assignment,The protein or protein group the vendor assigns the
 apb_alpha,fasta_accessions,The FASTA accessions the vendor lists for the feature: the var column the level's rule marks with the role fasta_accessions.
 obs_annotation_alpha,group,"The experimental group a sample belongs to: prolfqua's group, MSstats' Condition."
 obs_annotation_alpha,subject,"The biological subject a sample comes from; one value across groups marks a repeated subject: prolfqua's subject, MSstats' BioReplicate."
-apb_fasta_alpha,peptide_in_fasta,apb-fasta's peptide verification: The stripped sequence occurs in at least one FASTA protein.
-apb_fasta_alpha,fasta_match_site_count,apb-fasta's peptide verification: Total match sites of the sequence across the FASTA.
-apb_fasta_alpha,fasta_matching_protein_count,apb-fasta's peptide verification: Distinct FASTA proteins containing the sequence.
-apb_fasta_alpha,fasta_matching_protein_ids,apb-fasta's peptide verification: The ';'-joined FASTA ids of the matching proteins.
-apb_fasta_alpha,fasta_matching_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the matching proteins, e.g. HUMAN;YEAST."
-apb_fasta_alpha,fasta_matches_contaminant,apb-fasta's peptide verification: A matching FASTA protein is a contaminant.
-apb_fasta_alpha,reported_member_count,apb-fasta's peptide verification: Protein-group members the result reported; null when the level reports no protein group.
-apb_fasta_alpha,reported_members_in_fasta_count,apb-fasta's peptide verification: Reported members found in the FASTA; null when the level reports no protein group.
-apb_fasta_alpha,reported_member_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the reported members found; null when the level reports no protein group."
-apb_fasta_alpha,reported_members_contaminant,apb-fasta's peptide verification: A reported member found in the FASTA is a contaminant; null when the level reports no protein group.
-apb_fasta_alpha,peptide_in_reported_protein,apb-fasta's peptide verification: The sequence occurs in a reported member; null when the level reports no protein group.
-apb_fasta_alpha,fasta_il_only,apb-fasta's peptide verification: peptide_in_fasta or peptide_in_reported_protein holds only for another I/L spelling.
-apb_fasta_alpha,is_protein_group_specific,apb-fasta's peptide verification: Every FASTA protein the peptide matches is a member of its own protein group (protein_assignment).
-apb_fasta_alpha,is_proteotypic,apb-fasta's peptide verification: The peptide matches exactly one FASTA protein.
-apb_fasta_alpha,reported_leading_id,"apb-fasta's peptide verification: FASTA id of the leading protein, the first member of protein_assignment."
-apb_fasta_alpha,reported_leading_accession,apb-fasta's peptide verification: The leading protein's accession.
-apb_fasta_alpha,reported_leading_description,apb-fasta's peptide verification: The leading protein's header text after the id.
-apb_fasta_alpha,reported_leading_gene_name,apb-fasta's peptide verification: The leading protein's gene name.
-apb_fasta_alpha,reported_leading_protein_length,apb-fasta's peptide verification: The leading protein's sequence length.
-apb_fasta_alpha,reported_leading_tryptic_peptides,"apb-fasta's peptide verification: The leading protein's tryptic peptides of 7 to 29 residues, cleaved after K or R unless P follows."
+fasta_peptides_alpha,peptide_in_fasta,apb-fasta's peptide verification: The stripped sequence occurs in at least one FASTA protein.
+fasta_peptides_alpha,fasta_matching_protein_count,apb-fasta's peptide verification: Distinct FASTA proteins containing the sequence.
+fasta_peptides_alpha,fasta_matching_protein_ids,apb-fasta's peptide verification: The ';'-joined FASTA ids of the matching proteins.
+fasta_peptides_alpha,fasta_matching_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the matching proteins, e.g. HUMAN;YEAST."
+fasta_peptides_alpha,fasta_matches_contaminant,apb-fasta's peptide verification: A matching FASTA protein is a contaminant.
+fasta_peptides_alpha,reported_member_organisms,"apb-fasta's peptide verification: Sorted, ';'-joined organism mnemonics of the reported members found; null when the level reports no protein group."
+fasta_peptides_alpha,reported_members_contaminant,apb-fasta's peptide verification: A reported member found in the FASTA is a contaminant; null when the level reports no protein group.
+fasta_peptides_alpha,reported_leading_id,"apb-fasta's peptide verification: FASTA id of the leading protein, the first member of protein_assignment."
+fasta_peptides_alpha,reported_leading_accession,apb-fasta's peptide verification: The leading protein's accession.
+fasta_peptides_alpha,reported_leading_description,apb-fasta's peptide verification: The leading protein's header text after the id.
+fasta_peptides_alpha,reported_leading_gene_name,apb-fasta's peptide verification: The leading protein's gene name.
+fasta_peptides_alpha,reported_leading_protein_length,apb-fasta's peptide verification: The leading protein's sequence length.
+fasta_peptides_alpha,reported_leading_tryptic_peptides,"apb-fasta's peptide verification: The leading protein's tryptic peptides of 7 to 29 residues, cleaved after K or R unless P follows."
+fasta_proteins_alpha,any_member_in_fasta,apb-fasta's protein annotation: A reported member of the protein group is found in the FASTA.
+fasta_proteins_alpha,fasta_descriptions,"apb-fasta's protein annotation: The ';'-joined header texts after the id of the group's members found in the FASTA, distinct, in member order."
+fasta_proteins_alpha,fasta_gene_names,"apb-fasta's protein annotation: The ';'-joined gene names of the group's members found in the FASTA, distinct, in member order."
+fasta_proteins_alpha,fasta_organism_names,"apb-fasta's protein annotation: The ';'-joined organism names of the group's members found in the FASTA, distinct, in member order."
 chromatography_alpha,retention_time,"Where the feature eluted in this run, measured on the run's own time axis: the apex or centre of its elution peak."
 chromatography_alpha,aligned_retention_time,"The measured retention time, moved by the software's alignment onto a scale shared by all runs: a reference run's time axis or the library's iRT scale."
 chromatography_alpha,predicted_retention_time,"Where the software expects the feature to elute in this run, from its library or prediction model calibrated to the run; not a measurement."

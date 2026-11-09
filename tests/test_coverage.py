@@ -184,10 +184,11 @@ def test_every_packaged_set_is_listed() -> None:
         "proteobench_entrapment_alpha",
         "apb_alpha",
         "obs_annotation_alpha",
-        "apb_fasta_alpha",
+        "fasta_peptides_alpha",
+        "fasta_proteins_alpha",
         "chromatography_alpha",
     ]
-    requirements = [True, False, False, True, False, False, False]
+    requirements = [True, False, False, True, False, False, False, False]
     assert listed.get_column("has_requirements").to_list() == requirements
     assert (listed.get_column("entries") > 0).all()
 

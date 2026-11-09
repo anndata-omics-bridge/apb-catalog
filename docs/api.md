@@ -16,11 +16,12 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 | `snapshot(catalog=None)` | `ResolutionSnapshot` of one set's lookups so far; the first set named by default; `ValueError` when no set is named | — |
 | `resolve(request)` | `Resolution` of one explicit request, recorded for the snapshot: status `resolved`, `missing`, `ambiguous` or `unknown`, with candidates and reasons; an undecided answer is a status, not an `UnresolvedField` | — |
 | `description` | the first set named: its `purpose` and `used_by` | same |
+| `DataCatalog.answering_sets(result)` | the sets `DataCatalog(result, name)` opens, a `list[str]`: every packaged and plugin set but one whose app has not run on the result or whose annotation it does not record; a static method, so nothing raises | — |
 
 - A key is one of the set's keys, listed per set in [Catalogues](catalogues.md): a kind with the qualifier values it fixes, such as `intensity_norm_settings` (kind `intensity`, normalization `run_setting`)
 - A slot's `get` and `name` take `**qualifiers`, a qualifier the key leaves open, such as `unit`; `kind`, or a qualifier the key fixes, raises `ValueError`
 - `resolve` takes a request naming a level, optionally a location and a key, and the accepted values of each qualifier; `apb_catalog.api` exports neither its type, `FieldRequest`, nor `Resolution`
-- A level's `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which `apb_fasta_alpha` catalogues
+- A level's `var` also reads feature-aligned `varm` tables, such as apb-fasta's `fasta_validation`, which `fasta_peptides_alpha` catalogues
 - `fields()` lists a field APB2 left out because it held one value with `present` false and that value as `constant`
 - A level answers only for its own entity: `peptidoform_ion` for precursors, `protein` for protein groups
 - Composed sets: a key routes to the sets that define it; two sets naming different fields for one key on one level raise `ValueError` when the catalog is built; a slot's `keys()` and `fields()` cover every set; `enforce` checks each set's requirements when the catalog opens
@@ -46,7 +47,7 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 - A prefix makes the lookup exact, since a vendor may name a column as a key is named: a set's prefix asks that set alone, so `c:q_value` is the confidence set's q-value or nothing, never Sage's own `q_value` column; `v:` asks the level's own name alone, so `v:q_value` is that column, never the catalog. `catalogues()` lists each set's `prefix`; `v` is reserved
 - A list reads every field a key names, as cf_xarray's `ds.cf[["name"]]`: both contaminant flags where the vendor and apb-fasta each set one, every prolfquapp `group` column; it still raises `UnresolvedField` for a field the catalogue cannot decide
 - `keys()` and `in` know keys only; vendor names are read, not listed
-- Every key `keys()` lists reads: an app's keys, such as apb-fasta's `fasta_matches_contaminant`, are there once the app has run. `DataCatalog(result, "apb_fasta_alpha")` on a result apb-fasta has not verified raises `ValueError` when it opens, naming what to run
+- Every key `keys()` lists reads: an app's keys, such as apb-fasta's `fasta_matches_contaminant`, are there once the app has run. `DataCatalog(result, "fasta_peptides_alpha")` on a result apb-fasta has not verified raises `ValueError` when it opens, naming what to run; `DataCatalog.answering_sets(result)` says beforehand which sets open
 - A key may name the primary layer and then answers `X`; `layers` holds the other layers, as in AnnData
 - A matrix is built once per level and shared by every later answer
 
@@ -60,6 +61,7 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 - The lookup is `api.DataCatalog`'s: the same keys, names, `None`, `KeyError` and `UnresolvedField`; only the values are AnnData's
 - Own names are APB2's: `layers["a/b"]` reads the layer AnnData stores as `a_b`
 - Levels only: `fields()`, `snapshot()`, `resolve()` and `description` stay on `api.DataCatalog`
+- `DataCatalog.answering_sets(data)`: the same sets as `api.DataCatalog.answering_sets`, read from the object's APB2 record
 - `as_mudata()`: a new MuData of the catalogued fields alone, each under its key, with `uns["catalog"]` recording each column; `levels[name].as_anndata()` converts one level ([A result named by catalog keys](keyed.md))
 
 ## Answers
@@ -70,7 +72,7 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 | `None` | From `get`: the level's software version was reviewed and has no such field, or the name is neither a key nor the level's own; an absent level is not in `levels` |
 | `KeyError` | From `[...]` and `name` where `get` returns `None` |
 | `UnresolvedField` | Two fields match equally, an entry leaves a requested qualifier `unknown`, no catalogue reviewed the level's software version, or an app a plugin set also names has not run, in `Catalog` or in a set with vendor entries too; names the reason and candidates |
-| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, a prefix of no composed set or a key its set lacks, qualifiers on a `v:` name, or a version no packaged rule admits. When `DataCatalog` opens: a named set that can answer nothing on the result, such as `apb_fasta_alpha` before `apb-fasta verify-peptides` runs or `obs_annotation_alpha` on a result `apb2 annotate` never annotated; the message says what to run |
+| `ValueError` | A misspelled set or qualifier, qualifiers with a name that is no key, a qualifier the key fixes, a prefix of no composed set or a key its set lacks, qualifiers on a `v:` name, or a version no packaged rule admits. When `DataCatalog` opens: a named set that can answer nothing on the result, such as `fasta_peptides_alpha` before `apb-fasta verify-peptides` runs, `fasta_proteins_alpha` before `apb-fasta merge-annotations` or `obs_annotation_alpha` on a result `apb2 annotate` never annotated; the message says what to run |
 
 ## Requirements and `enforce`
 

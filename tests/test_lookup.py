@@ -296,7 +296,8 @@ def test_the_long_table_lists_every_set() -> None:
         "proteobench_entrapment_alpha",
         "apb_alpha",
         "obs_annotation_alpha",
-        "apb_fasta_alpha",
+        "fasta_peptides_alpha",
+        "fasta_proteins_alpha",
         "chromatography_alpha",
     }
     library = table.filter(

@@ -677,11 +677,11 @@ def test_only_the_sets_named_are_composed() -> None:
 
 
 def test_an_apps_set_opens_once_the_app_has_run() -> None:
-    """``apb_fasta_alpha`` answers nothing before apb-fasta runs, so opening it says what to run;
+    """``fasta_peptides_alpha`` answers nothing before apb-fasta runs, so opening it says what to run;
     once it has run, every key listed reads, as AnnData's keys()."""
     unverified = _result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION)
     with pytest.raises(ValueError, match=r"apb-fasta has not run.*apb-fasta verify-peptides"):
-        DataCatalog(unverified, "apb_fasta_alpha")
+        DataCatalog(unverified, "fasta_peptides_alpha")
     ran = _result(
         "diann/v2/rules.json",
         ["Ms1_Normalised"],
@@ -689,9 +689,46 @@ def test_an_apps_set_opens_once_the_app_has_run() -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    level = DataCatalog(ran, "apb_fasta_alpha").levels["peptidoform_ion"]
+    level = DataCatalog(ran, "fasta_peptides_alpha").levels["peptidoform_ion"]
     assert "fasta_matches_contaminant" in level.var
     assert level.var["fasta_matches_contaminant"].to_list() == [True, False]
+
+
+def test_the_protein_set_opens_once_merge_annotations_has_run() -> None:
+    """Each apb-fasta command fills its own set: peptide verification alone leaves
+    ``fasta_proteins_alpha`` unable to answer, protein annotation opens it."""
+    genes = {"fasta": pl.DataFrame({"fasta_gene_names": ["GENE1", "GENE2;GENE3"]})}
+    verified = _result(
+        "diann/v2/rules.json", ["PG_MaxLFQ"], level="protein", varm=genes, metadata=FASTA_RAN
+    )
+    with pytest.raises(ValueError, match=r"run `apb-fasta merge-annotations`"):
+        DataCatalog(verified, "fasta_proteins_alpha")
+    annotated = _result(
+        "diann/v2/rules.json",
+        ["PG_MaxLFQ"],
+        level="protein",
+        varm=genes,
+        metadata={"fasta": {"provenance": {"protein_annotation": {}}}},
+    )
+    var = DataCatalog(annotated, "fasta_proteins_alpha").levels["protein"].var
+    assert var.name("fasta_gene_names") == "fasta/fasta_gene_names"
+    assert var["fasta_gene_names"].to_list() == ["GENE1", "GENE2;GENE3"]
+
+
+def test_answering_sets_lists_the_sets_a_result_opens() -> None:
+    """The sets whose app or annotation the result lacks are left out, without raising."""
+    plain = _result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION)
+    listed = DataCatalog.answering_sets(plain)
+    assert "abundance_alpha" in listed
+    assert not {"fasta_peptides_alpha", "fasta_proteins_alpha", "obs_annotation_alpha"} & set(
+        listed
+    )
+    verified = _result("diann/v2/rules.json", ["Ms1_Normalised"], DIANN_ION, metadata=FASTA_RAN)
+    listed = DataCatalog.answering_sets(verified)
+    assert "fasta_peptides_alpha" in listed
+    assert "fasta_proteins_alpha" not in listed
+    for name in listed:
+        DataCatalog(verified, name)
 
 
 def test_a_list_of_names_reads_every_column_a_key_names(toy_set: str) -> None:
@@ -749,7 +786,7 @@ def test_a_varm_fields_name_is_its_table_and_column() -> None:
         varm=FASTA_CONTAMINANTS,
         metadata=FASTA_RAN,
     )
-    var = DataCatalog(ran, "apb_fasta_alpha").levels["peptidoform_ion"].var
+    var = DataCatalog(ran, "fasta_peptides_alpha").levels["peptidoform_ion"].var
     assert var.name("fasta_matches_contaminant") == "fasta_validation/fasta_matches_contaminant"
     flag = var.get("fasta_matches_contaminant")
     assert flag is not None and flag.to_list() == [True, False]

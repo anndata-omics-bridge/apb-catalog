@@ -80,7 +80,7 @@ The package's folder holds the same CSV files with the set's rows only, in the c
 
 `DataCatalog`, `catalogues()`, `rule_coverage()` and `apb-catalog check` then work as for a packaged set. A name a packaged set or another plugin already uses raises `ValueError`.
 
-An app that runs after conversion, such as apb-fasta, is named in `producers.csv` with `requires`, the metadata path recording its run joined by `.`, and `instruction`; its entries name it as their source and no version pattern. Until the result records that run, a set of the app's entries alone, such as `apb_fasta_alpha`, raises `ValueError` with the instruction when `DataCatalog` opens; in a set with vendor entries too, and in `Catalog`, the app's entries answer `unknown` with the instruction.
+An app that runs after conversion, such as apb-fasta, is named in `producers.csv` with `requires`, the metadata path recording its run joined by `.`, and `instruction`; its entries name it as their source and no version pattern. Until the result records that run, a set of the app's entries alone, such as `fasta_peptides_alpha`, raises `ValueError` with the instruction when `DataCatalog` opens; in a set with vendor entries too, and in `Catalog`, the app's entries answer `unknown` with the instruction. An app whose commands record separate runs, as apb-fasta's `verify-peptides` and `merge-annotations` do, gets one set per command, each with its own `producers.csv` row.
 
 ## Checks
 

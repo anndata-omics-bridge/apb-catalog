@@ -38,6 +38,7 @@ from apb_catalog.source import (
     RequirementRow,
     SourceCatalogues,
     SourceEntry,
+    catalogue_descriptions,
     catalogue_set,
 )
 from apb_catalog.source import Reference as SourceReference
@@ -506,6 +507,12 @@ class DataCatalog:
         lookup = self._sets.lookup()
         self.levels = {name: Level(name, level, lookup) for name, level in result.levels.items()}
 
+    @staticmethod
+    def answering_sets(result: ParsedLevels) -> list[str]:
+        """The sets ``DataCatalog(result, name)`` opens: every packaged and plugin set but one
+        whose app has not run on ``result`` or whose annotation it does not record."""
+        return sets_answering(result.metadata)
+
     @property
     def description(self) -> CatalogueDescription:
         """What the first catalogue set named holds and who uses it."""
@@ -585,10 +592,10 @@ def _data_lookups(
             the result records none of its annotation conventions, so it can answer nothing.
     """
     catalogues = catalogue_set(name)
+    _check_answers(name, catalogues, metadata)
     annotations = tuple(
         annotation for annotation in catalogues.annotations if annotation.applies(metadata)
     )
-    _check_answers(name, catalogues, metadata, annotations)
     views: dict[str, LevelView] = {}
     for level_name, level in levels.items():
         software, pattern, rule_level = level.rule or (None, None, None)
@@ -606,23 +613,29 @@ def _data_lookups(
     return _Lookups(name, catalogues, views)
 
 
-def _check_answers(
-    name: str,
-    catalogues: SourceCatalogues,
-    metadata: Mapping[str, object],
-    annotations: tuple[AnnotationCatalogue, ...],
-) -> None:
-    """Require a set without vendor catalogues to have a source the result answers from: an app
-    that has run or an annotation convention the result records.
+def sets_answering(metadata: Mapping[str, object]) -> list[str]:
+    """Every packaged and plugin set a result with this metadata can open: see
+    :func:`_answers`."""
+    return [name for name in catalogue_descriptions() if _answers(catalogue_set(name), metadata)]
+
+
+def _answers(catalogues: SourceCatalogues, metadata: Mapping[str, object]) -> bool:
+    """Whether a set can answer on a result: it has vendor catalogues, one of its apps has run,
+    or the result records one of its annotation conventions."""
+    return (
+        catalogues.needs_review
+        or any(annotation.applies(metadata) for annotation in catalogues.annotations)
+        or any(producer.ran(metadata) for producer in catalogues.producers)
+    )
+
+
+def _check_answers(name: str, catalogues: SourceCatalogues, metadata: Mapping[str, object]) -> None:
+    """Require a set to have a source the result answers from, as :func:`_answers` decides.
 
     Raises:
         ValueError: The set can answer nothing; the message says what to run.
     """
-    if (
-        catalogues.needs_review
-        or annotations
-        or any(producer.ran(metadata) for producer in catalogues.producers)
-    ):
+    if _answers(catalogues, metadata):
         return
     reasons = [producer.pending_reason() for producer in catalogues.producers]
     if catalogues.annotations:

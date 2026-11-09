@@ -282,7 +282,7 @@ DIANN = "diann/v2/rules.json"
 
 def _edge_results() -> dict[str, ParsedLevels]:
     """Results that exercise an unreviewed level, both annotation conventions and apb-fasta's
-    verification."""
+    peptide verification and protein annotation."""
     ion = "peptidoform_ion"
     two_levels = {level: synthetic_level(DIANN, level) for level in (ion, "protein")}
     verified = replace(
@@ -297,8 +297,24 @@ def _edge_results() -> dict[str, ParsedLevels]:
             )
         },
     )
+    annotated = replace(
+        synthetic_level(DIANN, "protein"),
+        varm={
+            "fasta": pl.DataFrame(
+                {
+                    "any_member_in_fasta": [True, True, False],
+                    "fasta_gene_names": ["ALB", "KRT1;KRT2", ""],
+                    "fasta_descriptions": ["Albumin", "Keratin 1;Keratin 2", ""],
+                    "fasta_organism_names": ["Homo sapiens", "Homo sapiens", ""],
+                }
+            )
+        },
+    )
     return {
         "edge-fasta": _one(ion, verified, {"fasta": {"provenance": {"peptide_verification": {}}}}),
+        "edge-fasta-proteins": _one(
+            "protein", annotated, {"fasta": {"provenance": {"protein_annotation": {}}}}
+        ),
         "edge-unreviewed": _one(ion, synthetic_level(MAXQUANT, ion, stored=False)),
         "edge-sdrf": _one(
             ion,

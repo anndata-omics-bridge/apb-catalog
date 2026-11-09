@@ -20,7 +20,13 @@ from anndata import AnnData
 from apb2.api import JsonValue, UnsJsonCodec
 from mudata import MuData
 
-from apb_catalog.catalog import ComposedSets, Enforce, LevelFields, stored_rule_version
+from apb_catalog.catalog import (
+    ComposedSets,
+    Enforce,
+    LevelFields,
+    sets_answering,
+    stored_rule_version,
+)
 from apb_catalog.levels import Columns, Lookup, Slot, field_name
 from apb_catalog.rules import Address
 from apb_catalog.source import Reference, SourceEntry
@@ -182,18 +188,15 @@ class DataCatalog:
     __slots__ = ("_namespace", "_sets", "levels")
 
     def __init__(self, data: MuData | AnnData, *catalogs: str, enforce: Enforce = None) -> None:
-        codec = UnsJsonCodec()
         namespace = _namespace(data.uns)
-        storage = codec.storage(namespace)
-        metadata = {
-            key: value
-            for key, value in codec.decode(namespace, storage).items()
-            if key not in _ROOT_TABLES
-        }
+        storage = UnsJsonCodec().storage(namespace)
         entries = cast(list[dict[str, str]], storage["levels"])
         stored = {entry["name"]: _stored(data, entry["physical_name"]) for entry in entries}
         sets = ComposedSets(
-            {name: level.fields for name, level in stored.items()}, metadata, catalogs, enforce
+            {name: level.fields for name, level in stored.items()},
+            _metadata(namespace),
+            catalogs,
+            enforce,
         )
         lookup = sets.lookup()
         self._namespace = namespace
@@ -201,6 +204,11 @@ class DataCatalog:
         self.levels = {
             name: AnnDataLevel(name, level, lookup, sets) for name, level in stored.items()
         }
+
+    @staticmethod
+    def answering_sets(data: AnnData | MuData) -> list[str]:
+        """The same sets, for the AnnData or MuData object APB2 wrote."""
+        return sets_answering(_metadata(_namespace(data.uns)))
 
     def as_mudata(self) -> MuData:
         """Every level with a catalogued field as :meth:`AnnDataLevel.as_anndata` converts it, one
@@ -308,6 +316,14 @@ def _namespace(uns: Mapping[str, object]) -> Mapping[str, object]:
     if not isinstance(found, Mapping):
         raise ValueError(f"no uns[{NAMESPACE!r}]: APB2 did not write this object")
     return cast(Mapping[str, object], found)
+
+
+def _metadata(namespace: Mapping[str, object]) -> dict[str, object]:
+    """The result's metadata, as ``ParsedLevels.metadata`` holds it: the APB2 record without its
+    root tables."""
+    codec = UnsJsonCodec()
+    decoded = codec.decode(namespace, codec.storage(namespace))
+    return {key: value for key, value in decoded.items() if key not in _ROOT_TABLES}
 
 
 def _frame(columns: Sequence[tuple[str, pd.Series[Any]]]) -> pd.DataFrame:

@@ -30,7 +30,8 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
         "proteobench_entrapment_alpha",
         "apb_alpha",
         "obs_annotation_alpha",
-        "apb_fasta_alpha",
+        "fasta_peptides_alpha",
+        "fasta_proteins_alpha",
         "chromatography_alpha",
         toy_set,
     ]

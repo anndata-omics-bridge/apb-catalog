@@ -73,9 +73,10 @@ def _result() -> ParsedLevels:
             }
         },
     )
-    # apb-fasta has run and a sample table is attached, so every packaged set can answer.
+    # Both apb-fasta steps have run and a sample table is attached, so every packaged set can
+    # answer.
     metadata: dict[str, JsonValue] = {
-        "fasta": {"provenance": {"peptide_verification": {}}},
+        "fasta": {"provenance": {"peptide_verification": {}, "protein_annotation": {}}},
         "sdrf": {},
     }
     return ParsedLevels(levels={"peptidoform_ion": level}, uns={}, metadata=metadata)

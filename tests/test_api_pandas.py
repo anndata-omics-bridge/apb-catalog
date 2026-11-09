@@ -103,7 +103,7 @@ def test_every_key_answers_as_the_polars_catalog(
 def test_values_are_anndatas_own(tmp_path: Path, suffix: str) -> None:
     """Matrices as AnnData holds them, columns as pandas Series, a list as a pandas DataFrame."""
     stored = _stored(_parsed(), tmp_path, suffix)
-    ion = api_pandas.DataCatalog(stored, *SETS, "apb_fasta_alpha").levels[LEVEL]
+    ion = api_pandas.DataCatalog(stored, *SETS, "fasta_peptides_alpha").levels[LEVEL]
     adata = cast(AnnData, stored.mod[LEVEL]) if isinstance(stored, MuData) else stored
     assert ion.X is adata.X
     assert ion.layers["q_value"] is adata.layers["Q_Value"]
@@ -223,7 +223,7 @@ def test_the_converted_mudata_writes_and_reads_back(tmp_path: Path) -> None:
 def test_absent_keys_are_recorded_and_a_varm_field_becomes_a_var_column(tmp_path: Path) -> None:
     keyed = (
         api_pandas.DataCatalog(
-            _stored(_parsed(), tmp_path, "h5ad"), *SETS, "apb_alpha", "apb_fasta_alpha"
+            _stored(_parsed(), tmp_path, "h5ad"), *SETS, "apb_alpha", "fasta_peptides_alpha"
         )
         .levels[LEVEL]
         .as_anndata()
@@ -265,3 +265,16 @@ def test_sdrf_factors_one_key_names_are_told_apart_by_their_own_names(tmp_path: 
     assert keyed.obs_names.equals(cast(AnnData, stored.mod[LEVEL]).obs_names)
     record = keyed.uns["catalog"]["obs"]["group[field=factor_value_treatment]"]
     assert (record["key"], record["name"]) == ("group", "factor_value_treatment")
+
+
+@pytest.mark.parametrize("suffix", ["h5mu", "h5ad"])
+def test_answering_sets_reads_the_object_apb2_wrote(tmp_path: Path, suffix: str) -> None:
+    """The pandas catalog lists the same sets as the Polars one, from the stored record."""
+    for fasta_ran in (True, False):
+        parsed = _parsed(fasta_ran=fasta_ran)
+        folder = tmp_path / str(fasta_ran)
+        folder.mkdir()
+        stored = _stored(parsed, folder, suffix)
+        listed = api_pandas.DataCatalog.answering_sets(stored)
+        assert listed == api.DataCatalog.answering_sets(parsed)
+        assert ("fasta_peptides_alpha" in listed) is fasta_ran

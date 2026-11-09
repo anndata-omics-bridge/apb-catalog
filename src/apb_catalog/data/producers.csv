@@ -1,2 +1,3 @@
 set,producer,requires,instruction
-apb_fasta_alpha,apb-fasta,fasta.provenance.peptide_verification,run `apb-fasta verify-peptides`
+fasta_peptides_alpha,apb-fasta,fasta.provenance.peptide_verification,run `apb-fasta verify-peptides`
+fasta_proteins_alpha,apb-fasta,fasta.provenance.protein_annotation,run `apb-fasta merge-annotations`

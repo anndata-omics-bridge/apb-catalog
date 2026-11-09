@@ -14,6 +14,7 @@ from apb2.api import read_parsed_levels
 from apb_catalog.api import DataCatalog
 
 diann = read_parsed_levels(Path("diann.h5mu"))
+answering = DataCatalog.answering_sets(diann)  # the sets this result opens
 protein = DataCatalog(diann, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["protein"]
 runs = protein.obs_names.to_list()
 
@@ -31,10 +32,10 @@ table = pl.DataFrame(
 )
 types = ["T", "N", "C", "C"]
 
-# apb-fasta's gene names, once apb-fasta has run; its protein table has no catalog key
-fasta = diann.levels["protein"].varm.get("fasta")
-if fasta is not None:
-    genes = fasta.get_column("fasta_gene_names").cast(pl.String).fill_null("")
+# apb-fasta's gene names, once apb-fasta merge-annotations has run
+if "fasta_proteins_alpha" in answering:
+    fasta = DataCatalog(diann, "fasta_proteins_alpha").levels["protein"]
+    genes = fasta.var["fasta_gene_names"].fill_null("")
     table = table.insert_column(1, genes.alias("Gene names"))
     types.insert(1, "T")
 
@@ -53,15 +54,14 @@ for name, values in quantities.items():
         types.append("E")
         column_runs.append(position)
 
-# Sample groups and subjects, none for a result apb2 annotate never annotated
-try:
+# Sample groups and subjects, once apb2 annotate has run
+samples = pl.DataFrame()
+if "obs_annotation_alpha" in answering:
     annotation = DataCatalog(diann, "obs_annotation_alpha").levels["protein"]
     samples = annotation.obs[["group"]]
     subject = annotation.obs.get("subject")
     if subject is not None:
         samples = samples.with_columns(subject)
-except ValueError:
-    samples = pl.DataFrame()
 
 with open("perseus.txt", "w", encoding="utf-8") as out:
     out.write("\t".join(table.columns) + "\n")
@@ -91,6 +91,7 @@ import pandas as pd
 from apb_catalog.api_pandas import DataCatalog
 
 mdata = mudata.read_h5mu("diann.h5mu")
+answering = DataCatalog.answering_sets(mdata)  # the sets this result opens
 catalog = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha")
 ion, protein = catalog.levels["peptidoform_ion"], catalog.levels["protein"]
 runs = list(ion.obs_names)
@@ -112,7 +113,7 @@ var = pd.DataFrame(
     }
 )
 
-# apb-fasta's leading protein of each group, once apb-fasta has run
+# apb-fasta's leading protein of each group, once apb-fasta verify-peptides has run
 leading = {
     "IDcolumn": "reported_leading_accession",
     "fasta.id": "reported_leading_id",
@@ -121,12 +122,10 @@ leading = {
     "protein_length": "reported_leading_protein_length",
     "nr_tryptic_peptides": "reported_leading_tryptic_peptides",
 }
-try:
-    fasta = DataCatalog(mdata, "apb_fasta_alpha").levels["peptidoform_ion"]
+if "fasta_peptides_alpha" in answering:
+    fasta = DataCatalog(mdata, "fasta_peptides_alpha").levels["peptidoform_ion"]
     for name, key in leading.items():
         var[name] = fasta.var[key]
-except ValueError:
-    pass
 
 group_of = pd.Index(protein.var["protein_assignment"])
 
@@ -154,11 +153,9 @@ layers = {name: values for name, values in layers.items() if values is not None}
 
 # Runs, and their groups and subjects once apb2 annotate has run
 obs = pd.DataFrame({"sampleName": runs, "raw.file": runs}, index=runs)
-try:
+if "obs_annotation_alpha" in answering:
     annotation = DataCatalog(mdata, "obs_annotation_alpha").levels["peptidoform_ion"]
     obs = obs.join(pd.concat([annotation.obs[["group"]], annotation.obs.get("subject")], axis=1))
-except ValueError:
-    pass
 factors = [name for name in obs.columns if name not in ("sampleName", "raw.file")]
 
 hierarchy = ["protein_Id", "peptide_Id", "precursor_Id"]
@@ -210,4 +207,4 @@ adata.write_h5ad("prolfqua.h5ad")
 
 ## Sets an app fills
 
-`apb_fasta_alpha` and `obs_annotation_alpha` answer only once apb-fasta or `apb2 annotate` has run; before that, `DataCatalog` raises `ValueError` when it opens. Each exporter above opens them on their own and skips the columns they give when they raise.
+`fasta_peptides_alpha`, `fasta_proteins_alpha` and `obs_annotation_alpha` answer only once `apb-fasta verify-peptides`, `apb-fasta merge-annotations` or `apb2 annotate` has run on the result; before that, `DataCatalog` raises `ValueError` when it opens, naming what to run. `DataCatalog.answering_sets(result)` lists the sets a result opens without raising, so each exporter above asks it first and leaves out the columns an app that has not run would give.
