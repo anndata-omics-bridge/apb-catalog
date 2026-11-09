@@ -1,42 +1,41 @@
 # Writing an exporter
 
-An exporter asks the catalog for each field by meaning and writes it under the target's name. The two examples below write a Perseus table and a prolfquapp `.h5ad` with the pandas `DataCatalog` alone, no export rule. On a DIA-NN result that `apb2 convert` wrote and `apb2 annotate` annotated, with or without apb-fasta, they write the values `apb-export perseus` and `apb-export prolfqua` write; the Perseus table is the same file.
+An exporter asks the catalog for each field by meaning and writes it under the target's name. The two examples below write a Perseus table with the Polars `DataCatalog` and a prolfquapp `.h5ad` with the pandas one, no export rule. On a DIA-NN result that `apb2 convert` wrote and `apb2 annotate` annotated, with or without apb-fasta, they write the values `apb-export perseus` and `apb-export prolfqua` write; the Perseus table is the same file.
 
 ## Perseus
 
-Perseus loads MaxQuant's `proteinGroups.txt`: one row per protein group, a `<quantity> <run>` column per quantity and run, a `#!{Type}` row, and a `#!{C:<name>}` row per sample annotation.
+Perseus loads MaxQuant's `proteinGroups.txt`: one row per protein group, a `<quantity> <run>` column per quantity and run, a `#!{Type}` row, and a `#!{C:<name>}` row per sample annotation. A text table needs no AnnData, so this exporter reads the result with APB2 and asks the Polars `DataCatalog`.
 
 ```python
-import mudata
-import numpy as np
-import pandas as pd
-from apb_catalog.api_pandas import DataCatalog
+from pathlib import Path
 
-mdata = mudata.read_h5mu("diann.h5mu")
-protein = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["protein"]
-runs = list(protein.obs_names)
+import polars as pl
+from apb2.api import read_parsed_levels
+from apb_catalog.api import DataCatalog
 
+diann = read_parsed_levels(Path("diann.h5mu"))
+protein = DataCatalog(diann, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["protein"]
+runs = protein.obs_names.to_list()
 
-def flag(column: pd.Series) -> pd.Series:
-    """Perseus marks a true flag with +."""
-    return column.fillna(False).map({True: "+", False: ""})
-
-
-# Feature columns and their Perseus types: T text, N number, C categorical
-table = pd.DataFrame(
+# Feature columns and their Perseus types: T text, N number, C categorical; a flag is "+"
+flags = ["Reverse", "Potential contaminant"]
+table = pl.DataFrame(
     {
         "Protein IDs": protein.var["protein_assignment"],
         "Q-value": protein.var.get("q_value"),
-        "Reverse": flag(protein.var["decoy"]),
-        "Potential contaminant": flag(protein.var["contaminant"]),
+        "Reverse": protein.var["decoy"],
+        "Potential contaminant": protein.var["contaminant"],
     }
+).with_columns(
+    pl.when(pl.col(flag)).then(pl.lit("+")).otherwise(pl.lit("")).alias(flag) for flag in flags
 )
 types = ["T", "N", "C", "C"]
 
 # apb-fasta's gene names, once apb-fasta has run; its protein table has no catalog key
-fasta = mdata["protein"].varm.get("fasta")
+fasta = diann.levels["protein"].varm.get("fasta")
 if fasta is not None:
-    table.insert(1, "Gene names", fasta["fasta_gene_names"].astype("string").fillna("").to_numpy())
+    genes = fasta.get_column("fasta_gene_names").cast(pl.String).fill_null("")
+    table = table.insert_column(1, genes.alias("Gene names"))
     types.insert(1, "T")
 
 # A "<quantity> <run>" column per quantity the result reports and run; a 0 is missing
@@ -49,26 +48,31 @@ column_runs = []
 for name, values in quantities.items():
     if values is None:
         continue
-    for run, row in zip(runs, values):
-        table[f"{name} {run}"] = np.where(row == 0, np.nan, row)
+    for position, (run, row) in enumerate(zip(runs, values)):
+        table = table.with_columns(pl.Series(f"{name} {run}", row).replace(0, None))
         types.append("E")
-        column_runs.append(run)
+        column_runs.append(position)
 
 # Sample groups and subjects, none for a result apb2 annotate never annotated
 try:
-    annotation = DataCatalog(mdata, "obs_annotation_alpha").levels["protein"]
-    samples = pd.concat([annotation.obs[["group"]], annotation.obs.get("subject")], axis=1)
+    annotation = DataCatalog(diann, "obs_annotation_alpha").levels["protein"]
+    samples = annotation.obs[["group"]]
+    subject = annotation.obs.get("subject")
+    if subject is not None:
+        samples = samples.with_columns(subject)
 except ValueError:
-    samples = pd.DataFrame(index=runs)
+    samples = pl.DataFrame()
 
 with open("perseus.txt", "w", encoding="utf-8") as out:
     out.write("\t".join(table.columns) + "\n")
     out.write("#!{Type}" + "\t".join(types) + "\n")
     blank = [""] * (len(types) - len(column_runs))
-    for name, values in samples.items():
-        cells = blank + [str(values[run]) for run in column_runs]
-        out.write(f"#!{{C:{name}}}" + "\t".join(cells) + "\n")
-    table.to_csv(out, sep="\t", header=False, index=False, na_rep="NaN")
+    for values in samples.iter_columns():
+        cells = blank + [str(values[position]) for position in column_runs]
+        out.write(f"#!{{C:{values.name}}}" + "\t".join(cells) + "\n")
+    table.write_csv(
+        out, separator="\t", include_header=False, null_value="NaN", quote_style="never"
+    )
 ```
 
 - **Quantities by meaning:** `aggregation="maxlfq"` picks DIA-NN's `PG_MaxLFQ` or MaxQuant's `LFQ intensity`; a quantity the software does not report is `None` and gets no columns
@@ -77,7 +81,7 @@ with open("perseus.txt", "w", encoding="utf-8") as out:
 
 ## prolfquapp
 
-prolfquapp reads one `.h5ad`: precursors by runs, the intensity as `X`, q-values and PEP as layers, protein, peptide and precursor identifiers in `var`, and its configuration in `uns`.
+prolfquapp reads one `.h5ad`: precursors by runs, the intensity as `X`, q-values and PEP as layers, protein, peptide and precursor identifiers in `var`, and its configuration in `uns`. It writes AnnData, so it asks the pandas `DataCatalog`, whose answers are AnnData's own values.
 
 ```python
 import anndata
