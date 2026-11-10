@@ -9,7 +9,7 @@ from typing import NoReturn
 
 import polars as pl
 import pytest
-from apb2.api import JsonValue, ParsedLevel, ParsedLevels, packaged_rule_declarations
+from apb2.api import JsonValue, ParsedLevel, ParsedLevels
 from scripts.versions import TABLE, render
 
 from apb_catalog import rules
@@ -23,20 +23,6 @@ SOURCE = Path(__file__).resolve().parents[1] / "src" / "apb_catalog"
 def test_versions_match_apb2s_packaged_rules() -> None:
     """Rewrite the table with ``make versions`` after an APB2 rule change."""
     assert render() == TABLE.read_text("utf-8"), "versions.csv is stale; run `make versions`"
-
-
-def test_the_entries_name_every_level_apb2_converts() -> None:
-    """A version's levels come from its entries, so they must be exactly APB2's packaged levels."""
-    packaged = {
-        (str(declared["software_name"]), str(declared["software_version_pattern"]), level)
-        for (_, level), texts in packaged_rule_declarations().items()
-        for declared in [json.loads(texts[0])]
-    }
-    derived = {
-        (found.software_name, found.software_version_pattern, found.level)
-        for found in rules.rule_levels()
-    }
-    assert derived == packaged
 
 
 def test_the_datapackage_describes_the_versions() -> None:

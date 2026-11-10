@@ -86,18 +86,14 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 
 | Test | Fails when |
 | --- | --- |
-| `test_every_packaged_rule_level_is_reviewed` | A set has no variant for a software name, version pattern and level APB2 packages |
 | `test_versions_match_apb2s_packaged_rules` | `versions.csv` differs from APB2's packaged rules; run `make versions` |
-| `test_the_entries_name_every_level_apb2_converts` | The entries name a level APB2 does not convert, or miss one it does |
 | `test_entries_name_fields_the_rules_retain` | An entry names a field the rule of one of its version patterns does not keep |
 | `test_packaged_catalogues_load_against_the_vocabulary` | A qualifier is missing or not admitted, a table's columns differ from `datapackage.json`, a key repeats, or an entry names a software or version `versions.csv` does not list |
 | `test_every_packaged_set_states_its_purpose_and_users` | `catalog.csv` and `sets.csv` disagree |
 | `test_a_plugin_set_has_a_prefix_of_its_own` | A set's prefix is `v`, is not lowercase letters, digits and `_`, or is another set's |
 | `test_domain_sets_hold_no_apb2_columns` | A set other than `apb_alpha` names an APB2 `ProForma_*` column |
 | `test_vendor_flags_answer_only_where_the_rule_reads_the_vendor` | A vendor entry names `apb_Decoy` or `apb_Contaminant` on a rule that reads no vendor input for it |
-| `test_abundance_entries_are_the_layers_apb2_marks_abundance` | The `abundance_alpha` set and the layers APB2 marks `abundance_alpha` differ |
 | `test_apb_entries_name_fixed_columns_or_role_columns` | An `apb_alpha` entry names neither a fixed column nor the column its rule marks with the role its kind names |
-| `test_every_fixed_and_role_column_a_rule_writes_has_an_apb_entry` | A packaged rule level writes a fixed or role column `apb_alpha` does not name for that software version |
 | `test_every_set_answers_without_apb2s_rule_declarations` | A lookup, the coverage check or the long table reads APB2's parse rules |
 | `test_every_entry_is_described_by_its_key` | An entry does not carry the kind and fixed values of the key it names |
 | `test_fields_sharing_a_key_on_a_rule_level_differ_in_a_qualifier` | Two fields of one software version, level and location share a key and every qualifier value in a vendor set |

@@ -34,6 +34,12 @@ The closest `AGENTS.md` wins. Explicit user instructions override this file.
 - Add no errors, defaults or guards of the catalog's own for a name it cannot map; the API user handles `None`
 - Before calling a lookup behaviour a problem, check what AnnData does; only a deviation from AnnData is one. The full contract is in [docs/api.md](docs/api.md)
 
+## What the catalog holds
+
+- A row exists because a downstream application reads it (apb-export, apb-aggregate, apb-proteobench, …). A new apb2 level, layer or column gets no row until an application reads it
+- apb2 tests what it converts; apb-catalog tests what downstream applications need. No apb-catalog test requires the catalog to cover every level, layer or column apb2 writes
+- When an apb2 change fails a catalog test, first ask which application reads the field. If none does, the test is the defect, not the catalog
+
 ## Dependency rules
 
 ### Required

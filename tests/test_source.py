@@ -1,9 +1,10 @@
-"""Packaged catalogue sets must stay consistent with the vocabulary and with what APB2 ships."""
+"""Packaged catalogue sets must stay consistent with the vocabulary, and each entry must name a
+field APB2 writes."""
 
 from __future__ import annotations
 
 import pytest
-from apb2.api import FIXED_COLUMNS, VAR_ROLES
+from apb2.api import FIXED_COLUMNS
 
 from apb_catalog.rules import EntryId, entry_id
 from apb_catalog.source import (
@@ -20,11 +21,8 @@ from apb_catalog.source import (
     packaged_descriptions,
 )
 from tests.packaged_rules import (
-    abundance_layers,
     declared_roles,
-    declared_software_versions,
     declared_var_column,
-    effective_rules,
     retained_sources,
     rule_of,
 )
@@ -88,61 +86,6 @@ def test_entries_name_fields_the_rules_retain(name: str) -> None:
         )
     ]
     assert missing == []
-
-
-@pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_every_packaged_rule_level_is_reviewed(name: str) -> None:
-    """A new software version needs a catalogue, even one recording that nothing is relevant."""
-    if not _catalogues(name):
-        pytest.skip("a set without vendor catalogues needs no review")
-    reviewed = {
-        (c.software_name, variant.software_version_pattern, variant.level)
-        for c in _catalogues(name)
-        for variant in c.variants
-    }
-    packaged = {
-        (software, version, level)
-        for rule, level in effective_rules()
-        for software, version in declared_software_versions(rule, level)
-    }
-    assert reviewed == packaged
-
-
-ABUNDANCE_LEFT_OUT = {
-    # DIA-NN's gene-group quantity sits on the protein-group level, which answers for its own entity.
-    ("protein", "Genes_MaxLFQ"),
-    # One entry per key: AlphaPept's MS1 sum over the peak area is its intensity; the apex and
-    # maximum variants stay readable by name.
-    ("peptidoform_ion", "ms1_int_sum_apex"),
-    ("peptidoform_ion", "ms1_int_max_area"),
-    ("peptidoform_ion", "ms1_int_max_apex"),
-    # Spectronaut's fragment peak area is its intensity; the peak height stays readable by name.
-    ("peptidoform_fragment", "F_PeakHeight"),
-    # Spectronaut's elution-group quantities under the run's settings are not the precursor's own
-    # quantity, FG_Quantity; they stay readable by name.
-    ("peptidoform_ion", "EG_TotalQuantity_Settings"),
-    ("peptidoform_ion", "EG_TargetQuantity_Settings"),
-    ("peptidoform_ion", "EG_ReferenceQuantity_Settings"),
-}
-"""Abundance-role layers the catalog leaves out; one key has at most one entry per rule level."""
-
-
-def test_abundance_entries_are_the_layers_apb2_marks_abundance() -> None:
-    """A new abundance layer in an APB2 rule fails here until a reviewer catalogues it."""
-    catalogued = {
-        (rule_of(catalogue.software_name, pattern, entry.reference.level), level, name)
-        for catalogue in _catalogues("abundance_alpha")
-        for entry in catalogue.entries
-        for pattern in entry.software_version_pattern
-        for level, name in [(entry.reference.level, entry.reference.name)]
-    }
-    marked = {
-        (rule, level, name)
-        for rule, level in effective_rules()
-        for name in abundance_layers(rule, level)
-        if (level, name) not in ABUNDANCE_LEFT_OUT
-    }
-    assert catalogued == marked
 
 
 @pytest.mark.parametrize(
@@ -458,31 +401,3 @@ def test_apb_entries_name_fixed_columns_or_role_columns() -> None:
         and declared_roles(rule_of(software, pattern, level), level).get(kind) != name
     ]
     assert unwritten == []
-
-
-def test_every_fixed_and_role_column_a_rule_writes_has_an_apb_entry() -> None:
-    """A new rule level fails here until the apb set names APB2's columns for it."""
-    catalogued = {
-        (software, pattern, level, name) for software, pattern, level, name, _ in _apb_columns()
-    }
-    written = {
-        (software, pattern, level, name)
-        for rule, level in effective_rules()
-        for software, pattern in declared_software_versions(rule, level)
-        for location, name in retained_sources(rule, level)
-        if location == "var" and name in FIXED_COLUMNS
-    } | {
-        (software, pattern, level, column)
-        for rule, level in effective_rules()
-        for software, pattern in declared_software_versions(rule, level)
-        for role, column in declared_roles(rule, level).items()
-        if role in VAR_ROLES
-    }
-    assert written - catalogued == set()
-
-
-def test_every_fixed_column_and_var_role_has_an_apb_kind() -> None:
-    """The apb set drifts from apb2 the moment apb2 fixes a new name or adds a var role."""
-    columns = _apb_columns()
-    assert {name for _, _, _, name, _ in columns} >= set(FIXED_COLUMNS)
-    assert {kind for _, _, _, _, kind in columns} >= set(VAR_ROLES)

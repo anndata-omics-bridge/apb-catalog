@@ -139,10 +139,15 @@ def _write_manifest(folder: Path, names: list[str]) -> None:
 
 
 def _write_results(archive: Path, results: Mapping[str, ParsedLevels]) -> None:
-    """The synthetic results in one archive: their Parquet paths exceed the 100 bytes R packages allow."""
+    """The synthetic results in one archive: their Parquet paths exceed the 100 bytes R packages allow.
+
+    Each result is written as Parquet and DuckDB, and a one-level result also as h5ad, so a reader
+    can check that every format reads as Parquet does.
+    """
     with tempfile.TemporaryDirectory() as scratch:
         for result, parsed in results.items():
-            write_parsed_levels(parsed, Path(scratch) / f"{result}.parquet")
+            for suffix in (".parquet", ".duckdb", ".h5ad")[: 3 if len(parsed.levels) == 1 else 2]:
+                write_parsed_levels(parsed, Path(scratch) / f"{result}{suffix}")
         with tarfile.open(archive, "w:gz", format=tarfile.GNU_FORMAT) as packed:
             for path in sorted(Path(scratch).iterdir()):
                 packed.add(path, arcname=path.name)

@@ -32,12 +32,13 @@ APB2 rules can mark a column with a [semantic role](https://anndata-omics-bridge
 | --- | --- |
 | Needed by several tools, or defined by APB2 itself | A role in the rule |
 | Needed by one consumer or an external standard | A catalogue set |
-| More detail about a role, such as an abundance layer's normalization | A catalogue set that qualifies the role; a test keeps the two equal |
+| More detail about a role, such as an abundance layer's normalization | A catalogue set that qualifies the role |
 
 ## How it stays correct
 
 - An entry holds for the software versions it was reviewed against: the software name and version pattern each level's stored rule declares
-- Tests fail when APB2 adds a rule version or level, until a reviewer adds it
+- A set holds what downstream applications read; a new APB2 level, layer or column gets entries once an application reads it
+- Tests fail when an entry names a field its rule no longer keeps; APB2's own tests cover what it converts
 - APB2's parse rules are read only when the catalog is written; at runtime it reads its own tables
 - Lookups never transform values; the consumer reads the field it is handed
 - A snapshot of every lookup can be stored in the result, readable without this package
