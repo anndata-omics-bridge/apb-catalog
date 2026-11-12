@@ -1,5 +1,5 @@
 set,qualifier,definition
-abundance_alpha,normalization,Whether the producing software normalizes the value across runs; which method a run used is not catalogued.
+abundance_alpha,normalization,Whether the producing software normalizes the value across runs; which method a run used is not cataloged.
 abundance_alpha,aggregation,"How the value combines the signals of lower-level features, such as precursors into a protein group; none for a value measured on the feature's own signal."
 abundance_alpha,ms_level,"The MS level the value is measured on: the precursor's MS1 signal, or its MS2 fragments' signals."
 confidence_alpha,stage,Which decision the value qualifies.

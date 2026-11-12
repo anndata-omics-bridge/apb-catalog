@@ -1,4 +1,4 @@
-/* Coverage tables on the Catalogues page: field headers run vertically so every column fits. */
+/* Coverage tables on the Sets page: field headers run vertically so every column fits. */
 .md-typeset .coverage-matrix table:not([class]) th,
 .md-typeset .coverage-matrix table:not([class]) td {
   min-width: 0;

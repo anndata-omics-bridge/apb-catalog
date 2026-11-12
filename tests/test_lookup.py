@@ -18,7 +18,8 @@ from apb_catalog.catalog import (
     attach_snapshot,
 )
 from apb_catalog.resolver import UnresolvedField
-from apb_catalog.table import KEY_COLUMNS, catalogue_table
+from apb_catalog.rules import version_label
+from apb_catalog.table import KEY_COLUMNS, catalog_table
 from tests.packaged_rules import declared_rule_json
 
 
@@ -119,7 +120,7 @@ def test_an_annotation_column_is_found_by_its_convention_prefix() -> None:
 def test_an_annotation_entry_of_every_level_is_one_table_row_and_a_column_per_level() -> None:
     """The long table keeps the entry's level ``*``; a result's fields name the level and the
     column it bound to."""
-    table = catalogue_table("obs_annotation_alpha")
+    table = catalog_table("obs_annotation_alpha")
     assert set(table.get_column("level")) == {"*"}
     obs = {"group_condition": ["A", "A", "B"]}
     annotated = _result(
@@ -284,9 +285,43 @@ def test_fields_lists_absent_fields_with_their_constant() -> None:
     assert fields.filter(pl.col("name") == "Q_Value").get_column("present").to_list() == [True]
 
 
+@pytest.mark.parametrize(
+    "sets", [("abundance_alpha", "confidence_alpha"), ("confidence_alpha", "abundance_alpha")]
+)
+def test_fields_of_composed_sets_keep_the_long_tables_order(sets: tuple[str, ...]) -> None:
+    """Whatever order the sets come in: place and field, the term, the qualifiers, then the
+    requirement, the entry and what the result holds."""
+    parsed = _result("diann/v2/rules.json", ["Precursor_Normalised", "Q_Value"])
+    columns = DataCatalog(parsed, *sets).fields().columns
+    head = [*KEY_COLUMNS, "key", "kind"]
+    tail = ["requirement", "entry_id", "present", "constant"]
+    assert columns[: len(head)] == head
+    assert columns[-len(tail) :] == tail
+    assert all(name.startswith("qualifier.") for name in columns[len(head) : -len(tail)])
+
+
+def test_the_long_tables_version_is_its_patterns_label() -> None:
+    """A vendor entry for every version has one row per rule, each with that rule's label; an
+    app's or an annotation's entry holds for every version, written ``*``."""
+    table = catalog_table()
+    vendor = table.filter(pl.col("software_version_pattern").is_not_null())
+    assert all(
+        version == version_label(pattern)
+        for version, pattern in vendor.select("version", "software_version_pattern").iter_rows()
+    )
+    every = table.filter(pl.col("software_version_pattern").is_null())
+    assert set(every.get_column("version")) == {"*"}
+    quantity = vendor.filter(
+        (pl.col("set") == "abundance_alpha") & (pl.col("name") == "Precursor_Quantity")
+    )
+    assert quantity.get_column("entry_id").str.starts_with("DIA-NN/*/").all()
+    assert quantity.height > 1
+    assert "*" not in quantity.get_column("version").to_list()
+
+
 def test_the_long_table_lists_every_set() -> None:
     """One row per entry and software version, the qualifiers as columns, and no concept."""
-    table = catalogue_table()
+    table = catalog_table()
     assert table.columns[: len(KEY_COLUMNS)] == list(KEY_COLUMNS)
     assert table.columns[-2:] == ["requirement", "entry_id"]
     assert "concept" not in table.columns

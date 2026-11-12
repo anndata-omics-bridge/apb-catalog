@@ -4,7 +4,7 @@
 with its ``.tar.gz``. The release workflow attaches both archives to the GitHub release and copies
 both folders into apbCatalogR.
 
-The bundle is what a reader looks fields up with: the packaged catalogue tables, CSV files
+The bundle is what a reader looks fields up with: the packaged catalog tables, CSV files
 described by their ``datapackage.json``, ``versions.csv`` among them. The test bundle holds
 synthetic Parquet results built from APB2's effective rule declarations (packed in
 ``results.tar.gz``) and the answers this package gives on them.
@@ -43,21 +43,21 @@ from apb_catalog.catalog import (
     Enforce,
     MissingRequiredField,
 )
-from apb_catalog.coverage import CATALOGUES_SCHEMA, coverage_of
+from apb_catalog.coverage import SETS_SCHEMA, coverage_of
 from apb_catalog.levels import Level, LevelNames, Slot
 from apb_catalog.resolver import UnresolvedField
 from apb_catalog.rules import ANY, Location
 from apb_catalog.source import (
     TABLES,
-    SourceCatalogues,
-    packaged_catalogues,
+    LoadedSet,
     packaged_descriptions,
+    packaged_set,
 )
 from apb_catalog.table import KEY_COLUMNS, schema, set_rows
 
 NAME = "apb-catalog-bundle"
 TEST_NAME = "apb-catalog-test-bundle"
-BUNDLE_FORMAT = 4
+BUNDLE_FORMAT = 5
 """Raised when a reader of the previous format could not read the bundle."""
 
 
@@ -103,12 +103,12 @@ def build(target: Path) -> tuple[Path, Path]:
     """Write the bundle and the test bundle into ``target``, replacing what is there."""
     names = list(packaged_descriptions())
     bundle = _fresh(target / NAME)
-    _write_catalogues(bundle / "catalogues", names)
+    _write_tables(bundle / "data", names)
     _write_manifest(bundle, names)
     tests = _fresh(target / TEST_NAME)
     results = synthetic_results()
     _write_results(tests / "results.tar.gz", results)
-    sets = {name: packaged_catalogues(name) for name in names}
+    sets = {name: packaged_set(name) for name in names}
     _write_json(tests / "cases" / "catalog.json", catalog_cases(sets))
     _write_json(tests / "cases" / "data_catalog.json", data_catalog_cases(sets, results))
     _write_json(tests / "cases" / "tables.json", table_cases(sets))
@@ -132,7 +132,7 @@ def _write_manifest(folder: Path, names: list[str]) -> None:
         "version": metadata.version("apb-catalog"),
         "apb_catalog_version": metadata.version("apb-catalog"),
         "apb2_version": metadata.version("apb2"),
-        "catalogues": list(names),
+        "sets": list(names),
         "files": list(files),
     }
     (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", "utf-8")
@@ -158,11 +158,11 @@ def _write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, ensure_ascii=False, separators=(",", ":")) + "\n", "utf-8")
 
 
-def _write_catalogues(folder: Path, names: list[str]) -> None:
-    """The packaged catalogue tables and their ``datapackage.json``, after loading each set
+def _write_tables(folder: Path, names: list[str]) -> None:
+    """The packaged catalog tables and their ``datapackage.json``, after loading each set
     checks them."""
     for name in names:
-        packaged_catalogues(name)
+        packaged_set(name)
     data = resources.files("apb_catalog").joinpath("data")
     for name in ("datapackage.json", "versions.csv", *(f"{table}.csv" for table in TABLES)):
         _copy(data.joinpath(name), folder / name)
@@ -407,7 +407,7 @@ def _keys(answer: Callable[[], tuple[str, ...]]) -> dict[str, JsonValue]:
         return {"error": "UnresolvedField", "status": error.resolution.status}
 
 
-def requests(sources: SourceCatalogues, level: str) -> list[Request]:
+def requests(sources: LoadedSet, level: str) -> list[Request]:
     """Every request a set's entries and requirement rows on one level ask, without repeats.
 
     Each entry asks for its key once with the qualifiers its key leaves open and once alone; each
@@ -444,7 +444,7 @@ def requests(sources: SourceCatalogues, level: str) -> list[Request]:
     ]
 
 
-def vendor_requests(sources: SourceCatalogues, level: str) -> list[Request]:
+def vendor_requests(sources: LoadedSet, level: str) -> list[Request]:
     """A ``v:`` request for the own name of every entry on one level outside ``varm``."""
     found: dict[tuple[Location, str], Request] = {}
     for source in sources.sources():
@@ -476,7 +476,7 @@ def _records(frame: pl.DataFrame) -> list[JsonValue]:
     return cast(list[JsonValue], frame.to_dicts())
 
 
-def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
+def catalog_cases(sets: Mapping[str, LoadedSet]) -> list[JsonValue]:
     """``Catalog`` answers for every set, software and version pattern of the packaged rules."""
     versions: dict[tuple[str, str], str] = {}
     for found in rules.rule_levels():
@@ -497,9 +497,9 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
             ]
             cases.append(
                 {
-                    "catalogue": name,
+                    "set": name,
                     "software": software,
-                    "version": version,
+                    "software_version": version,
                     "requests": [
                         _request_case(request, _outcome(_named(catalog.levels, request)))
                         for request in asked
@@ -510,9 +510,9 @@ def catalog_cases(sets: Mapping[str, SourceCatalogues]) -> list[JsonValue]:
             )
     cases.append(
         {
-            "catalogue": "abundance_alpha",
+            "set": "abundance_alpha",
             "software": "DIA-NN",
-            "version": "99.0",
+            "software_version": "99.0",
             "error": "ValueError",
         }
     )
@@ -554,7 +554,7 @@ def _keys_cases(levels: Mapping[str, Level | LevelNames]) -> list[JsonValue]:
 
 
 def data_catalog_cases(
-    sets: Mapping[str, SourceCatalogues], results: Mapping[str, ParsedLevels]
+    sets: Mapping[str, LoadedSet], results: Mapping[str, ParsedLevels]
 ) -> list[JsonValue]:
     """``DataCatalog`` answers for every synthetic result and set, with and without ``enforce``;
     a catalog that cannot open records what it raises instead."""
@@ -568,7 +568,7 @@ def data_catalog_cases(
             for enforce in enforced:
                 catalog, opened = _opened(parsed, name, enforce)
                 if catalog is None:
-                    cases.append({"result": result, "catalogue": name, "enforce": enforce} | opened)
+                    cases.append({"result": result, "set": name, "enforce": enforce} | opened)
                     continue
                 asked: list[Request]
                 if enforce is None:
@@ -585,7 +585,7 @@ def data_catalog_cases(
                     ]
                 case: dict[str, JsonValue] = {
                     "result": result,
-                    "catalogue": name,
+                    "set": name,
                     "enforce": enforce,
                     "requests": [
                         _request_case(request, _outcome(_named(catalog.levels, request)))
@@ -600,12 +600,12 @@ def data_catalog_cases(
     return cases
 
 
-def table_cases(sets: Mapping[str, SourceCatalogues]) -> dict[str, JsonValue]:
+def table_cases(sets: Mapping[str, LoadedSet]) -> dict[str, JsonValue]:
     """The overview, rule coverage and long table of the packaged sets."""
     overview = pl.DataFrame(
         [
             {
-                "catalogue": name,
+                "set": name,
                 "prefix": sources.vocabulary.prefix,
                 "purpose": sources.description.purpose,
                 "used_by": list(sources.description.used_by),
@@ -614,7 +614,7 @@ def table_cases(sets: Mapping[str, SourceCatalogues]) -> dict[str, JsonValue]:
             }
             for name, sources in sets.items()
         ],
-        schema=CATALOGUES_SCHEMA,
+        schema=SETS_SCHEMA,
     )
     tables = {
         name: pl.DataFrame(set_rows(name, sources), schema=schema(sources))
@@ -623,9 +623,9 @@ def table_cases(sets: Mapping[str, SourceCatalogues]) -> dict[str, JsonValue]:
     combined = pl.concat(list(tables.values()), how="diagonal")
     qualifiers = [column for column in combined.columns if column.startswith("qualifier.")]
     return {
-        "catalogues": _records(overview),
+        "sets": _records(overview),
         "rule_coverage": {name: _records(coverage_of(sources)) for name, sources in sets.items()},
-        "catalogue_table": {
+        "catalog_table": {
             "all": _records(
                 combined.select(*KEY_COLUMNS, "key", "kind", *qualifiers, "requirement", "entry_id")
             ),

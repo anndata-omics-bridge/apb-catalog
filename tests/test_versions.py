@@ -13,8 +13,8 @@ from apb2.api import JsonValue, ParsedLevel, ParsedLevels
 from scripts.versions import TABLE, render
 
 from apb_catalog import rules
-from apb_catalog.api import Catalog, DataCatalog, catalogue_table, rule_coverage
-from apb_catalog.source import packaged_catalogues, packaged_descriptions
+from apb_catalog.api import Catalog, DataCatalog, catalog_table, rule_coverage
+from apb_catalog.source import packaged_descriptions, packaged_set
 from tests.packaged_rules import declared_rule_json
 
 SOURCE = Path(__file__).resolve().parents[1] / "src" / "apb_catalog"
@@ -78,16 +78,16 @@ def test_every_set_answers_without_apb2s_rule_declarations(
         raise AssertionError("a lookup read APB2's rule declarations")
 
     monkeypatch.setattr("apb2.api.packaged_rule_declarations", unavailable)
-    packaged_catalogues.cache_clear()
+    packaged_set.cache_clear()
     rules.rule_levels.cache_clear()
     rules.versions.cache_clear()
     for name in packaged_descriptions():
-        assert not catalogue_table(name).is_empty()
+        assert not catalog_table(name).is_empty()
         assert not rule_coverage(name).is_empty()
         named = Catalog("DIA-NN", "2.6.0", name).fields()
-        # Without data, only a vendor catalogue names fields: an app's wait for its run and an
+        # Without data, only vendor entries name fields: an app's wait for its run and an
         # annotation's bind to a result's columns.
-        assert not named.is_empty() or not packaged_catalogues(name).needs_review, name
+        assert not named.is_empty() or not packaged_set(name).needs_review, name
         DataCatalog(result, name).fields()
     found = DataCatalog(result, "apb_alpha").levels["peptidoform_ion"].var.get("protein_assignment")
     assert found is not None and found.to_list() == ["P1", "P2"]

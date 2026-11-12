@@ -101,7 +101,7 @@ class SourceEntry(FrozenModel):
     @property
     def source(self) -> str:
         """Who the entry comes from: the software, an app, or ``annotation:<convention>``, the
-        first field of its id ``<source>/<version>/<level>/<attribute>/<key>/<column>``; one id
+        first field of its id ``<source>/<version>/<level>/<slot>/<layer or table>/<column>``; one id
         with two kinds is two entries."""
         return self.entry_id.partition("/")[0]
 
@@ -157,7 +157,7 @@ class RuleVariant(FrozenModel):
     software_version_pattern: str
 
 
-class SourceCatalogue(FrozenModel):
+class VendorEntries(FrozenModel):
     """Every reviewed rule variant of one vendor and the entries one consumer needs from it."""
 
     software_name: str
@@ -165,7 +165,7 @@ class SourceCatalogue(FrozenModel):
     entries: tuple[SourceEntry, ...]
 
     @model_validator(mode="after")
-    def _consistent(self) -> SourceCatalogue:
+    def _consistent(self) -> VendorEntries:
         if _ids_repeat(self.entries):
             raise ValueError(f"{self.software_name}: duplicate entry ids")
         declared = {(variant.software_version_pattern, variant.level) for variant in self.variants}
@@ -191,7 +191,7 @@ class SourceCatalogue(FrozenModel):
         return self.software_name
 
     def entries_for(self, variant: RuleVariant, /) -> tuple[SourceEntry, ...]:
-        """Return the entries reviewed for one of this catalogue's rule variants."""
+        """Return the entries reviewed for one of this vendor's rule variants."""
         return tuple(
             entry
             for entry in self.entries
@@ -200,7 +200,7 @@ class SourceCatalogue(FrozenModel):
         )
 
 
-class ProducerCatalogue(FrozenModel):
+class ProducerEntries(FrozenModel):
     """Fields an app such as apb-fasta writes after conversion, on every software's level.
 
     ``requires`` is the metadata path that records the app's run. Until a required run is
@@ -213,13 +213,13 @@ class ProducerCatalogue(FrozenModel):
     entries: tuple[SourceEntry, ...]
 
     @model_validator(mode="after")
-    def _consistent(self) -> ProducerCatalogue:
+    def _consistent(self) -> ProducerEntries:
         if _ids_repeat(self.entries):
             raise ValueError(f"{self.label}: duplicate entry ids")
         if any(entry.software_version_pattern for entry in self.entries):
             raise ValueError(f"{self.label}: app entries apply to every software version")
         if any(entry.reference.prefix is not None for entry in self.entries):
-            raise ValueError(f"{self.label}: prefixes belong to annotation catalogues")
+            raise ValueError(f"{self.label}: prefixes belong to annotation entries")
         if bool(self.requires) != (self.instruction is not None):
             raise ValueError(f"{self.label}: an instruction comes with a required run")
         return self
@@ -252,7 +252,7 @@ class ProducerCatalogue(FrozenModel):
         return f"{self.producer} has not run on this result; {self.instruction}"
 
 
-class AnnotationCatalogue(FrozenModel):
+class AnnotationEntries(FrozenModel):
     """Sample-annotation fields of one annotation convention, found by column-name prefix.
 
     APB2 keeps an annotation's columns in each level's ``obs`` under sanitized header names and
@@ -264,7 +264,7 @@ class AnnotationCatalogue(FrozenModel):
     entries: tuple[SourceEntry, ...]
 
     @model_validator(mode="after")
-    def _consistent(self) -> AnnotationCatalogue:
+    def _consistent(self) -> AnnotationEntries:
         if _ids_repeat(self.entries):
             raise ValueError(f"{self.label}: duplicate entry ids")
         if any(entry.software_version_pattern for entry in self.entries):
@@ -279,7 +279,7 @@ class AnnotationCatalogue(FrozenModel):
         return f"annotation:{self.convention}"
 
     def applies(self, metadata: Mapping[str, object], /) -> bool:
-        """Whether a result's metadata records this catalogue's annotation convention."""
+        """Whether a result's metadata records this annotation convention."""
         return self.convention in metadata
 
     def entries_on(self, level: str) -> tuple[SourceEntry, ...]:
@@ -314,22 +314,22 @@ type Requirements = tuple[RequirementRow, ...]
 
 @dataclass(frozen=True, slots=True)
 class ReviewedRule:
-    """The catalogue and rule variant one software version's level was reviewed as."""
+    """The vendor entries and rule variant one software version's level was reviewed as."""
 
-    catalogue: SourceCatalogue
+    vendor: VendorEntries
     variant: RuleVariant
 
     def entries(self) -> tuple[SourceEntry, ...]:
         """Return the entries reviewed for this rule variant."""
-        return self.catalogue.entries_for(self.variant)
+        return self.vendor.entries_for(self.variant)
 
 
-class SourceCatalogues:
-    """One set's source catalogues, checked against its vocabulary and indexed by software and
+class LoadedSet:
+    """One set's vendor entries, checked against its vocabulary and indexed by software and
     version.
 
     ``producers`` hold the fields apps write after conversion and ``annotations`` the
-    sample-annotation fields; both apply to every software version. A set made only of them has no vendor catalogue and needs
+    sample-annotation fields; both apply to every software version. A set made only of them has no vendor entries and needs
     no review. ``requirements`` are the consumer's requirement rows; a set without them is
     checked for coverage only. ``keys`` are the set's access keys; each entry has exactly one.
     """
@@ -338,11 +338,11 @@ class SourceCatalogues:
         "_by_key",
         "_by_version",
         "annotations",
-        "catalogues",
         "description",
         "keys",
         "producers",
         "requirements",
+        "vendors",
         "vocabulary",
         "vocabulary_version",
     )
@@ -351,17 +351,17 @@ class SourceCatalogues:
         self,
         vocabulary: SetVocabulary,
         vocabulary_version: str,
-        catalogues: tuple[SourceCatalogue, ...],
-        description: CatalogueDescription,
-        producers: tuple[ProducerCatalogue, ...] = (),
-        annotations: tuple[AnnotationCatalogue, ...] = (),
+        vendors: tuple[VendorEntries, ...],
+        description: SetDescription,
+        producers: tuple[ProducerEntries, ...] = (),
+        annotations: tuple[AnnotationEntries, ...] = (),
         requirements: Requirements = (),
         keys: tuple[Key, ...] = (),
     ) -> None:
         self.vocabulary = vocabulary
         self.vocabulary_version = vocabulary_version
         self.description = description
-        self.catalogues = catalogues
+        self.vendors = vendors
         self.producers = producers
         self.annotations = annotations
         self.requirements = requirements
@@ -372,26 +372,26 @@ class SourceCatalogues:
         self._by_version: dict[tuple[str, str, str], ReviewedRule] = {}
         entries = [entry for source in self.sources() for entry in source.entries]
         if _ids_repeat(entries):
-            raise ValueError("an entry id repeats across the set's catalogues")
+            raise ValueError("an entry id repeats across the set's sources")
         _check_keys(vocabulary, keys, entries)
         for row in requirements:
             if row.key not in self._by_key:
                 raise ValueError(f"requirement on {row.level}: unknown key {row.key!r}")
-        for catalogue in catalogues:
-            for variant in catalogue.variants:
-                key = (catalogue.software_name, variant.software_version_pattern, variant.level)
+        for vendor in vendors:
+            for variant in vendor.variants:
+                key = (vendor.software_name, variant.software_version_pattern, variant.level)
                 if key in self._by_version:
                     raise ValueError(f"{' '.join(key)} is reviewed more than once")
-                self._by_version[key] = ReviewedRule(catalogue, variant)
+                self._by_version[key] = ReviewedRule(vendor, variant)
 
-    def sources(self) -> tuple[SourceCatalogue | ProducerCatalogue | AnnotationCatalogue, ...]:
-        """Every catalogue of the set: vendor, producer and annotation."""
-        return (*self.catalogues, *self.producers, *self.annotations)
+    def sources(self) -> tuple[VendorEntries | ProducerEntries | AnnotationEntries, ...]:
+        """Every source of the set: vendors, producers and annotations."""
+        return (*self.vendors, *self.producers, *self.annotations)
 
     @property
     def needs_review(self) -> bool:
-        """Whether a level answers only once a vendor catalogue reviewed its rule."""
-        return bool(self.catalogues)
+        """Whether a level answers only once vendor entries reviewed its rule."""
+        return bool(self.vendors)
 
     def reviewed(
         self, software_name: str, software_version_pattern: str, level: str
@@ -447,8 +447,8 @@ def _check_keys(
             raise ValueError(f"{entry.entry_id}: its key {entry.key!r} does not describe it")
 
 
-class CatalogueDescription(FrozenModel):
-    """What one catalogue set holds and who uses it."""
+class SetDescription(FrozenModel):
+    """What one set holds and who uses it."""
 
     purpose: str
     used_by: tuple[str, ...]
@@ -463,7 +463,7 @@ TABLES = (
     "catalog",
     "producers",
 )
-"""The CSV tables a catalogue folder holds, each named ``<table>.csv``; ``datapackage.json``
+"""The CSV tables a catalog folder holds, each named ``<table>.csv``; ``datapackage.json``
 declares their columns."""
 
 type Row = dict[str, str]
@@ -499,7 +499,7 @@ def _datapackage() -> _DataPackage:
 
 
 def catalog_version() -> str:
-    """The version of the catalogue tables, as ``datapackage.json`` records it."""
+    """The version of the catalog tables, as ``datapackage.json`` records it."""
     return _datapackage()["version"]
 
 
@@ -545,10 +545,10 @@ def _set_names(folder: Traversable, /) -> list[str]:
     return names
 
 
-def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
-    """Load one set's rows from a folder of catalogue tables and check them.
+def _load(folder: Traversable, name: str, /) -> LoadedSet:
+    """Load one set's rows from a folder of catalog tables and check them.
 
-    An entry id names the entry's source and version: vendor entries their conversion software and
+    An entry id names the entry's source and version: vendor entries their quantification software and
     a label of ``versions.csv``, or ``*`` for every version; such a set reviews every level the
     packaged entries name for each version. A source ``producers.csv`` names is an app; its entries
     and ``annotation:<convention>`` entries apply to every software version.
@@ -573,18 +573,18 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
         by_source.setdefault(named.source, []).append(entry)
     runs = {row["producer"]: row for row in rows("producers")}
     vendors: dict[str, tuple[SourceEntry, ...]] = {}
-    producers: list[ProducerCatalogue] = []
-    annotations: list[AnnotationCatalogue] = []
+    producers: list[ProducerEntries] = []
+    annotations: list[AnnotationEntries] = []
     for source, entries in by_source.items():
         prefix, _, named = source.partition(":")
         if prefix == "annotation":
             annotations.append(
-                AnnotationCatalogue.model_validate({"convention": named, "entries": entries})
+                AnnotationEntries.model_validate({"convention": named, "entries": entries})
             )
         elif source in runs:
             run = runs.pop(source)
             producers.append(
-                ProducerCatalogue(
+                ProducerEntries(
                     producer=source,
                     requires=tuple(run["requires"].split(".")) if run["requires"] else (),
                     instruction=run["instruction"] or None,
@@ -595,7 +595,7 @@ def _load(folder: Traversable, name: str, /) -> SourceCatalogues:
             vendors[source] = tuple(entries)
     if runs:
         raise ValueError(f"{name}: producers.csv names apps without entries {sorted(runs)}")
-    return SourceCatalogues(
+    return LoadedSet(
         vocabulary,
         catalog_version(),
         _vendors(name, vendors),
@@ -613,7 +613,7 @@ def _vocabulary(
     kinds: Sequence[Row],
     qualifiers: Sequence[Row],
     values: Sequence[Row],
-) -> tuple[CatalogueDescription, SetVocabulary]:
+) -> tuple[SetDescription, SetVocabulary]:
     """A set's description and vocabulary from its row of ``sets.csv``, its kinds, its qualifiers
     and their values.
 
@@ -648,9 +648,9 @@ def _vocabulary(
     return description, vocabulary
 
 
-def _description(head: Row) -> CatalogueDescription:
+def _description(head: Row) -> SetDescription:
     """What a set holds and who uses it, from its ``sets.csv`` row."""
-    return CatalogueDescription(purpose=head["purpose"], used_by=tuple(head["used_by"].split(";")))
+    return SetDescription(purpose=head["purpose"], used_by=tuple(head["used_by"].split(";")))
 
 
 def _check_mapped(
@@ -708,8 +708,8 @@ def _check_row(label: str, row: Row, key: Key, /) -> None:
 
 
 def _entry_id(row: Row, /) -> str:
-    """A ``catalog.csv`` row's entry id, its software, location and name joined by ``/``."""
-    return f"{row['software']}/{row['location']}/{row['name']}"
+    """A ``catalog.csv`` row's entry id, its source, location and name joined by ``/``."""
+    return f"{row['source']}/{row['location']}/{row['name']}"
 
 
 def _pair(label: str, row: Row, /) -> dict[str, str]:
@@ -848,8 +848,8 @@ def _entry(name: str, rows: Sequence[Row], named: EntryId, key: Key) -> SourceEn
 
 def _vendors(
     name: str, entries: Mapping[str, tuple[SourceEntry, ...]]
-) -> tuple[SourceCatalogue, ...]:
-    """One catalogue per software of ``versions.csv``, each reviewing every level the packaged
+) -> tuple[VendorEntries, ...]:
+    """One vendor's entries per software of ``versions.csv``, each reviewing every level the packaged
     entries name for its versions, when the set has vendor entries; none otherwise."""
     if not entries:
         return ()
@@ -862,7 +862,7 @@ def _vendors(
     if unknown:
         raise ValueError(f"{name}: no packaged rule declares the software {unknown}")
     return tuple(
-        SourceCatalogue(
+        VendorEntries(
             software_name=software, variants=tuple(found), entries=entries.get(software, ())
         )
         for software, found in variants.items()
@@ -870,27 +870,27 @@ def _vendors(
 
 
 @cache
-def packaged_descriptions() -> dict[str, CatalogueDescription]:
-    """Return every packaged catalogue set's description, by set name."""
+def packaged_descriptions() -> dict[str, SetDescription]:
+    """Return every packaged set's description, by set name."""
     heads = {row["set"]: row for row in _table(_data(), "sets")}
     return {name: _description(heads[name]) for name in _set_names(_data())}
 
 
 @cache
-def packaged_catalogues(name: str, /) -> SourceCatalogues:
-    """Load and cross-check one packaged catalogue set against its vocabulary."""
+def packaged_set(name: str, /) -> LoadedSet:
+    """Load and cross-check one packaged set against its vocabulary."""
     descriptions = packaged_descriptions()
     if name not in descriptions:
-        raise ValueError(f"unknown catalogue {name!r}; packaged: {list(descriptions)}")
+        raise ValueError(f"unknown set {name!r}; packaged: {list(descriptions)}")
     return _load(_data(), name)
 
 
-PLUGIN_GROUP = "apb_catalog.catalogues"
-"""The entry-point group through which installed packages add catalogue sets."""
+PLUGIN_GROUP = "apb_catalog.sets"
+"""The entry-point group through which installed packages add sets."""
 
 
 def plugin_folders(points: EntryPoints) -> dict[str, Traversable]:
-    """The catalogue set folder each entry point names, by set name.
+    """The set folder each entry point names, by set name.
 
     Raises:
         ValueError: Two entry points name one set.
@@ -899,18 +899,18 @@ def plugin_folders(points: EntryPoints) -> dict[str, Traversable]:
         name for name, count in Counter(point.name for point in points).items() if count > 1
     )
     if repeated:
-        raise ValueError(f"several installed plugins name the catalogue sets {repeated}")
+        raise ValueError(f"several installed plugins name the sets {repeated}")
     return {point.name: resources.files(point.value) for point in points}
 
 
 @cache
 def _plugin_folders() -> dict[str, Traversable]:
-    """Every installed plugin's catalogue set folder, by set name."""
+    """Every installed plugin's set folder, by set name."""
     return plugin_folders(entry_points(group=PLUGIN_GROUP))
 
 
-def catalogue_descriptions() -> dict[str, CatalogueDescription]:
-    """Return every packaged and plugin catalogue set's description, by set name.
+def set_descriptions() -> dict[str, SetDescription]:
+    """Return every packaged and plugin set's description, by set name.
 
     Raises:
         ValueError: A plugin set has a packaged set's name, or two sets share a prefix.
@@ -919,14 +919,14 @@ def catalogue_descriptions() -> dict[str, CatalogueDescription]:
     plugins = _plugin_folders()
     clashing = sorted(set(packaged) & set(plugins))
     if clashing:
-        raise ValueError(f"plugin catalogue sets {clashing} have the names of packaged sets")
+        raise ValueError(f"plugin sets {clashing} have the names of packaged sets")
     prefixes = {
         **_packaged_prefixes(),
         **{name: _plugin_set(name).vocabulary.prefix for name in plugins},
     }
     shared = sorted(prefix for prefix, count in Counter(prefixes.values()).items() if count > 1)
     if shared:
-        raise ValueError(f"catalogue sets share the prefixes {shared}: {prefixes}")
+        raise ValueError(f"sets share the prefixes {shared}: {prefixes}")
     return {**packaged, **{name: _plugin_set(name).description for name in plugins}}
 
 
@@ -936,23 +936,23 @@ def _packaged_prefixes() -> dict[str, str]:
     return {row["set"]: row["prefix"] for row in _table(_data(), "sets")}
 
 
-def catalogue_set(name: str, /) -> SourceCatalogues:
-    """Load one packaged or plugin catalogue set.
+def load_set(name: str, /) -> LoadedSet:
+    """Load one packaged or plugin set.
 
     Raises:
         ValueError: No packaged or plugin set has this name.
     """
-    descriptions = catalogue_descriptions()
+    descriptions = set_descriptions()
     if name not in descriptions:
         raise ValueError(
-            f"unknown catalogue {name!r}; packaged: {list(packaged_descriptions())}, "
+            f"unknown set {name!r}; packaged: {list(packaged_descriptions())}, "
             f"plugins: {list(_plugin_folders())}"
         )
-    return packaged_catalogues(name) if name in packaged_descriptions() else _plugin_set(name)
+    return packaged_set(name) if name in packaged_descriptions() else _plugin_set(name)
 
 
 @cache
-def _plugin_set(name: str, /) -> SourceCatalogues:
+def _plugin_set(name: str, /) -> LoadedSet:
     """Load one plugin set, whose folder holds the tables of that set alone.
 
     Raises:

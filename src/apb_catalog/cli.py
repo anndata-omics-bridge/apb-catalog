@@ -1,21 +1,20 @@
-"""Command line: list the catalogues, check the packaged APB2 rules against one, and print one
-as a table across every quantification tool."""
+"""Command line: list the sets, check the packaged APB2 rules against one, and print one as a
+table across every quantification tool."""
 
 from __future__ import annotations
 
-import re
 import sys
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
 import polars as pl
 from cyclopts import App
 
-from apb_catalog.api import Catalog, catalogue_table, catalogues, rule_coverage
+from apb_catalog.api import catalog_table, rule_coverage, sets
 
 app = App(
     name="apb-catalog",
-    help="List APB catalogues, check the packaged APB2 rules against one, and print one as a table",
+    help="List APB catalog sets, check the packaged APB2 rules against one, and print one as a table",
     help_on_error=True,
 )
 
@@ -24,25 +23,25 @@ _LABELS = {"fail": "FAIL", "warn": "WARN", "pass": "PASS"}
 
 @app.default
 def overview() -> int:
-    """List every catalogue set, its prefix, its entries, and whether it sets requirements."""
-    for row in catalogues().iter_rows(named=True):
+    """List every set, its prefix, its entries, and whether it sets requirements."""
+    for row in sets().iter_rows(named=True):
         checked = "requirements" if row["has_requirements"] else "coverage only"
-        print(f"{row['catalogue']} ({row['prefix']}:): {row['entries']} entries, {checked}")
+        print(f"{row['set']} ({row['prefix']}:): {row['entries']} entries, {checked}")
         print(f"    {row['purpose']}")
     return 0
 
 
 @app.command
-def check(catalogue: str, software: str | None = None, /) -> int:
-    """Check every packaged rule level against CATALOGUE; exit 1 when one misses a required field.
+def check(set_name: str, software: str | None = None, /) -> int:
+    """Check every packaged rule level against SET_NAME; exit 1 when one misses a required field.
 
     Each line is FAIL, WARN or PASS with the rule level and its unsupported fields; levels the
-    catalogue sets no requirements for are left out, and a catalogue without any requirements
-    prints ---- for every level. With SOFTWARE, only that vendor's rules, each with every field
-    and the column answering it.
+    set sets no requirements for are left out, and a set without any requirements prints ----
+    for every level. With SOFTWARE, only that software's rules, each with every field and the
+    name of the field answering it.
     """
     try:
-        coverage = rule_coverage(catalogue)
+        coverage = rule_coverage(set_name)
     except ValueError as error:
         print(error, file=sys.stderr)
         return 2
@@ -51,7 +50,7 @@ def check(catalogue: str, software: str | None = None, /) -> int:
         coverage = coverage.filter(pl.col("software").str.to_lowercase() == software.lower())
         if coverage.is_empty():
             print(
-                f"{catalogue} has no rule of {software!r}; software: {', '.join(known)}",
+                f"{set_name} has no rule of {software!r}; software: {', '.join(known)}",
                 file=sys.stderr,
             )
             return 2
@@ -68,33 +67,40 @@ def check(catalogue: str, software: str | None = None, /) -> int:
 
 @app.command
 def meaning(
-    catalogue: str,
+    set_name: str,
     /,
     *,
     software: str | None = None,
-    version: str | None = None,
+    software_version: str | None = None,
     format: Literal["text", "csv"] = "text",
 ) -> int:
-    """Print CATALOGUE as one table: the column holding each catalogued meaning per rule level.
+    """Print SET_NAME as one table: the field holding each cataloged meaning per rule level.
 
-    One row per packaged rule level and field, with its key, kind and the catalogue's qualifiers;
-    ``none`` where the level has no column for it. With ``--software`` and ``--version``, only
-    the fields that software version's packaged rule declares. With ``--format csv``, the same
-    rows as CSV.
+    One row per packaged rule level and field: software, version label, level, slot, varm table,
+    name (``none`` where the level has no field for it), key, kind, one ``qualifier.<name>``
+    column per other qualifier of the set, and the app that writes the field, if any. With
+    ``--software`` and ``--software-version``, only the rule levels whose version pattern
+    admits that version. With ``--format csv``, the same rows as CSV.
     """
-    if (software is None) != (version is None):
-        print("--software and --version go together", file=sys.stderr)
+    if (software is None) != (software_version is None):
+        print("--software and --software-version go together", file=sys.stderr)
         return 2
     try:
-        if software is not None and version is not None:
-            fields = Catalog(software, version, catalogue).fields()
-            qualifiers = [name for name in fields.columns if name.startswith("qualifier.")]
-            table = fields.select("level", "location", "table", "name", "key", "kind", *qualifiers)
-        else:
-            table = _meanings(rule_coverage(catalogue))
+        coverage = rule_coverage(set_name)
     except ValueError as error:
         print(error, file=sys.stderr)
         return 2
+    if software is not None and software_version is not None:
+        coverage = coverage.filter(
+            (pl.col("software").str.to_lowercase() == software.lower())
+            & pl.lit(software_version).str.contains(pl.col("software_version_pattern"))
+        )
+        if coverage.is_empty():
+            print(
+                f"no packaged {software} rule admits version {software_version!r}", file=sys.stderr
+            )
+            return 2
+    table = _meanings(coverage)
     if format == "csv":
         sys.stdout.write(table.write_csv())
     else:
@@ -103,15 +109,15 @@ def meaning(
 
 
 @app.command
-def table(catalogue: str | None = None, /, *, output: Path | None = None) -> int:
-    """Write every catalogue set, or CATALOGUE alone, as one long CSV table.
+def table(set_name: str | None = None, /, *, output: Path | None = None) -> int:
+    """Write the whole catalog, or SET_NAME alone, as one long CSV table.
 
-    One row per entry and software version it applies to: set, source, software version
-    pattern, level, location, table, name, key, kind, one ``qualifier.<name>`` column per other
+    One row per entry and software version it applies to: set, source, version, software version
+    pattern, level, slot, table, name, key, kind, one ``qualifier.<name>`` column per other
     qualifier, requirement and entry id. Written to standard output, or to ``--output``.
     """
     try:
-        rows = catalogue_table(catalogue)
+        rows = catalog_table(set_name)
     except ValueError as error:
         print(error, file=sys.stderr)
         return 2
@@ -123,33 +129,20 @@ def table(catalogue: str | None = None, /, *, output: Path | None = None) -> int
 
 
 def _meanings(coverage: pl.DataFrame) -> pl.DataFrame:
-    """Software, version, level, column, key and kind, then one column per other qualifier."""
-    pairs = cast(list[str], coverage.get_column("qualifiers").drop_nulls().to_list())
-    names = sorted({pair.split("=", 1)[0] for text in pairs for pair in text.split(";")})
-    qualifiers = [
-        pl.col("qualifiers").str.extract(rf"(?:^|;){re.escape(name)}=([^;]*)").alias(name)
-        for name in names
-    ]
-    if coverage.get_column("origin").is_not_null().any():
-        qualifiers.append(pl.col("origin"))
-    column = (
-        pl.when(pl.col("table").is_not_null())
-        .then(pl.concat_str(pl.col("table"), pl.lit("."), pl.col("column")))
-        .otherwise(pl.col("column"))
-    )
-    column = (
-        pl.when(pl.col("producer").is_not_null())
-        .then(pl.concat_str(column, pl.lit(" ("), pl.col("producer"), pl.lit(")")))
-        .otherwise(column)
-    )
+    """Software, version, level, slot, table, name, key and kind, one column per other
+    qualifier, then the app that writes the field."""
+    qualifiers = [name for name in coverage.columns if name.startswith("qualifier.")]
     return coverage.select(
         "software",
         "version",
         "level",
-        column.fill_null("none").alias("column"),
+        "slot",
+        "table",
+        pl.col("name").fill_null("none"),
         "key",
         "kind",
         *qualifiers,
+        "producer",
     )
 
 
@@ -168,7 +161,7 @@ def _aligned(table: pl.DataFrame) -> str:
 def _summary(variant: str, rows: pl.DataFrame) -> str:
     verdict = rows.get_column("verdict")[0]
     line = f"{_LABELS.get(verdict, '----')}  {variant}"
-    missing = rows.filter(pl.col("column").is_null() & pl.col("requirement").is_not_null())
+    missing = rows.filter(pl.col("name").is_null() & pl.col("requirement").is_not_null())
     if missing.is_empty():
         return line
     fields = ", ".join(
@@ -180,17 +173,22 @@ def _summary(variant: str, rows: pl.DataFrame) -> str:
 
 def _field(row: dict[str, object]) -> str:
     if row["key"] is None:
-        return "no catalogued field"
+        return "no cataloged field"
     label = str(row["key"])
-    if row["qualifiers"]:
-        label += f" [{row['qualifiers']}]"
+    pairs = sorted(
+        f"{name.removeprefix('qualifier.')}={value}"
+        for name, value in row.items()
+        if name.startswith("qualifier.") and value is not None
+    )
+    if pairs:
+        label += f" [{';'.join(pairs)}]"
     if row["requirement"]:
         label += f" {row['requirement']}"
-    if row["column"] is None:
+    if row["name"] is None:
         return f"{label}: missing"
-    column = f"{row['table']}.{row['column']}" if row["table"] else str(row["column"])
-    notes = [str(note) for note in (row["origin"], row["needs"]) if note]
-    return f"{label}: {column}" + (f" ({'; '.join(notes)})" if notes else "")
+    name = f"{row['table']}.{row['name']}" if row["table"] else str(row["name"])
+    notes = [str(note) for note in (row["producer"], row["needs"]) if note]
+    return f"{label}: {name}" + (f" ({'; '.join(notes)})" if notes else "")
 
 
 def main() -> int:

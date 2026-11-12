@@ -1,4 +1,4 @@
-set,software,location,name,key,kind,qualifier,value,fixed,psi_ms,basis,evidence_url
+set,source,location,name,key,kind,qualifier,value,fixed,psi_ms,basis,evidence_url
 abundance_alpha,AlphaDIA/1.10,peptidoform_ion/layers,Intensity/-,intensity_norm_settings,intensity,normalization,run_setting,true,MS:1001850;MS:1001852,"AlphaDIA's precursor-level directLFQ intensity matrix; normalised when the run sets search_output.normalize_lfq, on by default.",https://doi.org/10.1016/j.mcpro.2023.100581
 abundance_alpha,AlphaDIA/1.10,peptidoform_ion/layers,Intensity/-,intensity_norm_settings,intensity,aggregation,none,false,MS:1001850;MS:1001852,"AlphaDIA's precursor-level directLFQ intensity matrix; normalised when the run sets search_output.normalize_lfq, on by default.",https://doi.org/10.1016/j.mcpro.2023.100581
 abundance_alpha,AlphaDIA/1.10,peptidoform_ion/layers,Intensity/-,intensity_norm_settings,intensity,ms_level,ms2,false,MS:1001850;MS:1001852,"AlphaDIA's precursor-level directLFQ intensity matrix; normalised when the run sets search_output.normalize_lfq, on by default.",https://doi.org/10.1016/j.mcpro.2023.100581

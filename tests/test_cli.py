@@ -1,4 +1,4 @@
-"""The command line lists the catalogues, checks the packaged rules against one, and prints one
+"""The command line lists the sets, checks the packaged rules against one, and prints one
 as a table."""
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ def _run(*argv: str) -> object:
     return app(list(argv), exit_on_error=False, result_action="return_value")
 
 
-def test_without_arguments_every_catalogue_is_listed(
+def test_without_arguments_every_set_is_listed(
     toy_set: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """One line per set, packaged or plugin, saying whether it sets requirements."""
@@ -45,26 +45,30 @@ def test_a_set_without_requirements_never_fails(capsys: pytest.CaptureFixture[st
 def test_software_shows_every_field_and_its_column(
     toy_set: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The vendor's own columns, computed inputs, origins and what to run are all named."""
+    """The vendor's own fields, their qualifiers, the app that writes one and what to run."""
     _run("check", toy_set, "fragpipe")
     output = capsys.readouterr().out
-    assert "charge required: Charge (vendor)" in output
-    assert "decoy optional: apb_Decoy (vendor)" in output
+    assert "charge [origin=vendor] required: Charge" in output
+    assert "decoy [origin=vendor] optional: apb_Decoy" in output
     assert "group required: missing" in output
-    assert "(apb_fasta; run `apb-fasta verify-peptides`)" in output
+    assert "(apb-fasta; run `apb-fasta verify-peptides`)" in output
     assert "DIA-NN" not in output
 
 
-def test_meaning_prints_the_column_of_every_meaning_per_rule_level(
+MEANING = ["software", "version", "level", "slot", "table", "name", "key", "kind"]
+
+
+def test_meaning_prints_the_field_of_every_meaning_per_rule_level(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """One row per rule level and field, with its key, kind and the set's qualifiers as columns."""
     assert _run("meaning", "abundance_alpha") == 0
     lines = capsys.readouterr().out.splitlines()
-    header = ["software", "version", "level", "column", "key", "kind"]
-    assert lines[0].split() == [*header, "aggregation", "ms_level", "normalization"]
-    row = ["DIA-NN", "2.x", "peptidoform_ion", "Precursor_Normalised", "intensity_norm_settings"]
-    assert [*row, "intensity", "none", "ms2", "run_setting"] in [line.split() for line in lines]
+    qualifiers = ["qualifier.normalization", "qualifier.aggregation", "qualifier.ms_level"]
+    assert lines[0].split() == [*MEANING, *qualifiers, "producer"]
+    row = ["DIA-NN", "2.x", "peptidoform_ion", "layers", "Precursor_Normalised"]
+    expected = [*row, "intensity_norm_settings", "intensity", "run_setting", "none", "ms2"]
+    assert expected in [line.split() for line in lines]
 
 
 def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str]) -> None:
@@ -72,34 +76,39 @@ def test_meaning_writes_the_same_rows_as_csv(capsys: pytest.CaptureFixture[str])
     assert _run("meaning", "abundance_alpha", "--format", "csv") == 0
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
     assert table.columns == [
-        "software",
-        "version",
-        "level",
-        "column",
-        "key",
-        "kind",
-        "aggregation",
-        "ms_level",
-        "normalization",
+        *MEANING,
+        "qualifier.normalization",
+        "qualifier.aggregation",
+        "qualifier.ms_level",
+        "producer",
     ]
     assert table.height == rule_coverage("abundance_alpha").height
 
 
+def test_meaning_narrows_to_one_software_version(capsys: pytest.CaptureFixture[str]) -> None:
+    """``--software`` and ``--software-version`` keep the rule levels admitting that version."""
+    argv = ("meaning", "abundance_alpha", "--software", "dia-nn", "--software-version", "2.6.0")
+    assert _run(*argv, "--format", "csv") == 0
+    table = pl.read_csv(io.StringIO(capsys.readouterr().out))
+    assert set(table.get_column("version")) == {"2.x"}
+    assert "Precursor_Quantity" in table.get_column("name").to_list()
+
+
 def test_a_level_without_an_entry_names_none(capsys: pytest.CaptureFixture[str]) -> None:
-    """A rule level the set has no entry for still gets a row, its column ``none``."""
+    """A rule level the set has no entry for still gets a row, its name ``none``."""
     _run("meaning", "confidence_alpha", "--format", "csv")
     table = pl.read_csv(io.StringIO(capsys.readouterr().out))
-    assert not table.filter(pl.col("column") == "none").is_empty()
+    assert not table.filter(pl.col("name") == "none").is_empty()
 
 
-def test_meaning_names_who_writes_a_column(
-    toy_set: str, capsys: pytest.CaptureFixture[str]
-) -> None:
-    """A column another package writes carries its producer, and the origin becomes a column."""
-    _run("meaning", toy_set)
-    lines = capsys.readouterr().out.splitlines()
-    assert lines[0].split()[-1] == "origin"
-    assert any("fasta_validation.fasta_matches_contaminant (apb-fasta)" in line for line in lines)
+def test_meaning_names_who_writes_a_field(toy_set: str, capsys: pytest.CaptureFixture[str]) -> None:
+    """A field another package writes names its producer; the toy set's origin is a qualifier."""
+    _run("meaning", toy_set, "--format", "csv")
+    table = pl.read_csv(io.StringIO(capsys.readouterr().out))
+    assert table.columns[-2:] == ["qualifier.origin", "producer"]
+    found = table.filter(pl.col("name") == "fasta_matches_contaminant")
+    assert set(found.get_column("table")) == {"fasta_validation"}
+    assert set(found.get_column("producer")) == {"apb-fasta"}
 
 
 @pytest.mark.parametrize(

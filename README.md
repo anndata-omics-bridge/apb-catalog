@@ -7,15 +7,15 @@ APB Catalog finds APB result fields by reviewed meaning, so a consumer asks for 
 
 Documentation: [anndata-omics-bridge.github.io/apb-catalog](https://anndata-omics-bridge.github.io/apb-catalog/)
 
-Catalog viewer: [fgcz-ms.uzh.ch/public/apb-catalog](https://fgcz-ms.uzh.ch/public/apb-catalog/), every catalogue set with its entries, requirements and coverage, in the browser.
+Catalog viewer: [fgcz-ms.uzh.ch/public/apb-catalog](https://fgcz-ms.uzh.ch/public/apb-catalog/), every set with its entries, requirements and coverage, in the browser.
 
 | Page | For |
 | --- | --- |
 | [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/) | Install, look up fields, use the data |
-| [Catalogues](https://anndata-omics-bridge.github.io/apb-catalog/catalogues/) | Every set: its vocabulary, which software has which field |
+| [Sets](https://anndata-omics-bridge.github.io/apb-catalog/sets/) | Every set: its vocabulary, which software has which field |
 | [Python API](https://anndata-omics-bridge.github.io/apb-catalog/api/) | Every call, answer, table and command |
 | [Maintaining](https://anndata-omics-bridge.github.io/apb-catalog/maintaining/) | APB2 rule changes, new sets, the checks |
-| [Contributing](https://anndata-omics-bridge.github.io/apb-catalog/contributing/) | Extend a catalog, or create your own |
+| [Contributing](https://anndata-omics-bridge.github.io/apb-catalog/contributing/) | Extend a set, or create your own |
 
 ## Install
 
@@ -34,11 +34,11 @@ pep = ion.layers.get("pep")        # runs × ions, numpy; None when the vendor r
 ion.layers.name("pep")             # MaxQuant 'PEP', Spectronaut 'EG_PEP', DIA-NN 'PEP'
 ```
 
-With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence")`; see [pandas](https://anndata-omics-bridge.github.io/apb-catalog/api/#pandas).
+With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence_alpha")`; see [pandas](https://anndata-omics-bridge.github.io/apb-catalog/api/#pandas).
 
 ```bash
 apb-catalog                       # every set
-apb-catalog check SET             # FAIL, WARN or PASS per packaged rule level; ---- for a set without requirements
+apb-catalog check SET_NAME        # FAIL, WARN or PASS per packaged rule level; ---- for a set without requirements
 ```
 
 ## Development

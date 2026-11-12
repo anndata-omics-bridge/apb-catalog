@@ -1,6 +1,6 @@
 """The self-contained resolution record stored as ``ParsedLevels.metadata["catalog"][name]["result"]``.
 
-Readers implementing this contract need neither this package nor its catalogues: the set's
+Readers implementing this contract need neither this package nor its sets: the set's
 vocabulary, entry meanings and every answer are embedded.
 """
 
@@ -10,11 +10,11 @@ from importlib import metadata, resources
 from typing import Literal
 
 from apb_catalog.resolver import FieldRequest, LevelBinding, Resolution
-from apb_catalog.source import CatalogueDescription, SourceEntry
+from apb_catalog.source import SetDescription, SourceEntry
 from apb_catalog.vocabulary import FrozenModel, SetVocabulary
 
 CONTRACT = "apb-catalog-resolution"
-CONTRACT_VERSION = "0.9"
+CONTRACT_VERSION = "0.10"
 SCHEMA_FILE = f"{CONTRACT}-{CONTRACT_VERSION}.schema.json"
 
 
@@ -34,10 +34,10 @@ class ResolutionSnapshot(FrozenModel):
     """Level bindings, the retained entries they supply, and the answers to consumer requests."""
 
     contract: Literal["apb-catalog-resolution"] = CONTRACT
-    contract_version: Literal["0.9"] = CONTRACT_VERSION
+    contract_version: Literal["0.10"] = CONTRACT_VERSION
     producer: Producer
-    catalogue: str
-    description: CatalogueDescription
+    set_name: str
+    description: SetDescription
     vocabulary_version: str
     vocabulary: SetVocabulary
     levels: tuple[LevelBinding, ...]

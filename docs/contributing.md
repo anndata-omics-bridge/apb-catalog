@@ -1,10 +1,10 @@
 # Contributing
 
-The catalog can be extended to suit your application. New terms are supported by adding catalog entries, without changing APB2's parser, and you are welcome to create catalogs of your own. Together with APB2's tested parsing rules, the catalogs are meant as a community resource on what quantification software reports and how applications use it.
+The catalog can be extended to suit your application. New terms are supported by adding catalog entries, without changing APB2's parser, and you are welcome to create sets of your own. Together with APB2's tested parsing rules, the catalog is meant as a community resource on what quantification software reports and how applications use it.
 
-## What a catalog is
+## What a set is
 
-A catalogue set covers one topic, such as `abundance_alpha` or `confidence_alpha`:
+A set covers one topic, such as `abundance_alpha` or `confidence_alpha`:
 
 | Part | Holds | Example |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Two people fill a set:
 - the application developer writes the terms the application needs, and how strongly, before any software maps them; a term no entry maps yet loads with a warning
 - the integrator writes the entries for each software version and quotes the tool's documentation
 
-`apb-catalog check SET` then reports, for every software version APB2 converts, which required or recommended terms it lacks. The [catalog viewer](https://fgcz-ms.uzh.ch/public/apb-catalog/) shows every set in the browser.
+`apb-catalog check SET_NAME` then reports, for every software version APB2 converts, which required or recommended terms it lacks. The [catalog viewer](https://fgcz-ms.uzh.ch/public/apb-catalog/) shows every set in the browser.
 
 ## Ways to contribute
 
@@ -27,15 +27,15 @@ Two people fill a set:
 | A software version or a field a set lacks | Add its entries by pull request; see [An entry](maintaining.md#an-entry) |
 | An entry corrected | Open an issue or a pull request with the evidence |
 | Terms for your application, from Python, R and TypeScript | Add a set to apb-catalog by pull request; see [Adding a set](maintaining.md#adding-a-set) |
-| A catalog released with your own application | A plugin set in your package; see below |
+| A set released with your own application | A plugin set in your package; see below |
 
-## A catalog of your own
+## A set of your own
 
 A Python package adds a set without changing apb-catalog: the same CSV tables with only its rows, registered as an entry point:
 
 ```toml
-[project.entry-points."apb_catalog.catalogues"]
-peak_qc = "peak_qc_app.catalogue"
+[project.entry-points."apb_catalog.sets"]
+peak_qc = "peak_qc_app.peak_qc"
 ```
 
 - `DataCatalog(result, "peak_qc")`, `rule_coverage("peak_qc")` and `apb-catalog check peak_qc` work as for a packaged set
@@ -45,7 +45,7 @@ peak_qc = "peak_qc_app.catalogue"
 
 ## A mini example: two tools
 
-A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogues both for DIA-NN and FragPipe, in six files in the package folder `peak_qc_app/catalogue/`. Every row of every file starts with the set's name, `peak_qc`; the tables leave that column out, and the CSV file under each table has it.
+A peak-shape QC app needs each ion's retention time and, if the software reports it, its peak width. The set `peak_qc` catalogs both for DIA-NN and FragPipe, in six files in the package folder `peak_qc_app/peak_qc/`. Every row of every file starts with the set's name, `peak_qc`; the tables leave that column out, and the CSV file under each table has it.
 
 `sets.csv` holds the set's one row: its prefix, what its fields are, what its kinds name, its purpose and its users. The prefix asks this set alone, as `pqc:retention_time`; `v` is reserved, and no two sets share one.
 
@@ -63,7 +63,7 @@ peak_qc,pqc,Retention time and peak width of an ion in one run.,Which quantity t
 
 </details>
 
-`terms.csv` is where the set starts: the terms the app asks for, before any software maps them. Each is a key at one location, `<level>/<attribute>`, with the kind it stands for and how strongly the app needs it. A key that fixes a qualifier value, such as abundance's `intensity` with `normalization` `none`, has one row per fixed value; these keys fix none, so `qualifier` and `value` stay empty. `catalog.csv` may map no other term.
+`terms.csv` is where the set starts: the terms the app asks for, before any software maps them. Each is a key at one location, `<level>/<slot>`, with the kind it stands for and how strongly the app needs it. A key that fixes a qualifier value, such as abundance's `intensity` with `normalization` `none`, has one row per fixed value; these keys fix none, so `qualifier` and `value` stay empty. `catalog.csv` may map no other term.
 
 | `location` | `key` | `kind` | `qualifier` | `value` | `requirement` | `definition` |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -135,9 +135,9 @@ peak_qc,unit,unknown,The reviewer could not establish this.
 
 </details>
 
-`catalog.csv` maps the terms to columns: one row per column a software writes and qualifier of its set; this set has one qualifier, so one row per column. `software`, `location` and `name` say where the column lives, as `<software>/<version>`, `<level>/<attribute>` and `<key>/<column>` (see [An entry](maintaining.md#an-entry)); then come the term's key and kind, its value of the set's qualifier, here the unit, whether the key fixes that value, the key's PSI-MS terms, left empty here, and the evidence; key, kind, `fixed` and PSI-MS terms repeat `terms.csv`, so each row reads alone. Version `*` holds for every version; DIA-NN reports `FWHM` only from 2.x, so that entry names the label `2.x`. Neither key fixes the unit, so `fixed` is `false`; a key whose term fixes one, such as abundance's `intensity_norm_settings` with `normalization` `run_setting`, is `true` on every row of that qualifier.
+`catalog.csv` maps the terms to columns: one row per column a software writes and qualifier of its set; this set has one qualifier, so one row per column. `source`, `location` and `name` say who writes the column and where it lives, as `<source>/<version>`, `<level>/<slot>` and `<layer or table>/<column>` (see [An entry](maintaining.md#an-entry)); then come the term's key and kind, its value of the set's qualifier, here the unit, whether the key fixes that value, the key's PSI-MS terms, left empty here, and the evidence; key, kind, `fixed` and PSI-MS terms repeat `terms.csv`, so each row reads alone. Version `*` holds for every version; DIA-NN reports `FWHM` only from 2.x, so that entry names the label `2.x`. Neither key fixes the unit, so `fixed` is `false`; a key whose term fixes one, such as abundance's `intensity_norm_settings` with `normalization` `run_setting`, is `true` on every row of that qualifier.
 
-| `software` | `location` | `name` | `key` | `kind` | `qualifier` | `value` | `fixed` | `basis` | `evidence_url` |
+| `source` | `location` | `name` | `key` | `kind` | `qualifier` | `value` | `fixed` | `basis` | `evidence_url` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `DIA-NN/*` | `peptidoform_ion/layers` | `RT/-` | `retention_time` | `retention_time` | `unit` | `minute` | `false` | DIA-NN README: the observed precursor retention time, in minutes. | [DIA-NN README](https://github.com/vdemichev/DiaNN#main-output-reference) |
 | `DIA-NN/2.x` | `peptidoform_ion/layers` | `FWHM/-` | `peak_fwhm` | `peak_fwhm` | `unit` | `minute` | `false` | DIA-NN README: the estimated peak width at half maximum, in minutes. | [DIA-NN README](https://github.com/vdemichev/DiaNN#main-output-reference) |
@@ -148,7 +148,7 @@ peak_qc,unit,unknown,The reviewer could not establish this.
 <summary>The CSV file: <code>catalog.csv</code></summary>
 
 ```csv
-set,software,location,name,key,kind,qualifier,value,fixed,psi_ms,basis,evidence_url
+set,source,location,name,key,kind,qualifier,value,fixed,psi_ms,basis,evidence_url
 peak_qc,DIA-NN/*,peptidoform_ion/layers,RT/-,retention_time,retention_time,unit,minute,false,,"DIA-NN README: the observed precursor retention time, in minutes.",https://github.com/vdemichev/DiaNN#main-output-reference
 peak_qc,DIA-NN/2.x,peptidoform_ion/layers,FWHM/-,peak_fwhm,peak_fwhm,unit,minute,false,,"DIA-NN README: the estimated peak width at half maximum, in minutes.",https://github.com/vdemichev/DiaNN#main-output-reference
 peak_qc,FragPipe/*,peptidoform_ion/layers,Apex_Retention_Time/-,retention_time,retention_time,unit,unknown,false,,"FragPipe outputs: the retention time of the precursor's apex intensity; the unit depends on the instrument.",https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html
@@ -202,6 +202,6 @@ A key that fixes the unit is a different matter. Added beside `retention_time`, 
 
 ## Getting started
 
-- See what exists in the [catalog viewer](https://fgcz-ms.uzh.ch/public/apb-catalog/) and on [Catalogues](catalogues.md)
+- See what exists in the [catalog viewer](https://fgcz-ms.uzh.ch/public/apb-catalog/) and on [Sets](sets.md)
 - Open an [issue](https://github.com/anndata-omics-bridge/apb-catalog/issues) naming your application, the terms it needs and how strongly
 - A pull request runs `make check`, whose tests compare every entry with APB2's packaged rules

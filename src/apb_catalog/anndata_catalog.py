@@ -7,7 +7,7 @@ the same result: the lookup is shared, only the values come from AnnData. A leve
 APB2's, which its ``uns["apb"]`` maps to the names AnnData stores, such as ``a/b`` to ``a_b``.
 
 ``levels["protein"].as_anndata()`` and ``as_mudata()`` convert: a new object holding only the
-catalogued fields, each under its key, which ``write_h5ad`` or ``write_h5mu`` writes.
+cataloged fields, each under its key, which ``write_h5ad`` or ``write_h5mu`` writes.
 """
 
 from __future__ import annotations
@@ -118,7 +118,7 @@ class AnnDataLevel:
         return self._stored.adata.var_names
 
     def as_anndata(self) -> AnnData:
-        """The level's catalogued fields alone, each under its key, as a new AnnData.
+        """The level's cataloged fields alone, each under its key, as a new AnnData.
 
         ``layers``, ``var`` and ``obs`` keep the level's run and feature names; ``X`` is empty,
         since no set says which layer is primary. A key that names several fields in one slot
@@ -128,7 +128,7 @@ class AnnDataLevel:
         level's own name for it; under ``absent``, the required and recommended keys the level
         lacks; under ``source``, the level's APB2 record. The level itself is left unchanged.
         """
-        columns = _catalogued(self.name, self._sets)
+        columns = _cataloged(self.name, self._sets)
         adata = self._stored.adata
         layers = {
             name: self._layer(entry.reference) for name, (_, entry) in columns["layers"].items()
@@ -187,22 +187,22 @@ class DataCatalog:
 
     __slots__ = ("_namespace", "_sets", "levels")
 
-    def __init__(self, data: MuData | AnnData, *catalogs: str, enforce: Enforce = None) -> None:
+    def __init__(self, data: MuData | AnnData, *sets: str, enforce: Enforce = None) -> None:
         namespace = _namespace(data.uns)
         storage = UnsJsonCodec().storage(namespace)
         entries = cast(list[dict[str, str]], storage["levels"])
         stored = {entry["name"]: _stored(data, entry["physical_name"]) for entry in entries}
-        sets = ComposedSets(
+        composed = ComposedSets(
             {name: level.fields for name, level in stored.items()},
             _metadata(namespace),
-            catalogs,
+            sets,
             enforce,
         )
-        lookup = sets.lookup()
+        lookup = composed.lookup()
         self._namespace = namespace
-        self._sets = sets
+        self._sets = composed
         self.levels = {
-            name: AnnDataLevel(name, level, lookup, sets) for name, level in stored.items()
+            name: AnnDataLevel(name, level, lookup, composed) for name, level in stored.items()
         }
 
     @staticmethod
@@ -211,7 +211,7 @@ class DataCatalog:
         return sets_answering(_metadata(_namespace(data.uns)))
 
     def as_mudata(self) -> MuData:
-        """Every level with a catalogued field as :meth:`AnnDataLevel.as_anndata` converts it, one
+        """Every level with a cataloged field as :meth:`AnnDataLevel.as_anndata` converts it, one
         modality each, under the level's name; ``uns["catalog"]`` names the sets and holds the
         object's APB2 record as ``source``. The object itself is left unchanged."""
         modalities = {name: level.as_anndata() for name, level in self.levels.items()}
@@ -226,11 +226,9 @@ class DataCatalog:
         return mdata
 
 
-def _catalogued(
-    level: str, sets: ComposedSets
-) -> dict[Written, dict[str, tuple[str, SourceEntry]]]:
-    """The fields the sets catalogue on one level, by slot, each under the name a conversion
-    writes, with the set that catalogues it; a field one key names twice, once."""
+def _cataloged(level: str, sets: ComposedSets) -> dict[Written, dict[str, tuple[str, SourceEntry]]]:
+    """The fields the sets catalog on one level, by slot, each under the name a conversion
+    writes, with the set that catalogs it; a field one key names twice, once."""
     found: dict[tuple[str, Address], tuple[str, SourceEntry]] = {}
     for name, lookups in sets.sets.items():
         view = lookups.views.get(level)
@@ -293,7 +291,7 @@ def _absent(
     written = [entry for found in columns.values() for _, entry in found.values()]
     absent: dict[str, dict[str, str]] = {}
     for lookups in sets.sets.values():
-        for row in lookups.catalogues.requirements:
+        for row in lookups.loaded.requirements:
             if row.level != level or row.requirement == "optional":
                 continue
             if not any(row.describes(entry) for entry in written):

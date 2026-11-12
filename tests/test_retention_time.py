@@ -63,7 +63,7 @@ def test_data_catalog_returns_original_values_without_converting() -> None:
     assert found is not None
     assert found[:, 0].tolist() == [0.0, 12.5], "zero RT and original minutes are preserved"
     snapshot = catalog.snapshot().model_dump(mode="json")
-    assert snapshot["catalogue"] == "chromatography_alpha"
+    assert snapshot["set_name"] == "chromatography_alpha"
 
 
 def test_a_level_narrows_by_qualifiers_through_get_and_name() -> None:

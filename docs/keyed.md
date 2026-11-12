@@ -29,8 +29,8 @@ MuData object with n_obs × n_vars = 4 × 12
 ## What the new object holds
 
 - **Sets:** the named ones alone; `apb_alpha` brings the identifiers and the `decoy` and `contaminant` flags only when named
-- **Modalities:** one per level that has a catalogued field; `levels["protein"].as_anndata()` converts a single level
-- **`layers`, `var`, `obs`:** one entry per catalogued field, named by its key
+- **Modalities:** one per level that has a cataloged field; `levels["protein"].as_anndata()` converts a single level
+- **`layers`, `var`, `obs`:** one entry per cataloged field, named by its key
 - **Run and feature names:** the result's own
 - **`X`:** empty, since no set says which layer is primary
 - **A field two keys name:** written under both; DIA-NN's `Protein_Group` is both `protein_assignment` and `fasta_accessions`

@@ -19,20 +19,20 @@ With pandas, on the MuData or AnnData object APB2 wrote, the same keys return An
 | Page | For |
 | --- | --- |
 | [Get started](getting-started.md) | Install, look up fields, use the data |
-| [Catalogues](catalogues.md) | Every set: its vocabulary, which software has which field |
+| [Sets](sets.md) | Every set: its vocabulary, which software has which field |
 | [Python API](api.md) | Every call, answer, table and command |
 | [Maintaining](maintaining.md) | APB2 rule changes, new sets, the checks |
-| [Contributing](contributing.md) | Extend a catalog, or create your own |
+| [Contributing](contributing.md) | Extend a set, or create your own |
 
-## Catalogue or rule role?
+## Set or rule role?
 
 APB2 rules can mark a column with a [semantic role](https://anndata-omics-bridge.github.io/apb2/rule-based/#semantic-roles) such as `abundance_alpha` or `protein_assignment`; the [role policy](https://github.com/anndata-omics-bridge/apb2/blob/main/src/apb2/parserV2/vendor_parse_rules/schema/role_policy.json) owns that vocabulary.
 
 | Meaning | Lives in |
 | --- | --- |
 | Needed by several tools, or defined by APB2 itself | A role in the rule |
-| Needed by one consumer or an external standard | A catalogue set |
-| More detail about a role, such as an abundance layer's normalization | A catalogue set that qualifies the role |
+| Needed by one consumer or an external standard | A set |
+| More detail about a role, such as an abundance layer's normalization | A set that qualifies the role |
 
 ## How it stays correct
 

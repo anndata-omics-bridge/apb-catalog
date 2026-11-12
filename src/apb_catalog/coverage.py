@@ -1,4 +1,4 @@
-"""Which catalogued fields every packaged rule supplies, and whether each level meets its set.
+"""Which cataloged fields every packaged rule supplies, and whether each level meets its set.
 
 A set with requirements judges each rule level: ``fail`` when a required field is unsupported,
 ``warn`` when a recommended one is, ``pass`` otherwise; an unsupported optional field is listed
@@ -14,39 +14,35 @@ import polars as pl
 
 from apb_catalog import rules
 from apb_catalog.source import (
-    ProducerCatalogue,
+    LoadedSet,
+    ProducerEntries,
     RequirementRow,
     RuleVariant,
-    SourceCatalogues,
     SourceEntry,
-    catalogue_descriptions,
-    catalogue_set,
+    load_set,
+    set_descriptions,
 )
+from apb_catalog.table import qualifier_names
 
 type Verdict = Literal["pass", "warn", "fail"]
 
-COVERAGE_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
-    "software": pl.String,
-    "version": pl.String,
-    "software_version_pattern": pl.String,
-    "level": pl.String,
-    "key": pl.String,
-    "kind": pl.String,
-    "qualifiers": pl.String,
-    "origin": pl.String,
-    "producer": pl.String,
-    "requirement": pl.String,
-    "location": pl.String,
-    "table": pl.String,
-    "column": pl.String,
-    "needs": pl.String,
-    "verdict": pl.String,
-}
-"""One row per catalogued or required field of one rule level; a level with neither has one
-row without a key."""
+COVERAGE_COLUMNS = (
+    "software",
+    "version",
+    "software_version_pattern",
+    "level",
+    "slot",
+    "table",
+    "name",
+    "key",
+    "kind",
+)
+"""The columns before the set's ``qualifier.<name>`` columns; ``producer``, ``requirement``,
+``needs`` and ``verdict`` follow. One row per cataloged or required field of one rule level; a
+level with neither has one row without a key."""
 
-CATALOGUES_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
-    "catalogue": pl.String,
+SETS_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
+    "set": pl.String,
     "prefix": pl.String,
     "purpose": pl.String,
     "used_by": pl.List(pl.String),
@@ -57,15 +53,15 @@ CATALOGUES_SCHEMA: dict[str, pl.DataType | type[pl.DataType]] = {
 _SEVERITY: dict[str, Verdict] = {"required": "fail", "recommended": "warn", "optional": "pass"}
 
 
-def catalogues() -> pl.DataFrame:
-    """List every packaged and plugin catalogue set: the prefix that asks it alone, purpose,
+def sets() -> pl.DataFrame:
+    """List every packaged and plugin set: the prefix that asks it alone, purpose,
     users, and entry count."""
     rows: list[dict[str, object]] = []
-    for name, description in catalogue_descriptions().items():
-        sources = catalogue_set(name)
+    for name, description in set_descriptions().items():
+        sources = load_set(name)
         rows.append(
             {
-                "catalogue": name,
+                "set": name,
                 "prefix": sources.vocabulary.prefix,
                 "purpose": description.purpose,
                 "used_by": list(description.used_by),
@@ -73,32 +69,33 @@ def catalogues() -> pl.DataFrame:
                 "entries": sum(len(source.entries) for source in sources.sources()),
             }
         )
-    return pl.DataFrame(rows, schema=CATALOGUES_SCHEMA)
+    return pl.DataFrame(rows, schema=SETS_SCHEMA)
 
 
-def rule_coverage(catalogue: str) -> pl.DataFrame:
-    """Check every packaged rule level against one catalogue set, one row per field.
+def rule_coverage(set_name: str) -> pl.DataFrame:
+    """Check every packaged rule level against one set, one row per field.
 
-    Columns: ``software``, ``version`` (the label), ``software_version_pattern``, ``level``,
-    ``key``, ``kind``, ``qualifiers`` (the other qualifiers as ``name=value``), ``origin``,
-    ``producer``
-    (the app, null for the conversion software's fields), ``requirement``, ``location``,
-    ``table``, ``column`` (null when unsupported), ``needs`` (what to run before the field
-    exists) and ``verdict`` (the rule level's, null for a set without requirements).
+    Columns: ``software`` (the quantification software of the rule), ``version`` (the label),
+    ``software_version_pattern``, ``level``, ``slot``, ``table`` (the ``varm`` table, else
+    null), ``name`` (the field's name, null when unsupported), ``key``, ``kind``, one
+    ``qualifier.<name>`` column per other qualifier of the set, as in
+    :func:`~apb_catalog.table.catalog_table`, ``producer`` (the app, null for the quantification
+    software's fields), ``requirement``, ``needs`` (what to run before the field exists) and
+    ``verdict`` (the rule level's, null for a set without requirements).
 
     Raises:
-        ValueError: The catalogue set is neither packaged nor installed by a plugin.
+        ValueError: The set is neither packaged nor installed by a plugin.
     """
-    return coverage_of(catalogue_set(catalogue))
+    return coverage_of(load_set(set_name))
 
 
-def coverage_of(sources: SourceCatalogues) -> pl.DataFrame:
-    """Check every rule variant of one loaded catalogue set; see :func:`rule_coverage`.
+def coverage_of(sources: LoadedSet) -> pl.DataFrame:
+    """Check every rule variant of one loaded set; see :func:`rule_coverage`.
 
-    A set without vendor catalogues answers for every packaged rule level, so each is checked.
+    A set without vendor entries answers for every packaged rule level, so each is checked.
     """
     rows: list[dict[str, object]] = []
-    for vendor in sources.catalogues:
+    for vendor in sources.vendors:
         for variant in vendor.variants:
             rows += _variant_rows(
                 sources, vendor.software_name, variant, vendor.entries_for(variant)
@@ -109,16 +106,29 @@ def coverage_of(sources: SourceCatalogues) -> pl.DataFrame:
                 level=found.level, software_version_pattern=found.software_version_pattern
             )
             rows += _variant_rows(sources, found.software_name, variant, ())
-    return pl.DataFrame(rows, schema=COVERAGE_SCHEMA)
+    return pl.DataFrame(rows, schema=coverage_schema(sources))
+
+
+def coverage_schema(sources: LoadedSet) -> dict[str, type[pl.DataType]]:
+    """The coverage table's columns for one set: see :func:`rule_coverage`."""
+    columns = (
+        *COVERAGE_COLUMNS,
+        *(f"qualifier.{name}" for name in qualifier_names(sources)),
+        "producer",
+        "requirement",
+        "needs",
+        "verdict",
+    )
+    return dict.fromkeys(columns, pl.String)
 
 
 def _variant_rows(
-    sources: SourceCatalogues,
+    sources: LoadedSet,
     software: str,
     variant: RuleVariant,
     vendor_entries: tuple[SourceEntry, ...],
 ) -> list[dict[str, object]]:
-    found: list[tuple[SourceEntry, ProducerCatalogue | None]] = [
+    found: list[tuple[SourceEntry, ProducerEntries | None]] = [
         (entry, None) for entry in vendor_entries
     ]
     found += [
@@ -137,14 +147,18 @@ def _variant_rows(
         "verdict": verdict,
     }
     rows = [
-        {**base, **_field(entry, producer), "requirement": _requirement(required, entry)}
+        {
+            **base,
+            **_field(sources, entry, producer),
+            "requirement": _requirement(required, entry),
+        }
         for entry, producer in found
     ]
     rows += [
         {
             **base,
             **_meaning(sources, row.key),
-            "location": row.location,
+            "slot": row.location,
             "requirement": row.requirement,
         }
         for row in missing
@@ -159,14 +173,15 @@ def _requirement(required: list[RequirementRow], entry: SourceEntry) -> str | No
     return None if row is None else row.requirement
 
 
-def _pairs(qualifiers: dict[str, str]) -> str | None:
-    return ";".join(f"{name}={value}" for name, value in sorted(qualifiers.items())) or None
+def _qualifiers(sources: LoadedSet, values: dict[str, str]) -> dict[str, object]:
+    """One ``qualifier.<name>`` column per qualifier of the set, null where no value is given."""
+    return {f"qualifier.{name}": values.get(name) for name in qualifier_names(sources)}
 
 
-def _meaning(sources: SourceCatalogues, key: str) -> dict[str, object]:
-    """The key, kind and other qualifiers of a required key no entry supplies."""
+def _meaning(sources: LoadedSet, key: str) -> dict[str, object]:
+    """The key, kind and fixed qualifiers of a required key no entry supplies."""
     found = sources.key(key)
-    return {"key": key, "kind": found.kind, "qualifiers": _pairs(found.fixed)}
+    return {"key": key, "kind": found.kind, **_qualifiers(sources, found.fixed)}
 
 
 def _position(required: list[RequirementRow], row: dict[str, object]) -> tuple[int, bool]:
@@ -182,18 +197,17 @@ def _verdict(requirements: list[str]) -> Verdict:
     return "warn" if "warn" in severities else "pass"
 
 
-def _field(entry: SourceEntry, producer: ProducerCatalogue | None) -> dict[str, object]:
+def _field(
+    sources: LoadedSet, entry: SourceEntry, producer: ProducerEntries | None
+) -> dict[str, object]:
     reference = entry.reference
-    others = dict(entry.qualifiers)
-    origin = others.pop("origin", None)
     return {
+        "slot": reference.location,
+        "table": reference.table,
+        "name": reference.name,
         "key": entry.key,
         "kind": entry.kind,
-        "qualifiers": _pairs(others),
-        "origin": origin,
+        **_qualifiers(sources, entry.qualifiers),
         "producer": None if producer is None else producer.producer,
-        "location": reference.location,
-        "table": reference.table,
-        "column": reference.name,
         "needs": None if producer is None else producer.instruction,
     }

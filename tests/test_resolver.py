@@ -17,9 +17,9 @@ from apb_catalog.source import (
     Reference,
     ReviewedRule,
     RuleVariant,
-    SourceCatalogue,
     SourceEntry,
-    packaged_catalogues,
+    VendorEntries,
+    packaged_set,
 )
 from apb_catalog.vocabulary import Qualifier, SetVocabulary
 
@@ -43,12 +43,12 @@ def _entry(
 
 
 def _level(*entries: SourceEntry) -> ReviewedLevel:
-    catalogue = SourceCatalogue(
+    vendor = VendorEntries(
         software_name="Vendor",
         variants=(VARIANT,),
         entries=entries,
     )
-    return ReviewedLevel("peptidoform_ion", ReviewedRule(catalogue, VARIANT), entries)
+    return ReviewedLevel("peptidoform_ion", ReviewedRule(vendor, VARIANT), entries)
 
 
 def _request(
@@ -159,7 +159,7 @@ def test_a_resolution_carries_a_reference_exactly_when_resolved() -> None:
 
 def test_request_predicates_are_checked_against_the_vocabulary() -> None:
     """A request may name only declared qualifiers and admitted values."""
-    vocabulary = packaged_catalogues("confidence_alpha").vocabulary
+    vocabulary = packaged_set("confidence_alpha").vocabulary
     vocabulary.check_predicate("pep", {"stage": ("identification", "unknown")})
     vocabulary.check_predicate(None, {})
     with pytest.raises(ValueError, match="unknown qualifier"):
@@ -199,13 +199,13 @@ def test_every_qualifier_defines_unknown() -> None:
 def test_a_pending_entry_makes_its_answer_unknown_with_the_reason() -> None:
     """A field a producer has not written yet is not absent; the answer says what to run."""
     pending = PendingEntry(_entry("Tool_Q", "var", kind="q_value"), "tool has not run; run `tool`")
-    catalogue = SourceCatalogue(
+    vendor = VendorEntries(
         software_name="Vendor",
         variants=(VARIANT,),
         entries=(_entry("PEP"),),
     )
     level = ReviewedLevel(
-        "peptidoform_ion", ReviewedRule(catalogue, VARIANT), (_entry("PEP"),), (pending,)
+        "peptidoform_ion", ReviewedRule(vendor, VARIANT), (_entry("PEP"),), (pending,)
     )
     answer = level.resolve(_request(location="var", kind="q_value"))
     assert (answer.status, answer.reasons) == ("unknown", ("tool has not run; run `tool`",))

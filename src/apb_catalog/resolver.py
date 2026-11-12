@@ -120,7 +120,7 @@ class Resolution(FrozenModel):
 
 
 class UnresolvedField(LookupError):
-    """A lookup the catalogue cannot answer with one field: ambiguous or unknown."""
+    """A lookup the catalog cannot answer with one field: ambiguous or unknown."""
 
     def __init__(self, resolution: Resolution) -> None:
         request = resolution.request
@@ -133,7 +133,7 @@ class UnresolvedField(LookupError):
 
 
 class ReviewedBinding(FrozenModel):
-    """A level whose rule's software and version match a reviewed catalogue variant."""
+    """A level whose rule's software and version match a reviewed rule variant."""
 
     status: Literal["reviewed"] = "reviewed"
     level: str
@@ -142,7 +142,7 @@ class ReviewedBinding(FrozenModel):
 
 
 class ProducedBinding(FrozenModel):
-    """A level of a set without vendor catalogues: only apps' and annotations' fields answer."""
+    """A level of a set without vendor entries: only apps' and annotations' fields answer."""
 
     status: Literal["produced"] = "produced"
     level: str
@@ -151,7 +151,7 @@ class ProducedBinding(FrozenModel):
 
 
 class UnreviewedBinding(FrozenModel):
-    """A level no catalogue describes, and why."""
+    """A level no set reviews, and why."""
 
     status: Literal["unreviewed"] = "unreviewed"
     level: str
@@ -257,11 +257,11 @@ class ReviewedLevel:
     pending: tuple[PendingEntry, ...] = ()
 
     def binding(self) -> ReviewedBinding:
-        """Describe how this level was bound to its catalogue."""
-        catalogue = self.rule.catalogue
+        """Describe how this level was bound to its set."""
+        vendor = self.rule.vendor
         return ReviewedBinding(
             level=self.level,
-            software_name=catalogue.software_name,
+            software_name=vendor.software_name,
             software_version_pattern=self.rule.variant.software_version_pattern,
         )
 
@@ -269,7 +269,7 @@ class ReviewedLevel:
         """Resolve only when exactly one entry matches, none is undecided and none is pending."""
         variant = self.rule.variant
         missing = (
-            f"no reviewed {self.rule.catalogue.software_name} {variant.software_version_pattern} "
+            f"no reviewed {self.rule.vendor.software_name} {variant.software_version_pattern} "
             f"entry on {self.level} matches"
         )
         return _resolve(self.entries, self.pending, request, missing)
@@ -277,7 +277,7 @@ class ReviewedLevel:
 
 @dataclass(frozen=True, slots=True)
 class ProducedLevel:
-    """A level of a set without vendor catalogues, answered by APB's own fields alone."""
+    """A level of a set without vendor entries, answered by APB's own fields alone."""
 
     level: str
     software_name: str | None
@@ -313,7 +313,7 @@ class UnreviewedLevel:
         return ()
 
     def binding(self) -> UnreviewedBinding:
-        """Describe why this level has no catalogue."""
+        """Describe why the set reviews no entries for this level."""
         return UnreviewedBinding(
             level=self.level,
             software_name=self.software_name,
@@ -322,7 +322,7 @@ class UnreviewedLevel:
         )
 
     def resolve(self, request: FieldRequest, /) -> Resolution:
-        """Report that no reviewed catalogue describes this level."""
+        """Report that the set reviews no entries for this level."""
         return Resolution(request=request, status="unknown", reasons=(self.reason,))
 
 

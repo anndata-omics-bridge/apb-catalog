@@ -20,7 +20,7 @@ from mudata import MuData
 from scripts.build_bundle import synthetic_level
 
 from apb_catalog import api, api_pandas
-from apb_catalog.source import catalogue_set
+from apb_catalog.source import load_set
 from tests.packaged_rules import declared_rule_json
 
 SETS = ("abundance_alpha", "confidence_alpha")
@@ -89,7 +89,7 @@ def test_every_key_answers_as_the_polars_catalog(
     parsed = _parsed(fasta_ran=fasta_ran)
     polars = api.DataCatalog(parsed, *SETS).levels[LEVEL]
     pandas = api_pandas.DataCatalog(_stored(parsed, tmp_path, suffix), *SETS).levels[LEVEL]
-    keys = sorted({key.key for name in (*SETS, "apb_alpha") for key in catalogue_set(name).keys})
+    keys = sorted({key.key for name in (*SETS, "apb_alpha") for key in load_set(name).keys})
     assert polars.layers.keys() == {"intensity_ms1_norm_settings", "q_value"}
     for location in ("layers", "var", "obs"):
         mine, theirs = getattr(pandas, location), getattr(polars, location)
@@ -132,7 +132,7 @@ def test_an_object_apb2_did_not_write_is_rejected() -> None:
         api_pandas.DataCatalog(AnnData(np.ones((2, 2))), "abundance_alpha")
 
 
-# Conversion: a new object of the catalogued fields alone, each under its key -----------------
+# Conversion: a new object of the cataloged fields alone, each under its key -----------------
 
 KEYED_PROTEIN = {"protein": synthetic_level("diann/v1_8/rules.json", "protein")}
 
@@ -144,7 +144,7 @@ def _diann_protein(tmp_path: Path) -> MuData:
     return cast(MuData, _stored(ParsedLevels(levels=KEYED_PROTEIN, uns={}), tmp_path, "h5mu"))
 
 
-def test_a_level_converts_to_its_catalogued_fields_under_their_keys(tmp_path: Path) -> None:
+def test_a_level_converts_to_its_cataloged_fields_under_their_keys(tmp_path: Path) -> None:
     stored = _diann_protein(tmp_path)
     source = cast(AnnData, stored.mod["protein"])
     layers_before = list(source.layers)

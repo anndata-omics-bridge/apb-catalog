@@ -1,4 +1,4 @@
-"""An installed package adds a catalogue set that answers like a packaged one."""
+"""An installed package adds a set that answers like a packaged one."""
 
 from __future__ import annotations
 
@@ -10,21 +10,21 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from apb_catalog.coverage import catalogues, rule_coverage
+from apb_catalog.coverage import rule_coverage, sets
 from apb_catalog.source import (
     PLUGIN_GROUP,
     catalog_version,
-    catalogue_descriptions,
-    catalogue_set,
+    load_set,
     plugin_folders,
+    set_descriptions,
 )
 from tests.conftest import TESTS
 
 
 def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
     """The overview counts its entries and reports its requirements."""
-    listed = catalogues()
-    assert listed.get_column("catalogue").to_list() == [
+    listed = sets()
+    assert listed.get_column("set").to_list() == [
         "abundance_alpha",
         "confidence_alpha",
         "proteobench_entrapment_alpha",
@@ -35,13 +35,13 @@ def test_a_plugin_set_is_listed_with_the_packaged_ones(toy_set: str) -> None:
         "chromatography_alpha",
         toy_set,
     ]
-    toy = listed.filter(pl.col("catalogue") == toy_set).row(0, named=True)
+    toy = listed.filter(pl.col("set") == toy_set).row(0, named=True)
     assert (toy["prefix"], toy["has_requirements"], toy["entries"]) == ("toy", True, 22)
 
 
 def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> None:
     """DIA-NN supplies every required field; FragPipe names no protein group; a set with vendor
-    entries reviews every packaged rule level, so a vendor it catalogues nothing of fails."""
+    entries reviews every packaged rule level, so a vendor it catalogs nothing of fails."""
     judged = (
         rule_coverage(toy_set)
         .filter(pl.col("verdict").is_not_null())
@@ -56,7 +56,7 @@ def test_a_plugin_sets_requirements_judge_its_vendors_levels(toy_set: str) -> No
 
 def test_a_plugin_set_brings_its_own_vocabulary(toy_set: str) -> None:
     """Its kinds and qualifiers are its own, under the packaged vocabulary version."""
-    sources = catalogue_set(toy_set)
+    sources = load_set(toy_set)
     assert set(sources.vocabulary.qualifiers) == {"origin"}
     assert set(sources.vocabulary.kinds) == {
         "group",
@@ -71,7 +71,7 @@ def test_a_plugin_set_brings_its_own_vocabulary(toy_set: str) -> None:
 def test_an_unknown_set_names_packaged_and_plugin_sets(toy_set: str) -> None:
     """Both kinds of set are offered."""
     with pytest.raises(ValueError, match=r"packaged: \[.*\], plugins: \['toy'\]"):
-        catalogue_set("nope")
+        load_set("nope")
 
 
 def test_a_plugin_cannot_take_a_packaged_sets_name(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -81,7 +81,7 @@ def test_a_plugin_cannot_take_a_packaged_sets_name(monkeypatch: pytest.MonkeyPat
         lambda: {"confidence_alpha": TESTS / "toy_set"},
     )
     with pytest.raises(ValueError, match="names of packaged sets"):
-        catalogue_descriptions()
+        set_descriptions()
 
 
 def test_an_entry_point_names_the_package_holding_the_set() -> None:
@@ -146,7 +146,7 @@ def test_a_plugin_set_has_a_prefix_of_its_own(
         (folder / found.name).write_text(text.replace("\ntoy,", f"\n{name},"), "utf-8")
     monkeypatch.setattr("apb_catalog.source._plugin_folders", lambda: {name: folder})
     with pytest.raises(ValueError, match=message):
-        catalogue_set(name)
+        load_set(name)
 
 
 GROUP = "DIA-NN/*,peptidoform_ion/var,-/Protein_Group,group,group,origin,vendor"
@@ -164,7 +164,7 @@ def test_a_plugin_key_fixes_a_qualifier_of_its_own_set(
     folder = _toy_folder(tmp_path / "toy_set", monkeypatch, "fixed_origin")
     _replace(folder, ",group,group,,,required,", ",group,group,origin,vendor,required,", "terms")
     _replace(folder, f"{GROUP},false,", f"{GROUP},true,")
-    assert catalogue_set("fixed_origin").key("group").fixed == {"origin": "vendor"}
+    assert load_set("fixed_origin").key("group").fixed == {"origin": "vendor"}
 
 
 def test_a_row_carries_the_value_its_key_fixes(
@@ -178,7 +178,7 @@ def test_a_row_carries_the_value_its_key_fixes(
     _replace(folder, f"{CHARGES[0]},vendor,false,", f"{CHARGES[0]},vendor,true,")
     _replace(folder, f"{CHARGES[1]},vendor,false,", f"{CHARGES[1]},apb2,true,")
     with pytest.raises(ValueError, match=r"\{'origin': 'apb2'\}; its key 'charge' fixes"):
-        catalogue_set("fixed_two")
+        load_set("fixed_two")
 
 
 def test_a_term_exists_before_any_row_maps_it(
@@ -188,7 +188,7 @@ def test_a_term_exists_before_any_row_maps_it(
     term = "peptidoform_ion/obs,group,group,,,recommended,,The sample group."
     name = _toy_copy(tmp_path / "toy_set", monkeypatch, "unmapped", "terms", term)
     with caplog.at_level(logging.WARNING, logger="apb_catalog.source"):
-        found = catalogue_set(name)
+        found = load_set(name)
     assert "('group', 'peptidoform_ion/obs')" in caplog.text
     requirement = found.requirement_for("peptidoform_ion", "obs", "group")
     assert requirement is not None
@@ -217,7 +217,7 @@ def test_a_field_has_one_row_per_qualifier(tmp_path: Path, monkeypatch: pytest.M
     """Every field of a set with two qualifiers has two rows, one each; they make one entry."""
     folder = _toy_folder(tmp_path / "toy_set", monkeypatch, "two_rows")
     _second_qualifier(folder, "two_rows")
-    found = catalogue_set("two_rows")
+    found = load_set("two_rows")
     entries = [entry for source in found.sources() for entry in source.entries]
     assert len(entries) == len((folder / "catalog.csv").read_text("utf-8").splitlines()[1:]) // 2
     assert {tuple(entry.qualifiers) for entry in entries} == {("origin", "stage")}
@@ -230,7 +230,7 @@ def test_the_rows_of_a_field_share_its_basis(
     folder = _toy_folder(tmp_path / "toy_set", monkeypatch, "two_bases")
     _second_qualifier(folder, "two_bases", basis="Another basis.")
     with pytest.raises(ValueError, match="two bases or evidence URLs"):
-        catalogue_set("two_bases")
+        load_set("two_bases")
 
 
 EXTRA = "DIA-NN/*,peptidoform_ion/var,-/Extra"
@@ -287,7 +287,7 @@ def test_a_plugin_folder_holds_one_set_its_kinds_and_its_qualifiers(
     refused."""
     name = _toy_copy(tmp_path / "toy_set", monkeypatch, "broken", table, row)
     with pytest.raises(ValueError, match=message):
-        catalogue_set(name)
+        load_set(name)
 
 
 def test_a_set_declared_alone_loads(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -299,5 +299,5 @@ def test_a_set_declared_alone_loads(tmp_path: Path, monkeypatch: pytest.MonkeyPa
         "set,prefix,definition,kind_definition,purpose,used_by\nplanned,pl,,,,\n", "utf-8"
     )
     monkeypatch.setattr("apb_catalog.source._plugin_folders", lambda: {"planned": folder})
-    found = catalogue_set("planned")
+    found = load_set("planned")
     assert (found.keys, found.sources(), found.requirements) == ((), (), ())

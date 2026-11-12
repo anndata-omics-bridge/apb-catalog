@@ -31,11 +31,11 @@ ATTRIBUTES: tuple[Location, ...] = ("obs", "var", "layers", "varm")
 
 @dataclass(frozen=True, slots=True)
 class EntryId:
-    """An entry id's fields, built as CPE names are: ``<source>/<version>/<level>/<attribute>/
-    <key>/<column>``, six fields of one value each.
+    """An entry id's fields, built as CPE names are: ``<source>/<version>/<level>/<slot>/
+    <layer or table>/<column>``, six fields of one value each.
 
-    ``version`` is a label of ``versions.csv``, or ``*``. A layer's name is its key and a ``varm``
-    column's table is its key; obs and var have none. ``name`` is the layer or column; a trailing
+    ``version`` is a label of ``versions.csv``, or ``*``. The fifth field is a layer's name or a
+    ``varm`` column's table; obs and var have none. ``name`` is the layer or column; a trailing
     ``*`` matches obs columns by prefix.
     """
 
@@ -128,7 +128,7 @@ def rule_levels() -> tuple[RuleLevel, ...]:
     """Every level a packaged entry names for a software version: versions in ``versions.csv``'s
     order, each version's levels in the order the entries first name them; ``*`` names every
     version of its source."""
-    named_ids = (f"{row['software']}/{row['location']}/{row['name']}" for row in _rows("catalog"))
+    named_ids = (f"{row['source']}/{row['location']}/{row['name']}" for row in _rows("catalog"))
     ids = [named for found in named_ids if (named := entry_id(found)).level != ANY]
     found: list[RuleLevel] = []
     for version in versions():

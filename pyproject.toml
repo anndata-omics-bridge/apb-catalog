@@ -5,7 +5,7 @@ build-backend = "uv_build"
 [project]
 name = "apb-catalog"
 version = "0.1.4"
-description = "Semantic source catalogues and column resolution for APB results"
+description = "Semantic catalog sets and column resolution for APB results"
 readme = "README.md"
 requires-python = ">=3.13"
 license = "MIT"
@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Witold Wolski", email = "wew@fgcz.ethz.ch" },
 ]
-keywords = ["proteomics", "anndata", "metadata", "catalogue", "mass spectrometry"]
+keywords = ["proteomics", "anndata", "metadata", "catalog", "mass spectrometry"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",

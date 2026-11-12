@@ -20,29 +20,29 @@ diann = read_parsed_levels(Path("diann.h5mu"))   # any APB2 result: h5ad, h5mu, 
 confidence = DataCatalog(diann, "confidence_alpha")
 ```
 
-The second argument names the set; [Catalogues](catalogues.md) lists them all.
+The second argument names the set; [Sets](sets.md) lists them all.
 
 ## See what it holds
 
 ```python
-confidence.fields().select("level", "location", "name", "key", "qualifier.stage", "present")
+confidence.fields().select("level", "slot", "name", "key", "qualifier.stage", "present")
 ```
 
 ```text
 shape: (7, 6)
-┌─────────────────┬──────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
-│ level           ┆ location ┆ name              ┆ key             ┆ qualifier.stage ┆ present │
-│ ---             ┆ ---      ┆ ---               ┆ ---             ┆ ---             ┆ ---     │
-│ str             ┆ str      ┆ str               ┆ str             ┆ str             ┆ bool    │
-╞═════════════════╪══════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
-│ peptidoform_ion ┆ layers   ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
-│ peptidoform_ion ┆ layers   ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
-│ peptidoform_ion ┆ var      ┆ Global_Q_Value    ┆ q_value         ┆ identification  ┆ true    │
-│ peptidoform_ion ┆ var      ┆ Lib_Q_Value       ┆ library_q_value ┆ identification  ┆ true    │
-│ protein         ┆ layers   ┆ PG_Q_Value        ┆ q_value         ┆ identification  ┆ true    │
-│ protein         ┆ var      ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification  ┆ true    │
-│ protein         ┆ var      ┆ Global_PG_Q_Value ┆ q_value         ┆ identification  ┆ true    │
-└─────────────────┴──────────┴───────────────────┴─────────────────┴─────────────────┴─────────┘
+┌─────────────────┬────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
+│ level           ┆ slot   ┆ name              ┆ key             ┆ qualifier.stage ┆ present │
+│ ---             ┆ ---    ┆ ---               ┆ ---             ┆ ---             ┆ ---     │
+│ str             ┆ str    ┆ str               ┆ str             ┆ str             ┆ bool    │
+╞═════════════════╪════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
+│ peptidoform_ion ┆ layers ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ layers ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var    ┆ Global_Q_Value    ┆ q_value         ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var    ┆ Lib_Q_Value       ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ layers ┆ PG_Q_Value        ┆ q_value         ┆ identification  ┆ true    │
+│ protein         ┆ var    ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ var    ┆ Global_PG_Q_Value ┆ q_value         ┆ identification  ┆ true    │
+└─────────────────┴────────┴───────────────────┴─────────────────┴─────────────────┴─────────┘
 ```
 
 `q_value` in `layers` is the q-value of each run; in `var`, the one across the whole experiment. Or ask one level which keys it offers in one slot:
@@ -135,7 +135,7 @@ A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray
 | `c:q_value` | the set whose prefix is `c`, confidence, alone; never a field of that name | the same |
 | `v:Q_Value` | the level's own field of that name alone; never the catalog | the same |
 
-`catalogues()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns with `obs_annotation_alpha` named on an annotated result, `obs["group"]` raises `UnresolvedField` and the list `obs[["group", "Run"]]` reads them all, then `Run`.
+`sets()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns with `obs_annotation_alpha` named on an annotated result, `obs["group"]` raises `UnresolvedField` and the list `obs[["group", "Run"]]` reads them all, then `Run`.
 
 ## Read the AnnData object with pandas
 
@@ -156,7 +156,7 @@ ion.var[["q_value", "peptidoform_ion"]]   # a pandas DataFrame
 
 An `.h5ad` read with `anndata.read_h5ad` is the one level it holds. `UnresolvedField` comes from `apb_catalog.api`.
 
-`as_mudata()` converts: a new MuData of the catalogued fields alone, each under its key, which `write_h5mu` writes. See [A result named by catalog keys](keyed.md).
+`as_mudata()` converts: a new MuData of the cataloged fields alone, each under its key, which `write_h5mu` writes. See [A result named by catalog keys](keyed.md).
 
 ## Keys stand for a kind and its qualifiers
 
@@ -175,7 +175,7 @@ Each set lists its keys; a key names one meaning, a kind with the qualifier valu
 
 ## Narrow with qualifiers
 
-A qualifier the key leaves open is a keyword of `get` and `name`; [Catalogues](catalogues.md) lists each set's keys and values.
+A qualifier the key leaves open is a keyword of `get` and `name`; [Sets](sets.md) lists each set's keys and values.
 
 | Set | Call on the `peptidoform_ion` level | Returns |
 | --- | --- | --- |

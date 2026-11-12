@@ -3,7 +3,7 @@ _src_path: .
 author_email: wew@fgcz.ethz.ch
 author_name: Witold Wolski
 copyright_year: '2026'
-description: Semantic source catalogues and column resolution for APB results
+description: Semantic catalog sets and column resolution for APB results
 distribution_name: apb-catalog
 license_spdx: MIT
 package_name: apb_catalog

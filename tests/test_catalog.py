@@ -110,14 +110,14 @@ SPECTRONAUT = ("spectronaut/rules.json", ["FG_Quantity", "EG_PEP", "EG_Qvalue", 
 
 
 def test_the_same_call_returns_each_vendors_layer() -> None:
-    """Callers never name ``PEP`` or ``EG_PEP``; the catalogue does."""
+    """Callers never name ``PEP`` or ``EG_PEP``; the catalog does."""
     maxquant = DataCatalog(_result(*MAXQUANT), "confidence_alpha").levels["peptidoform_ion"]
     spectronaut = DataCatalog(_result(*SPECTRONAUT), "confidence_alpha").levels["peptidoform_ion"]
     assert maxquant.layers.name("pep") == "PEP"
     assert spectronaut.layers.name("pep") == "EG_PEP"
 
 
-def test_only_the_fields_the_consumer_needs_are_catalogued() -> None:
+def test_only_the_fields_the_consumer_needs_are_cataloged() -> None:
     """Spectronaut's EG and FG q-values agree; aggregation is given the EG one only."""
     parsed = _result(*SPECTRONAUT)
     layers = DataCatalog(parsed, "confidence_alpha").levels["peptidoform_ion"].layers
@@ -279,14 +279,14 @@ def test_a_varm_lookup_survives_storage(toy_set: str, tmp_path: Path) -> None:
     assert _stored(read_parsed_levels(target), toy_set) == snapshot
 
 
-def test_an_unknown_catalogue_set_is_rejected() -> None:
+def test_an_unknown_set_is_rejected() -> None:
     """Only the packaged consumer sets exist."""
-    with pytest.raises(ValueError, match="unknown catalogue"):
+    with pytest.raises(ValueError, match="unknown set"):
         DataCatalog(_result(*MAXQUANT), "everything")
 
 
 def test_an_unreviewed_level_raises() -> None:
-    """Without a reviewed rule the catalogue cannot even claim absence."""
+    """Without a reviewed rule the catalog cannot even claim absence."""
     with pytest.raises(UnresolvedField, match=r"unknown.*rule_json"):
         DataCatalog(_result(None, ["Intensity"]), "confidence_alpha").levels[
             "peptidoform_ion"
@@ -294,8 +294,8 @@ def test_an_unreviewed_level_raises() -> None:
 
 
 def test_an_unreviewed_software_version_is_unknown() -> None:
-    """A software version no catalogue variant names answers unknown."""
-    with pytest.raises(UnresolvedField, match="no source catalogue reviewed"):
+    """A software version no set reviews answers unknown."""
+    with pytest.raises(UnresolvedField, match="the set reviews no entries for"):
         DataCatalog(_edited_maxquant(software_version_pattern="^99\\."), "confidence_alpha").levels[
             "peptidoform_ion"
         ].layers.get("pep")
@@ -358,22 +358,22 @@ def test_listing_keys_is_not_recorded_as_a_lookup() -> None:
 
 
 def test_fields_lists_what_the_result_holds() -> None:
-    """One row per catalogued field of every composed set, readable without knowing the vendor."""
+    """One row per cataloged field of every composed set, readable without knowing the vendor."""
     catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha", "apb_alpha")
     fields = catalog.fields().filter(pl.col("present"))
-    assert fields.select("set", "location", "name", "kind").rows() == [
+    assert fields.select("set", "slot", "name", "kind").rows() == [
         ("confidence_alpha", "layers", "PEP", "pep"),
         ("apb_alpha", "var", "ProForma_ion", "peptidoform_ion"),
     ]
 
 
-def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
+def test_the_snapshot_records_its_set_bindings_and_lookups() -> None:
     """Every lookup is kept for the persisted record."""
     catalog = DataCatalog(_result(*MAXQUANT), "confidence_alpha")
     catalog.levels["peptidoform_ion"].layers.get("pep")
     catalog.levels["peptidoform_ion"].layers.get("q_value")
     snapshot = catalog.snapshot()
-    assert snapshot.catalogue == "confidence_alpha"
+    assert snapshot.set_name == "confidence_alpha"
     assert [resolution.status for resolution in snapshot.resolutions] == ["resolved", "missing"]
     binding = snapshot.levels[0]
     assert isinstance(binding, ReviewedBinding)
@@ -385,7 +385,7 @@ def test_the_snapshot_records_its_catalogue_bindings_and_lookups() -> None:
     assert isinstance(unreviewed.levels[0], UnreviewedBinding)
 
 
-def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
+def test_snapshots_of_two_sets_sit_side_by_side() -> None:
     """Attaching one set's snapshot keeps the other's, and the input stays unchanged."""
     parsed = _result(*MAXQUANT)
     confidence = DataCatalog(parsed, "confidence_alpha").snapshot()
@@ -400,10 +400,10 @@ def test_snapshots_of_two_catalogues_sit_side_by_side() -> None:
     )
 
 
-def _stored(parsed: ParsedLevels, catalogue: str) -> ResolutionSnapshot:
+def _stored(parsed: ParsedLevels, set_name: str) -> ResolutionSnapshot:
     """The snapshot ``attach_snapshot`` left, read from the metadata as a consumer reads it."""
     namespace = cast(dict[str, Any], parsed.metadata[METADATA_KEY])
-    return ResolutionSnapshot.model_validate(namespace[catalogue]["result"])
+    return ResolutionSnapshot.model_validate(namespace[set_name]["result"])
 
 
 def _with_namespace(parsed: ParsedLevels, namespace: JsonValue) -> ParsedLevels:
@@ -411,7 +411,7 @@ def _with_namespace(parsed: ParsedLevels, namespace: JsonValue) -> ParsedLevels:
 
 
 def test_attaching_keeps_unrelated_namespace_entries() -> None:
-    """Attaching adds this catalogue's snapshot and leaves every other entry as it was."""
+    """Attaching adds this set's snapshot and leaves every other entry as it was."""
     parsed = _with_namespace(_result(*MAXQUANT), {"other": {"contract": "elsewhere"}})
     snapshot = DataCatalog(parsed, "confidence_alpha").snapshot()
 
@@ -430,7 +430,7 @@ def test_a_malformed_namespace_raises_instead_of_being_replaced(namespace: JsonV
     parsed = _with_namespace(_result(*MAXQUANT), namespace)
     snapshot = DataCatalog(parsed, "confidence_alpha").snapshot()
 
-    with pytest.raises(ValueError, match="not snapshots by catalogue"):
+    with pytest.raises(ValueError, match="not snapshots by set"):
         attach_snapshot(parsed, snapshot)
     assert parsed.metadata[METADATA_KEY] == namespace
 
@@ -443,7 +443,7 @@ def test_a_stored_malformed_namespace_still_raises(tmp_path: Path, suffix: str) 
     restored = read_parsed_levels(target)
     snapshot = DataCatalog(restored, "confidence_alpha").snapshot()
 
-    with pytest.raises(ValueError, match="not snapshots by catalogue"):
+    with pytest.raises(ValueError, match="not snapshots by set"):
         attach_snapshot(restored, snapshot)
     assert restored.metadata[METADATA_KEY] == ["prior-evidence"]
 
@@ -666,13 +666,13 @@ def test_only_the_sets_named_are_composed() -> None:
     assert catalog.levels["peptidoform_ion"].var.get("peptidoform_ion") is None
     named = DataCatalog(parsed, "confidence_alpha", "apb_alpha")
     assert named.levels["peptidoform_ion"].var.get("peptidoform_ion") is not None
-    assert catalog.snapshot().catalogue == "abundance_alpha", "the first set named"
-    assert named.snapshot("apb_alpha").catalogue == "apb_alpha"
+    assert catalog.snapshot().set_name == "abundance_alpha", "the first set named"
+    assert named.snapshot("apb_alpha").set_name == "apb_alpha"
     with pytest.raises(KeyError, match="apb_alpha"):
         catalog.snapshot("apb_alpha")
     unnamed = DataCatalog(parsed)
     assert unnamed.levels["peptidoform_ion"].var["Precursor_Charge"].to_list() == [2, 3]
-    with pytest.raises(ValueError, match="no catalogue set named"):
+    with pytest.raises(ValueError, match="no set named"):
         unnamed.snapshot()
 
 

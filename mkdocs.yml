@@ -1,5 +1,5 @@
 site_name: APB Catalog
-site_description: Consumer-specific catalogues that name the APB2 fields a tool needs.
+site_description: Consumer-specific sets that name the APB2 fields a tool needs.
 site_url: https://anndata-omics-bridge.github.io/apb-catalog/
 repo_url: https://github.com/anndata-omics-bridge/apb-catalog
 repo_name: anndata-omics-bridge/apb-catalog
@@ -31,7 +31,7 @@ nav:
   - Get started: getting-started.md
   - Named by keys: keyed.md
   - Writing an exporter: exporters.md
-  - Catalogues: catalogues.md
+  - Sets: sets.md
   - Python API: api.md
   - Maintaining: maintaining.md
   - Contributing: contributing.md

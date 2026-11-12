@@ -32,17 +32,17 @@ from apb_catalog.resolver import (
 from apb_catalog.rules import ANY, Address, Location
 from apb_catalog.snapshot import ResolutionSnapshot, this_producer
 from apb_catalog.source import (
-    AnnotationCatalogue,
-    CatalogueDescription,
-    ProducerCatalogue,
+    AnnotationEntries,
+    LoadedSet,
+    ProducerEntries,
     RequirementRow,
-    SourceCatalogues,
+    SetDescription,
     SourceEntry,
-    catalogue_descriptions,
-    catalogue_set,
+    load_set,
+    set_descriptions,
 )
 from apb_catalog.source import Reference as SourceReference
-from apb_catalog.table import entry_row
+from apb_catalog.table import KEY_COLUMNS, entry_row
 
 METADATA_KEY = "catalog"
 _LOG = logging.getLogger("apb_catalog")
@@ -85,33 +85,33 @@ def level_view(
     software: str | None,
     pattern: str | None,
     rule_level: str | None,
-    catalogues: SourceCatalogues,
+    loaded: LoadedSet,
     *,
     retained: frozenset[Address] | set[Address],
     obs_columns: tuple[str, ...] = (),
-    ran: Callable[[ProducerCatalogue], bool],
-    annotations: tuple[AnnotationCatalogue, ...] = (),
+    ran: Callable[[ProducerEntries], bool],
+    annotations: tuple[AnnotationEntries, ...] = (),
 ) -> LevelView:
     """Bind one level to its set: the reviewed vendor entries, then the apps' and annotations'.
 
     Only entries whose field the level holds answer; an app that has not run leaves its entries
-    pending. A set with vendor catalogues answers only for a reviewed software version.
+    pending. A set with vendor entries answers only for a reviewed software version.
     """
     if software is None or pattern is None or rule_level is None:
         return UnreviewedLevel(name, None, None, "the level records no rule_json software version")
     entries: list[SourceEntry] = []
     pending: list[PendingEntry] = []
-    reviewed = catalogues.reviewed(software, pattern, rule_level)
-    if catalogues.needs_review:
+    reviewed = loaded.reviewed(software, pattern, rule_level)
+    if loaded.needs_review:
         if reviewed is None:
             return UnreviewedLevel(
                 name,
                 software,
                 pattern,
-                f"no source catalogue reviewed {software} {pattern} {rule_level}",
+                f"the set reviews no entries for {software} {pattern} {rule_level}",
             )
         entries += [entry for entry in reviewed.entries() if entry.reference.address() in retained]
-    for producer in catalogues.producers:
+    for producer in loaded.producers:
         offered = [
             bound
             for entry in producer.entries_on(rule_level)
@@ -133,15 +133,13 @@ def level_view(
 
 
 class _Lookups:
-    """The requests, answers and snapshot both catalogues share for one set."""
+    """The requests, answers and snapshot both catalogs share for one set."""
 
-    __slots__ = ("catalogues", "name", "resolutions", "views")
+    __slots__ = ("loaded", "name", "resolutions", "views")
 
-    def __init__(
-        self, name: str, catalogues: SourceCatalogues, views: dict[str, LevelView]
-    ) -> None:
+    def __init__(self, name: str, loaded: LoadedSet, views: dict[str, LevelView]) -> None:
         self.name = name
-        self.catalogues = catalogues
+        self.loaded = loaded
         self.views = views
         self.resolutions: list[Resolution] = []
 
@@ -155,7 +153,7 @@ class _Lookups:
             ValueError: The set has no such key, or a qualifier names the kind or a value the key
                 already fixes.
         """
-        found = None if key is None else self.catalogues.key(key)
+        found = None if key is None else self.loaded.key(key)
         fixed = {} if found is None else found.accepted()
         clashing = sorted(({"kind"} | set(fixed)) & set(qualifiers))
         if clashing:
@@ -169,7 +167,7 @@ class _Lookups:
         )
 
     def answer(self, request: FieldRequest) -> Resolution:
-        self.catalogues.vocabulary.check_predicate(request.kind, request.qualifiers)
+        self.loaded.vocabulary.check_predicate(request.kind, request.qualifiers)
         return self.views.get(request.level, AbsentLevel(request.level)).resolve(request)
 
     def resolve(self, request: FieldRequest) -> Resolution:
@@ -190,9 +188,9 @@ class _Lookups:
 
     def missing(self) -> list[tuple[Resolution, RequirementRow]]:
         """Every required or recommended field a bound level lacks, recorded with its
-        requirement; a field the catalogue cannot decide is not missing."""
+        requirement; a field the catalog cannot decide is not missing."""
         found: list[tuple[Resolution, RequirementRow]] = []
-        for row in self.catalogues.requirements:
+        for row in self.loaded.requirements:
             if row.requirement == "optional" or row.level not in self.views:
                 continue
             resolution = self.answer(self.request(row.level, row.location, row.key, {}))
@@ -233,7 +231,7 @@ class _Lookups:
             field=self.find,
             fields=self.find_all,
             offered=lambda level, location: self.keys(level, location, {}),
-            known=frozenset(found.key for found in self.catalogues.keys),
+            known=frozenset(found.key for found in self.loaded.keys),
             sets={},
         )
 
@@ -260,10 +258,10 @@ class _Lookups:
     def snapshot(self) -> ResolutionSnapshot:
         return ResolutionSnapshot(
             producer=this_producer(),
-            catalogue=self.name,
-            description=self.catalogues.description,
-            vocabulary_version=self.catalogues.vocabulary_version,
-            vocabulary=self.catalogues.vocabulary,
+            set_name=self.name,
+            description=self.loaded.description,
+            vocabulary_version=self.loaded.vocabulary_version,
+            vocabulary=self.loaded.vocabulary,
             levels=tuple(view.binding() for view in self.views.values()),
             entries=self.entries(),
             resolutions=tuple(self.resolutions),
@@ -272,19 +270,17 @@ class _Lookups:
     def rows(self, view: LevelView, entries: tuple[SourceEntry, ...]) -> list[dict[str, object]]:
         binding = view.binding()
         return [
-            entry_row(
-                self.name, self.catalogues, entry.source, binding.software_version_pattern, entry
-            )
+            entry_row(self.name, self.loaded, entry.source, binding.software_version_pattern, entry)
             for entry in entries
         ]
 
 
-def _catalogued(catalogues: SourceCatalogues, level: str) -> set[Address]:
-    """Every field the set's entries name on one level: without data, the catalogue says what a
+def _cataloged(loaded: LoadedSet, level: str) -> set[Address]:
+    """Every field the set's entries name on one level: without data, the catalog says what a
     level holds."""
     return {
         entry.reference.address()
-        for source in catalogues.sources()
+        for source in loaded.sources()
         for entry in source.entries
         if entry.reference.level in (level, ANY) and entry.reference.name is not None
     }
@@ -295,7 +291,7 @@ class Catalog:
 
     ``Catalog("DIA-NN", "2.6.0", "abundance_alpha").levels["peptidoform_ion"].layers["intensity"]`` is
     ``'Precursor_Quantity'``: the slots of :class:`DataCatalog`'s levels, holding names. The
-    packaged rule levels whose version pattern admits ``version`` give the levels; the set's
+    packaged rule levels whose version pattern admits ``software_version`` give the levels; the set's
     entries for that pattern give each level's fields. A slot's ``get`` returns the name or
     ``None`` and takes further qualifiers, such as ``unit="minute"``. ``enforce`` checks the
     set's requirements against the rule's levels once, here.
@@ -308,9 +304,11 @@ class Catalog:
 
     __slots__ = ("_lookups", "levels")
 
-    def __init__(self, software: str, version: str, catalog: str, enforce: Enforce = None) -> None:
-        catalogues = catalogue_set(catalog)
-        matched = rules.matching(software, version)
+    def __init__(
+        self, software: str, software_version: str, set_name: str, enforce: Enforce = None
+    ) -> None:
+        loaded = load_set(set_name)
+        matched = rules.matching(software, software_version)
         if not matched:
             known = sorted(
                 {
@@ -320,7 +318,8 @@ class Catalog:
                 }
             )
             raise ValueError(
-                f"no packaged {software} rule admits version {version!r}; patterns: {known}"
+                f"no packaged {software} rule admits version {software_version!r}; "
+                f"patterns: {known}"
             )
         views: dict[str, LevelView] = {}
         for found in matched:
@@ -329,28 +328,28 @@ class Catalog:
                 found.software_name,
                 found.software_version_pattern,
                 found.level,
-                catalogues,
-                retained=_catalogued(catalogues, found.level),
+                loaded,
+                retained=_cataloged(loaded, found.level),
                 ran=lambda producer: not producer.requires,
             )
-        self._lookups = _Lookups(catalog, catalogues, views)
+        self._lookups = _Lookups(set_name, loaded, views)
         _enforce((self._lookups,), enforce)
         lookup = Lookup(
             field=self._key_field,
             fields=self._lookups.find_all,
             offered=self._offered,
-            known=frozenset(found.key for found in catalogues.keys),
-            sets={catalogues.vocabulary.prefix: self._lookups.alone()},
+            known=frozenset(found.key for found in loaded.keys),
+            sets={loaded.vocabulary.prefix: self._lookups.alone()},
         )
         self.levels = {name: LevelNames(name, lookup) for name in views}
 
     @property
-    def description(self) -> CatalogueDescription:
-        """What this catalogue set holds and who uses it."""
-        return self._lookups.catalogues.description
+    def description(self) -> SetDescription:
+        """What this set holds and who uses it."""
+        return self._lookups.loaded.description
 
     def fields(self) -> pl.DataFrame:
-        """Every catalogued field the rule declares, one row per field, as ``apb-catalog table``
+        """Every cataloged field the rule declares, one row per field, as ``apb-catalog table``
         shows them, with ``present`` true for each."""
         rows = [
             {**row, "present": True, "constant": None}
@@ -401,15 +400,13 @@ class ComposedSets:
         self,
         levels: Mapping[str, LevelFields],
         metadata: Mapping[str, object],
-        catalogs: tuple[str, ...],
+        names: tuple[str, ...],
         enforce: Enforce,
     ) -> None:
-        self.sets = {
-            name: _data_lookups(levels, metadata, name) for name in dict.fromkeys(catalogs)
-        }
+        self.sets = {name: _data_lookups(levels, metadata, name) for name in dict.fromkeys(names)}
         _check_shared_keys(self.sets)
         self.known = frozenset(
-            found.key for lookups in self.sets.values() for found in lookups.catalogues.keys
+            found.key for lookups in self.sets.values() for found in lookups.loaded.keys
         )
         _enforce(tuple(self.sets.values()), enforce)
 
@@ -421,8 +418,7 @@ class ComposedSets:
             offered=self.offered,
             known=self.known,
             sets={
-                lookups.catalogues.vocabulary.prefix: lookups.alone()
-                for lookups in self.sets.values()
+                lookups.loaded.vocabulary.prefix: lookups.alone() for lookups in self.sets.values()
             },
         )
 
@@ -433,19 +429,19 @@ class ComposedSets:
             ValueError: No set was named.
         """
         if not self.sets:
-            raise ValueError("no catalogue set named")
+            raise ValueError("no set named")
         return next(iter(self.sets.values()))
 
     def defining(self, key: str, qualifiers: Mapping[str, str] | None = None) -> list[_Lookups]:
         """The sets that define a key and declare every further qualifier asked; the first set
         that defines it when none declares them, so its lookup names what it lacks."""
-        found = [lookups for lookups in self.sets.values() if lookups.catalogues.has_key(key)]
+        found = [lookups for lookups in self.sets.values() if lookups.loaded.has_key(key)]
         if not found:
             raise ValueError(f"unknown key {key!r}; keys: {sorted(self.known)}")
         declaring = [
             lookups
             for lookups in found
-            if set(qualifiers or {}) <= set(lookups.catalogues.vocabulary.qualifiers)
+            if set(qualifiers or {}) <= set(lookups.loaded.vocabulary.qualifiers)
         ]
         return declaring or found[:1]
 
@@ -496,12 +492,12 @@ class DataCatalog:
 
     __slots__ = ("_parsed", "_sets", "levels")
 
-    def __init__(self, result: ParsedLevels, *catalogs: str, enforce: Enforce = None) -> None:
+    def __init__(self, result: ParsedLevels, *sets: str, enforce: Enforce = None) -> None:
         self._parsed = result
         self._sets = ComposedSets(
             {name: LevelFields.of(level) for name, level in result.levels.items()},
             result.metadata,
-            catalogs,
+            sets,
             enforce,
         )
         lookup = self._sets.lookup()
@@ -514,12 +510,12 @@ class DataCatalog:
         return sets_answering(result.metadata)
 
     @property
-    def description(self) -> CatalogueDescription:
-        """What the first catalogue set named holds and who uses it."""
-        return self._sets.first().catalogues.description
+    def description(self) -> SetDescription:
+        """What the first set named holds and who uses it."""
+        return self._sets.first().loaded.description
 
     def fields(self) -> pl.DataFrame:
-        """Every catalogued field of the result in every composed set, one row per field, as
+        """Every cataloged field of the result in every composed set, one row per field, as
         ``apb-catalog table`` shows them, with ``present`` and, for a field APB2 left out
         because it held one value, that ``constant``."""
         rows: list[dict[str, object]] = []
@@ -546,10 +542,10 @@ class DataCatalog:
             return self._sets.first().resolve(request)
         return self._sets.defining(request.key)[0].resolve(request)
 
-    def snapshot(self, catalog: str | None = None) -> ResolutionSnapshot:
+    def snapshot(self, set_name: str | None = None) -> ResolutionSnapshot:
         """Return one set's self-contained record of the bindings, fields and every lookup so
         far; the first set named by default."""
-        return (self._sets.first() if catalog is None else self._sets.sets[catalog]).snapshot()
+        return (self._sets.first() if set_name is None else self._sets.sets[set_name]).snapshot()
 
 
 def _enforce(sets: tuple[_Lookups, ...], enforce: Enforce) -> None:
@@ -565,10 +561,10 @@ def _enforce(sets: tuple[_Lookups, ...], enforce: Enforce) -> None:
     """
     if enforce is None:
         return
-    binding = [lookups for lookups in sets if lookups.catalogues.requirements]
+    binding = [lookups for lookups in sets if lookups.loaded.requirements]
     if not binding:
         names = [lookups.name for lookups in sets]
-        raise ValueError(f"catalogues {names} set no requirements, so nothing to enforce")
+        raise ValueError(f"the sets {names} set no requirements, so nothing to enforce")
     missing = [found for lookups in binding for found in lookups.missing()]
     raising = tuple(
         found for found in missing if enforce == "recommended" or found[1].requirement == "required"
@@ -588,13 +584,13 @@ def _data_lookups(
     """One set bound to every level of a result.
 
     Raises:
-        ValueError: The set has no vendor catalogue, none of its apps has run on the result and
+        ValueError: The set has no vendor entries, none of its apps has run on the result and
             the result records none of its annotation conventions, so it can answer nothing.
     """
-    catalogues = catalogue_set(name)
-    _check_answers(name, catalogues, metadata)
+    loaded = load_set(name)
+    _check_answers(name, loaded, metadata)
     annotations = tuple(
-        annotation for annotation in catalogues.annotations if annotation.applies(metadata)
+        annotation for annotation in loaded.annotations if annotation.applies(metadata)
     )
     views: dict[str, LevelView] = {}
     for level_name, level in levels.items():
@@ -604,42 +600,42 @@ def _data_lookups(
             software,
             pattern,
             rule_level,
-            catalogues,
+            loaded,
             retained=level.retained,
             obs_columns=level.obs_columns,
             ran=lambda producer: producer.ran(metadata),
             annotations=annotations,
         )
-    return _Lookups(name, catalogues, views)
+    return _Lookups(name, loaded, views)
 
 
 def sets_answering(metadata: Mapping[str, object]) -> list[str]:
     """Every packaged and plugin set a result with this metadata can open: see
     :func:`_answers`."""
-    return [name for name in catalogue_descriptions() if _answers(catalogue_set(name), metadata)]
+    return [name for name in set_descriptions() if _answers(load_set(name), metadata)]
 
 
-def _answers(catalogues: SourceCatalogues, metadata: Mapping[str, object]) -> bool:
-    """Whether a set can answer on a result: it has vendor catalogues, one of its apps has run,
+def _answers(loaded: LoadedSet, metadata: Mapping[str, object]) -> bool:
+    """Whether a set can answer on a result: it has vendor entries, one of its apps has run,
     or the result records one of its annotation conventions."""
     return (
-        catalogues.needs_review
-        or any(annotation.applies(metadata) for annotation in catalogues.annotations)
-        or any(producer.ran(metadata) for producer in catalogues.producers)
+        loaded.needs_review
+        or any(annotation.applies(metadata) for annotation in loaded.annotations)
+        or any(producer.ran(metadata) for producer in loaded.producers)
     )
 
 
-def _check_answers(name: str, catalogues: SourceCatalogues, metadata: Mapping[str, object]) -> None:
+def _check_answers(name: str, loaded: LoadedSet, metadata: Mapping[str, object]) -> None:
     """Require a set to have a source the result answers from, as :func:`_answers` decides.
 
     Raises:
         ValueError: The set can answer nothing; the message says what to run.
     """
-    if _answers(catalogues, metadata):
+    if _answers(loaded, metadata):
         return
-    reasons = [producer.pending_reason() for producer in catalogues.producers]
-    if catalogues.annotations:
-        conventions = ", ".join(sorted(found.convention for found in catalogues.annotations))
+    reasons = [producer.pending_reason() for producer in loaded.producers]
+    if loaded.annotations:
+        conventions = ", ".join(sorted(found.convention for found in loaded.annotations))
         reasons.append(
             f"the result records no sample annotation ({conventions}); run apb2 annotate"
         )
@@ -674,11 +670,15 @@ def _check_shared_keys(sets: Mapping[str, _Lookups]) -> None:
 
 
 def _fields_frame(rows: list[dict[str, object]]) -> pl.DataFrame:
+    """The rows in :func:`~apb_catalog.table.catalog_table`'s column order, then ``present`` and
+    ``constant``, however many sets and qualifiers they come from."""
     if not rows:
         return pl.DataFrame()
-    return pl.DataFrame(rows, infer_schema_length=None).with_columns(
-        pl.col("constant").cast(pl.String)
-    )
+    frame = pl.DataFrame(rows, infer_schema_length=None)
+    qualifiers = [name for name in frame.columns if name.startswith("qualifier.")]
+    return frame.select(
+        *KEY_COLUMNS, "key", "kind", *qualifiers, "requirement", "entry_id", "present", "constant"
+    ).with_columns(pl.col("constant").cast(pl.String))
 
 
 def _retained(level: ParsedLevel) -> set[Address]:
@@ -735,14 +735,14 @@ def stored_rule_version(uns: Mapping[str, JsonValue]) -> tuple[str, str, str] | 
 
 
 def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> ParsedLevels:
-    """Return a new result carrying the snapshot beside other catalogues' snapshots.
+    """Return a new result carrying the snapshot beside other sets' snapshots.
 
-    The root record ``catalog.<catalogue>`` holds the snapshot as its ``result``; each level the
+    The root record ``catalog.<set>`` holds the snapshot as its ``result``; each level the
     snapshot answered a request for gets a record of the same name summarizing those requests.
     Scientific data is shared, not copied.
     """
     snapshots = _records(parsed.metadata)
-    snapshots[snapshot.catalogue] = {"result": snapshot.model_dump(mode="json")}
+    snapshots[snapshot.set_name] = {"result": snapshot.model_dump(mode="json")}
     levels = {
         name: replace(level, metadata=_with_level_summary(level.metadata, name, snapshot))
         for name, level in parsed.levels.items()
@@ -751,7 +751,7 @@ def attach_snapshot(parsed: ParsedLevels, snapshot: ResolutionSnapshot) -> Parse
 
 
 def _records(metadata: dict[str, JsonValue]) -> dict[str, JsonValue]:
-    """Return a copy of one part's records by catalogue; an absent namespace holds none.
+    """Return a copy of one part's records by set; an absent namespace holds none.
 
     A present namespace that is not an object raises rather than being treated as absent, so
     attaching a snapshot never replaces evidence it cannot read.
@@ -761,8 +761,7 @@ def _records(metadata: dict[str, JsonValue]) -> dict[str, JsonValue]:
     namespace = metadata[METADATA_KEY]
     if not isinstance(namespace, dict):
         raise ValueError(
-            f"metadata[{METADATA_KEY!r}] holds {type(namespace).__name__}, "
-            "not snapshots by catalogue"
+            f"metadata[{METADATA_KEY!r}] holds {type(namespace).__name__}, not snapshots by set"
         )
     return dict(namespace)
 
@@ -785,17 +784,17 @@ def _with_level_summary(
     unresolved = statuses["ambiguous"] + statuses["unknown"]
     required = sum(resolution.requirement is not None for resolution in answered)
     counts = (
-        ("resolved_requests", "Resolved catalogue requests", statuses["resolved"], "ok"),
-        ("missing_requests", "Missing catalogue requests", statuses["missing"], "ok"),
+        ("resolved_requests", "Resolved catalog requests", statuses["resolved"], "ok"),
+        ("missing_requests", "Missing catalog requests", statuses["missing"], "ok"),
         (
             "unresolved_requests",
-            "Ambiguous or unknown catalogue requests",
+            "Ambiguous or unknown catalog requests",
             unresolved,
             "attention" if unresolved else "ok",
         ),
         (
             "missing_required_requests",
-            "Missing fields the catalogue requires",
+            "Missing fields the set requires",
             required,
             "attention" if required else "ok",
         ),
@@ -805,5 +804,5 @@ def _with_level_summary(
         for name, label, value, status in counts
     ]
     records = _records(metadata)
-    records[snapshot.catalogue] = {"summary": summary}
+    records[snapshot.set_name] = {"summary": summary}
     return {**metadata, METADATA_KEY: records}

@@ -1,26 +1,26 @@
-"""The rule check: which catalogued fields each packaged rule level supplies, and its verdict."""
+"""The rule check: which cataloged fields each packaged rule level supplies, and its verdict."""
 
 from __future__ import annotations
 
 import polars as pl
 import pytest
 
-from apb_catalog.coverage import catalogues, coverage_of, rule_coverage
+from apb_catalog.coverage import coverage_of, rule_coverage, sets
 from apb_catalog.rules import rule_levels
 from apb_catalog.source import (
-    CatalogueDescription,
     Evidence,
     Key,
-    ProducerCatalogue,
+    LoadedSet,
+    ProducerEntries,
     RequirementRow,
     RuleVariant,
-    SourceCatalogue,
-    SourceCatalogues,
+    SetDescription,
     SourceEntry,
+    VendorEntries,
 )
 from apb_catalog.vocabulary import Qualifier, SetVocabulary
 
-DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
+DESCRIPTION = SetDescription(purpose="Test entries.", used_by=("tests",))
 PATTERN = "^2\\..*"
 ION = RuleVariant(level="peptidoform_ion", software_version_pattern=PATTERN)
 REQUIRED = (
@@ -67,21 +67,17 @@ def _entry(name: str, kind: str, origin: str = "vendor", location: str = "var") 
     )
 
 
-def _sources(
-    *entries: SourceEntry, producers: tuple[ProducerCatalogue, ...] = ()
-) -> SourceCatalogues:
-    vendor = SourceCatalogue(
+def _sources(*entries: SourceEntry, producers: tuple[ProducerEntries, ...] = ()) -> LoadedSet:
+    vendor = VendorEntries(
         software_name="DIA-NN",
         variants=(ION,),
         entries=entries,
     )
-    return SourceCatalogues(
-        VOCABULARY, "test", (vendor,), DESCRIPTION, producers, (), REQUIRED, KEYS
-    )
+    return LoadedSet(VOCABULARY, "test", (vendor,), DESCRIPTION, producers, (), REQUIRED, KEYS)
 
 
-def _producer(*entries: SourceEntry, requires: tuple[str, ...] = ()) -> ProducerCatalogue:
-    return ProducerCatalogue(
+def _producer(*entries: SourceEntry, requires: tuple[str, ...] = ()) -> ProducerEntries:
+    return ProducerEntries(
         producer="tool",
         requires=requires,
         instruction="run `tool`" if requires else None,
@@ -107,9 +103,9 @@ def test_a_missing_required_field_fails_and_a_missing_optional_one_passes(
     assert coverage.get_column("kind").to_list() == ["group", "charge", "decoy"]
 
 
-def test_unsupported_fields_name_their_requirement_and_no_column() -> None:
-    """A required field nothing answers is a row of its own, with no column."""
-    missing = coverage_of(_sources(GROUP)).filter(pl.col("column").is_null())
+def test_unsupported_fields_name_their_requirement_and_no_field() -> None:
+    """A required field nothing answers is a row of its own, without a name."""
+    missing = coverage_of(_sources(GROUP)).filter(pl.col("name").is_null())
     assert missing.select("kind", "requirement").rows() == [
         ("charge", "required"),
         ("decoy", "optional"),
@@ -117,10 +113,10 @@ def test_unsupported_fields_name_their_requirement_and_no_column() -> None:
 
 
 def test_a_missing_optional_field_passes_and_is_still_listed() -> None:
-    """An optional field nothing answers leaves the level passing, as a row with no column."""
+    """An optional field nothing answers leaves the level passing, as a row without a name."""
     coverage = coverage_of(_sources(GROUP, CHARGE))
     assert set(coverage.get_column("verdict")) == {"pass"}
-    missing = coverage.filter(pl.col("column").is_null())
+    missing = coverage.filter(pl.col("name").is_null())
     assert missing.select("kind", "requirement").rows() == [("decoy", "optional")]
 
 
@@ -128,7 +124,7 @@ def test_an_app_field_counts_on_every_level_of_every_software() -> None:
     """The catalog reads no rule, so an app's field counts wherever the app has an entry."""
     flag = _entry("is_unique", "peptidoform", origin="apb_fasta")
     coverage = coverage_of(_sources(GROUP, producers=(_producer(flag),)))
-    assert coverage.filter(pl.col("producer") == "tool").select("column", "needs").rows() == [
+    assert coverage.filter(pl.col("producer") == "tool").select("name", "needs").rows() == [
         ("is_unique", None)
     ]
 
@@ -140,36 +136,36 @@ def test_a_later_producer_counts_with_what_to_run() -> None:
     row = coverage_of(_sources(GROUP, producers=(producer,))).filter(
         pl.col("kind") == "contaminant"
     )
-    assert row.select("table", "column", "needs").rows() == [
+    assert row.select("table", "name", "needs").rows() == [
         ("fasta_validation", "fasta_matches_contaminant", "run `tool`")
     ]
 
 
 def test_requirements_must_name_the_sets_keys() -> None:
     """A requirement for a key the set does not list is refused."""
-    vendor = SourceCatalogue(
+    vendor = VendorEntries(
         software_name="DIA-NN",
         variants=(ION,),
         entries=(GROUP,),
     )
     row = RequirementRow(level="peptidoform_ion", location="var", key="fdr", requirement="required")
     with pytest.raises(ValueError, match="unknown key 'fdr'"):
-        SourceCatalogues(VOCABULARY, "test", (vendor,), DESCRIPTION, (), (), (row,), KEYS)
+        LoadedSet(VOCABULARY, "test", (vendor,), DESCRIPTION, (), (), (row,), KEYS)
 
 
 def test_a_requirement_row_matches_its_key() -> None:
     """The abundance set's recommended row asks for an un-normalized intensity, not any intensity."""
     coverage = rule_coverage("abundance_alpha").filter(pl.col("software") == "FragPipe")
-    missing = coverage.filter(pl.col("column").is_null())
-    assert missing.select("key", "kind", "qualifiers", "requirement").rows() == [
-        ("intensity", "intensity", "normalization=none", "recommended")
+    missing = coverage.filter(pl.col("name").is_null())
+    assert missing.select("key", "kind", "qualifier.normalization", "requirement").rows() == [
+        ("intensity", "intensity", "none", "recommended")
     ]
     assert "intensity_norm_settings" in coverage.get_column("key").to_list()
     assert set(coverage.get_column("verdict")) == {"warn"}
 
 
 def test_a_set_without_requirements_reports_coverage_only() -> None:
-    """Confidence catalogues judge nothing; a level without entries still has one row."""
+    """The confidence set judges nothing; a level without entries still has one row."""
     coverage = rule_coverage("confidence_alpha")
     assert coverage.get_column("verdict").is_null().all()
     assert not coverage.filter(pl.col("kind").is_null()).is_empty()
@@ -177,8 +173,8 @@ def test_a_set_without_requirements_reports_coverage_only() -> None:
 
 def test_every_packaged_set_is_listed() -> None:
     """The abundance and apb sets set requirements; every set has entries."""
-    listed = catalogues()
-    assert listed.get_column("catalogue").to_list() == [
+    listed = sets()
+    assert listed.get_column("set").to_list() == [
         "abundance_alpha",
         "confidence_alpha",
         "proteobench_entrapment_alpha",

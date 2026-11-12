@@ -57,13 +57,13 @@ def test_the_manifest_lists_every_file_each_bundle_holds(bundles: tuple[Path, Pa
     for folder in bundles:
         manifest = _object(folder / "manifest.json")
         assert manifest["files"] == _held(folder)
-        assert manifest["bundle_format"] == 4
+        assert manifest["bundle_format"] == 5
 
 
 def test_the_bundle_holds_only_what_a_lookup_reads(bundle: Path, test_bundle: Path) -> None:
-    """The served bundle holds the catalogue tables, ``versions.csv`` among them; the
+    """The served bundle holds the catalog tables, ``versions.csv`` among them; the
     answers and synthetic results go to the test bundle."""
-    assert {path.split("/")[0] for path in _held(bundle)} == {"catalogues"}
+    assert {path.split("/")[0] for path in _held(bundle)} == {"data"}
     assert {path.split("/")[0] for path in _held(test_bundle)} == {"cases", "results.tar.gz"}
     assert (
         _object(bundle / "manifest.json")["version"]
@@ -74,23 +74,21 @@ def test_the_bundle_holds_only_what_a_lookup_reads(bundle: Path, test_bundle: Pa
 def test_a_plugin_set_never_enters_the_bundle(bundle: Path, test_bundle: Path) -> None:
     """Only the packaged sets are carried, in files and in expected answers."""
     packaged = list(packaged_descriptions())
-    assert _object(bundle / "manifest.json")["catalogues"] == packaged
+    assert _object(bundle / "manifest.json")["sets"] == packaged
     for table in TABLES:
-        text = (bundle / "catalogues" / f"{table}.csv").read_text("utf-8")
+        text = (bundle / "data" / f"{table}.csv").read_text("utf-8")
         assert {row["set"] for row in csv.DictReader(io.StringIO(text))} <= set(packaged)
     tables = _object(test_bundle / "cases" / "tables.json")
-    assert [row["catalogue"] for row in tables["catalogues"]] == packaged
+    assert [row["set"] for row in tables["sets"]] == packaged
     cases = _rows(test_bundle / "cases" / "data_catalog.json")
-    assert {case["catalogue"] for case in cases} == set(packaged)
+    assert {case["set"] for case in cases} == set(packaged)
 
 
 def test_the_bundle_carries_the_packaged_versions(bundle: Path) -> None:
     """Readers turn a result's version pattern into the label entries name with the table the
     build wrote."""
     packaged = resources.files("apb_catalog").joinpath("data", "versions.csv")
-    assert (bundle / "catalogues" / "versions.csv").read_text("utf-8") == packaged.read_text(
-        "utf-8"
-    )
+    assert (bundle / "data" / "versions.csv").read_text("utf-8") == packaged.read_text("utf-8")
 
 
 def test_every_outcome_is_among_the_expected_answers(test_bundle: Path) -> None:

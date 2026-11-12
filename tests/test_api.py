@@ -13,9 +13,9 @@ def test_api_exports_exactly_the_approved_names() -> None:
         "ResolutionSnapshot",
         "UnresolvedField",
         "attach_snapshot",
-        "catalogue_table",
-        "catalogues",
+        "catalog_table",
         "rule_coverage",
+        "sets",
     ]
 
 

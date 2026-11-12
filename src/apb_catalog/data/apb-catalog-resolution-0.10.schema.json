@@ -45,29 +45,6 @@
       "title": "Candidate",
       "type": "object"
     },
-    "CatalogueDescription": {
-      "additionalProperties": false,
-      "description": "What one catalogue set holds and who uses it.",
-      "properties": {
-        "purpose": {
-          "title": "Purpose",
-          "type": "string"
-        },
-        "used_by": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Used By",
-          "type": "array"
-        }
-      },
-      "required": [
-        "purpose",
-        "used_by"
-      ],
-      "title": "CatalogueDescription",
-      "type": "object"
-    },
     "Evidence": {
       "additionalProperties": false,
       "description": "Why a reviewer assigned an entry's meaning.",
@@ -187,7 +164,7 @@
     },
     "ProducedBinding": {
       "additionalProperties": false,
-      "description": "A level of a set without vendor catalogues: only apps' and annotations' fields answer.",
+      "description": "A level of a set without vendor entries: only apps' and annotations' fields answer.",
       "properties": {
         "status": {
           "const": "produced",
@@ -403,7 +380,7 @@
     },
     "ReviewedBinding": {
       "additionalProperties": false,
-      "description": "A level whose rule's software and version match a reviewed catalogue variant.",
+      "description": "A level whose rule's software and version match a reviewed rule variant.",
       "properties": {
         "status": {
           "const": "reviewed",
@@ -430,6 +407,29 @@
         "software_version_pattern"
       ],
       "title": "ReviewedBinding",
+      "type": "object"
+    },
+    "SetDescription": {
+      "additionalProperties": false,
+      "description": "What one set holds and who uses it.",
+      "properties": {
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        },
+        "used_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Used By",
+          "type": "array"
+        }
+      },
+      "required": [
+        "purpose",
+        "used_by"
+      ],
+      "title": "SetDescription",
       "type": "object"
     },
     "SetVocabulary": {
@@ -524,7 +524,7 @@
     },
     "UnreviewedBinding": {
       "additionalProperties": false,
-      "description": "A level no catalogue describes, and why.",
+      "description": "A level no set reviews, and why.",
       "properties": {
         "status": {
           "const": "unreviewed",
@@ -583,20 +583,20 @@
       "type": "string"
     },
     "contract_version": {
-      "const": "0.9",
-      "default": "0.9",
+      "const": "0.10",
+      "default": "0.10",
       "title": "Contract Version",
       "type": "string"
     },
     "producer": {
       "$ref": "#/$defs/Producer"
     },
-    "catalogue": {
-      "title": "Catalogue",
+    "set_name": {
+      "title": "Set Name",
       "type": "string"
     },
     "description": {
-      "$ref": "#/$defs/CatalogueDescription"
+      "$ref": "#/$defs/SetDescription"
     },
     "vocabulary_version": {
       "title": "Vocabulary Version",
@@ -629,7 +629,7 @@
   },
   "required": [
     "producer",
-    "catalogue",
+    "set_name",
     "description",
     "vocabulary_version",
     "vocabulary",

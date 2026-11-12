@@ -157,7 +157,7 @@ class Slot[Value]:
 
         Raises:
             KeyError: The name is neither a key the level answers nor one of its own names.
-            UnresolvedField: The key names several fields, or one the catalogue cannot decide.
+            UnresolvedField: The key names several fields, or one the catalog cannot decide.
             ValueError: The prefix is no composed set's, or its set has no such key.
         """
         return self._read(self._found(name, {}))
@@ -167,7 +167,7 @@ class Slot[Value]:
         that name; ``None`` when it is neither.
 
         Raises:
-            UnresolvedField: The key names several fields, or one the catalogue cannot decide.
+            UnresolvedField: The key names several fields, or one the catalog cannot decide.
             ValueError: Qualifiers with a name that is no key, a qualifier the key fixes, or
                 qualifiers on a ``v:`` name; a prefix of no composed set, or a key its set lacks.
         """
@@ -180,7 +180,7 @@ class Slot[Value]:
 
         Raises:
             KeyError: The name is neither a key the level answers nor one of its own names.
-            UnresolvedField: The key names several fields, or one the catalogue cannot decide.
+            UnresolvedField: The key names several fields, or one the catalog cannot decide.
             ValueError: Qualifiers with a name that is no key, a qualifier the key fixes, or
                 qualifiers on a ``v:`` name; a prefix of no composed set, or a key its set lacks.
         """
@@ -278,7 +278,7 @@ class Columns[Value, Frame](Slot[Value]):
 
         Raises:
             KeyError: A name is neither a key the level answers nor one of its own names.
-            UnresolvedField: A key may name a field the catalogue cannot decide.
+            UnresolvedField: A key may name a field the catalog cannot decide.
             ValueError: A prefix is no composed set's, or its set has no such key.
         """
         if isinstance(name, str):

@@ -36,13 +36,13 @@ build:  ## Build and validate source and wheel distributions
 	uv build
 	$(VENV_BIN)/twine check dist/*
 
-bundle:  ## Build the language bundle (catalogue tables) and its test bundle (expected answers) into build/
+bundle:  ## Build the language bundle (catalog tables) and its test bundle (expected answers) into build/
 	$(VENV_BIN)/python -m scripts.build_bundle build
 
 versions:  ## Rewrite versions.csv from APB2's packaged rules
 	$(VENV_BIN)/python -m scripts.versions
 
-docs-tables:  ## Regenerate the Catalogues page tables from the packaged catalogues
+docs-tables:  ## Regenerate the Sets page tables from the packaged sets
 	$(VENV_BIN)/python -m scripts.coverage_tables
 
 docs:  ## Build user documentation with strict warnings

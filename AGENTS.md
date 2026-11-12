@@ -40,6 +40,18 @@ The closest `AGENTS.md` wins. Explicit user instructions override this file.
 - apb2 tests what it converts; apb-catalog tests what downstream applications need. No apb-catalog test requires the catalog to cover every level, layer or column apb2 writes
 - When an apb2 change fails a catalog test, first ask which application reads the field. If none does, the test is the defect, not the catalog
 
+## Names
+
+Words in prose (docs, the APB article) and what they are in the tables and code:
+
+- **Catalog and set:** apb-catalog is the catalog; `abundance_alpha` and the others are its sets (`set` column, `sets.csv`; `set_name` or `*sets` as arguments, since `set` is a builtin). `Catalog` and `DataCatalog` combine the sets they are given. Never "one catalog per topic", and never "catalogue": US spelling throughout
+- **Term and key:** a term is what an application asks for; its key is its name (`key` column, `terms.csv`) and fixes its kind and qualifier values
+- **Field and name:** a field is the layer or column that answers a term; its name is the `name` column of `catalog.csv`, written `<layer or varm table>/<column>` with `-` for the unused part. The API tables split it into `table` (varm only) and `name`
+- **Location, level and slot:** a location is `<level>/<slot>` in `catalog.csv` and `terms.csv`; a slot is `layers`, `var`, `obs` or `varm`. The API tables split it into `level` and `slot`
+- **Software and source:** software is the quantification software of an APB2 rule (`versions.csv`, `rule_coverage()`, `Catalog`'s first argument); a source is who writes a field: a software, an app such as apb-fasta, or `annotation:<convention>` (`source` column of `catalog.csv` and `catalog_table()`)
+- **Version:** a version is a label of `versions.csv` (`1.10`, `2.x`, `*`); a real version string such as `2.6.0` is a `software_version`; a rule's regex is its `software_version_pattern`
+- **Qualifiers:** `qualifier` and `value` rows in the CSV tables; one `qualifier.<name>` column each in every API table
+
 ## Dependency rules
 
 ### Required

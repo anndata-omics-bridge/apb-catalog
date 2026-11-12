@@ -1,4 +1,4 @@
-"""Packaged catalogue sets must stay consistent with the vocabulary, and each entry must name a
+"""Packaged sets must stay consistent with the vocabulary, and each entry must name a
 field APB2 writes."""
 
 from __future__ import annotations
@@ -8,17 +8,17 @@ from apb2.api import FIXED_COLUMNS
 
 from apb_catalog.rules import EntryId, entry_id
 from apb_catalog.source import (
-    CatalogueDescription,
     Evidence,
     Key,
-    ProducerCatalogue,
+    LoadedSet,
+    ProducerEntries,
     Reference,
     RuleVariant,
-    SourceCatalogue,
-    SourceCatalogues,
+    SetDescription,
     SourceEntry,
-    packaged_catalogues,
+    VendorEntries,
     packaged_descriptions,
+    packaged_set,
 )
 from tests.packaged_rules import (
     declared_roles,
@@ -27,15 +27,15 @@ from tests.packaged_rules import (
     rule_of,
 )
 
-CONFIDENCE = packaged_catalogues("confidence_alpha").vocabulary
-KEYS = packaged_catalogues("confidence_alpha").keys
-DESCRIPTION = CatalogueDescription(purpose="Test entries.", used_by=("tests",))
+CONFIDENCE = packaged_set("confidence_alpha").vocabulary
+KEYS = packaged_set("confidence_alpha").keys
+DESCRIPTION = SetDescription(purpose="Test entries.", used_by=("tests",))
 
 ION = RuleVariant(level="peptidoform_ion", software_version_pattern="^1\\.")
 
 
-def _catalogues(name: str) -> tuple[SourceCatalogue, ...]:
-    return packaged_catalogues(name).catalogues
+def _vendors(name: str) -> tuple[VendorEntries, ...]:
+    return packaged_set(name).vendors
 
 
 def _entry(name: str, key: str = "pep", kind: str = "pep", **qualifiers: str) -> SourceEntry:
@@ -50,25 +50,25 @@ def _entry(name: str, key: str = "pep", kind: str = "pep", **qualifiers: str) ->
     )
 
 
-def _catalogue(*entries: SourceEntry, **overrides: object) -> SourceCatalogue:
+def _vendor(*entries: SourceEntry, **overrides: object) -> VendorEntries:
     fields: dict[str, object] = {
         "software_name": "Vendor",
         "variants": (ION,),
         "entries": entries,
     } | overrides
-    return SourceCatalogue.model_validate(fields)
+    return VendorEntries.model_validate(fields)
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
-def test_packaged_catalogues_load_against_the_vocabulary(name: str) -> None:
+def test_packaged_sets_load_against_the_vocabulary(name: str) -> None:
     """Every packaged entry is fully described in its set's vocabulary."""
-    assert packaged_catalogues(name).reviewed("Vendor", "^0\\.", "peptidoform_ion") is None
+    assert packaged_set(name).reviewed("Vendor", "^0\\.", "peptidoform_ion") is None
 
 
-def test_an_unknown_catalogue_set_is_rejected() -> None:
+def test_an_unknown_set_is_rejected() -> None:
     """Only the packaged consumer sets exist."""
-    with pytest.raises(ValueError, match="unknown catalogue"):
-        packaged_catalogues("everything")
+    with pytest.raises(ValueError, match="unknown set"):
+        packaged_set("everything")
 
 
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
@@ -76,12 +76,12 @@ def test_entries_name_fields_the_rules_retain(name: str) -> None:
     """Every entry refers to an APB output name the rule of each of its versions retains."""
     missing = [
         f"{entry.entry_id} under {pattern}"
-        for catalogue in _catalogues(name)
-        for entry in catalogue.entries
+        for vendor in _vendors(name)
+        for entry in vendor.entries
         for pattern in entry.software_version_pattern
         if (entry.reference.location, entry.reference.name)
         not in retained_sources(
-            rule_of(catalogue.software_name, pattern, entry.reference.level),
+            rule_of(vendor.software_name, pattern, entry.reference.level),
             entry.reference.level,
         )
     ]
@@ -97,12 +97,12 @@ def test_fields_sharing_a_key_on_a_rule_level_differ_in_a_qualifier(name: str) -
     protein PG_Normalised and PG_MaxLFQ share intensity_norm_settings and differ in aggregation."""
     seen: dict[tuple[object, ...], str | None] = {}
     repeated: list[tuple[object, ...]] = []
-    for catalogue in _catalogues(name):
-        for entry in catalogue.entries:
+    for vendor in _vendors(name):
+        for entry in vendor.entries:
             for pattern in entry.software_version_pattern:
                 reference = entry.reference
                 slot = (
-                    catalogue.software_name,
+                    vendor.software_name,
                     pattern,
                     reference.level,
                     reference.location,
@@ -118,7 +118,7 @@ def test_fields_sharing_a_key_on_a_rule_level_differ_in_a_qualifier(name: str) -
 @pytest.mark.parametrize("name", tuple(packaged_descriptions()))
 def test_every_entry_is_described_by_its_key(name: str) -> None:
     """Each entry carries the kind and the fixed values of the key it records."""
-    sources = packaged_catalogues(name)
+    sources = packaged_set(name)
     mismatched = [
         entry.entry_id
         for source in sources.sources()
@@ -134,13 +134,11 @@ def test_an_entry_must_carry_its_keys_meaning() -> None:
     open_pep = Key(key="any_pep", kind="pep")
     other_stage = Key(key="pep", kind="pep", fixed={"stage": "quantification"})
     with pytest.raises(ValueError, match="does not describe it"):
-        SourceCatalogues(CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=())
+        LoadedSet(CONFIDENCE, "test", (_vendor(_entry("PEP")),), DESCRIPTION, keys=())
     with pytest.raises(ValueError, match="does not describe it"):
-        SourceCatalogues(
-            CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=(other_stage,)
-        )
-    both = SourceCatalogues(
-        CONFIDENCE, "test", (_catalogue(_entry("PEP")),), DESCRIPTION, keys=(*KEYS, open_pep)
+        LoadedSet(CONFIDENCE, "test", (_vendor(_entry("PEP")),), DESCRIPTION, keys=(other_stage,))
+    both = LoadedSet(
+        CONFIDENCE, "test", (_vendor(_entry("PEP")),), DESCRIPTION, keys=(*KEYS, open_pep)
     )
     assert both.key("any_pep").describes("pep", {"stage": "identification"})
 
@@ -148,65 +146,63 @@ def test_an_entry_must_carry_its_keys_meaning() -> None:
 def test_a_key_names_admitted_values_once() -> None:
     """A key's kind and fixed values are the vocabulary's, and its name repeats nowhere."""
     with pytest.raises(ValueError, match="does not admit"):
-        SourceCatalogues(CONFIDENCE, "test", (), DESCRIPTION, keys=(Key(key="fdr", kind="fdr"),))
+        LoadedSet(CONFIDENCE, "test", (), DESCRIPTION, keys=(Key(key="fdr", kind="fdr"),))
     with pytest.raises(ValueError, match="repeats"):
-        SourceCatalogues(CONFIDENCE, "test", (), DESCRIPTION, keys=(*KEYS, KEYS[0]))
+        LoadedSet(CONFIDENCE, "test", (), DESCRIPTION, keys=(*KEYS, KEYS[0]))
 
 
 def test_an_entry_must_use_a_declared_rule_variant() -> None:
-    """An entry cannot claim a software version the catalogue never reviewed."""
+    """An entry cannot claim a software version the set never reviewed."""
     stray = _entry("PEP").model_copy(update={"software_version_pattern": ("^9\\.",)})
     with pytest.raises(ValueError, match="uses"):
-        _catalogue(stray)
+        _vendor(stray)
 
 
 def test_entry_ids_are_unique() -> None:
     """Two entries cannot share one identifier."""
     with pytest.raises(ValueError, match="duplicate entry ids"):
-        _catalogue(_entry("PEP"), _entry("PEP"))
+        _vendor(_entry("PEP"), _entry("PEP"))
 
 
 def test_entry_qualifiers_must_describe_every_vocabulary_qualifier() -> None:
     """Leaving a qualifier out is rejected; ``unknown`` must be recorded explicitly."""
     partial = _entry("PEP").model_copy(update={"qualifiers": {}})
     with pytest.raises(ValueError, match="qualifiers must be exactly"):
-        SourceCatalogues(CONFIDENCE, "test", (_catalogue(partial),), DESCRIPTION, keys=KEYS)
+        LoadedSet(CONFIDENCE, "test", (_vendor(partial),), DESCRIPTION, keys=KEYS)
 
 
 def test_entry_qualifier_values_must_be_admitted() -> None:
     """A value outside the vocabulary is rejected, while ``unknown`` is accepted."""
     undecided = Key(key="pep_unknown_stage", kind="pep", fixed={"stage": "unknown"})
-    SourceCatalogues(
+    LoadedSet(
         CONFIDENCE,
         "test",
-        (_catalogue(_entry("PEP", key="pep_unknown_stage", stage="unknown")),),
+        (_vendor(_entry("PEP", key="pep_unknown_stage", stage="unknown")),),
         DESCRIPTION,
         keys=(*KEYS, undecided),
     )
     with pytest.raises(ValueError, match="does not admit"):
-        SourceCatalogues(
-            CONFIDENCE, "test", (_catalogue(_entry("PEP", kind="fdr")),), DESCRIPTION, keys=KEYS
-        )
+        LoadedSet(CONFIDENCE, "test", (_vendor(_entry("PEP", kind="fdr")),), DESCRIPTION, keys=KEYS)
 
 
-def test_a_software_version_is_reviewed_by_one_catalogue_only() -> None:
-    """One software version's level cannot be bound to two vendor catalogues of one set."""
-    first = _catalogue(_entry("PEP"))
-    second = _catalogue()
+def test_a_software_version_is_reviewed_by_one_vendor_only() -> None:
+    """One software version's level cannot be bound to two vendor entries of one set."""
+    first = _vendor(_entry("PEP"))
+    second = _vendor()
     with pytest.raises(ValueError, match="reviewed more than once"):
-        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
+        LoadedSet(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
 
 
 def test_an_entry_id_repeats_nowhere_in_a_set() -> None:
     """Vendor and app entries share one id space, so a snapshot names each unambiguously."""
     later = RuleVariant(level="peptidoform_ion", software_version_pattern="^2\\.")
-    first = _catalogue(_entry("PEP"))
-    second = _catalogue(
+    first = _vendor(_entry("PEP"))
+    second = _vendor(
         _entry("PEP").model_copy(update={"software_version_pattern": ("^2\\.",)}),
         variants=(later,),
     )
     with pytest.raises(ValueError, match="repeats"):
-        SourceCatalogues(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
+        LoadedSet(CONFIDENCE, "test", (first, second), DESCRIPTION, keys=KEYS)
 
 
 def test_an_entry_id_names_where_its_field_lives() -> None:
@@ -247,8 +243,8 @@ def test_a_malformed_entry_id_is_refused(text: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(packaged_descriptions()))
 def test_every_packaged_entry_id_names_its_source_and_field(name: str) -> None:
-    """A packaged entry's id names the catalogue it belongs to and the field it reads."""
-    for source in packaged_catalogues(name).sources():
+    """A packaged entry's id names the source it belongs to and the field it reads."""
+    for source in packaged_set(name).sources():
         for entry in source.entries:
             named = entry_id(entry.entry_id)
             assert (named.source, entry.source) == (source.label, source.label)
@@ -263,7 +259,7 @@ def test_a_bound_prefix_entry_takes_its_columns_id() -> None:
     """A prolfquapp ``group*`` entry bound to the column ``group_x`` names that column."""
     prefixed = next(
         entry
-        for annotation in packaged_catalogues("obs_annotation_alpha").annotations
+        for annotation in packaged_set("obs_annotation_alpha").annotations
         for entry in annotation.entries
         if entry.reference.prefix == "group"
     )
@@ -279,7 +275,7 @@ def test_an_entry_of_every_level_takes_the_level_it_answers_on() -> None:
     assert entry_id("annotation:prolfquapp/*/*/obs/-/subject*").level == "*"
     every = next(
         entry
-        for annotation in packaged_catalogues("obs_annotation_alpha").annotations
+        for annotation in packaged_set("obs_annotation_alpha").annotations
         for entry in annotation.entries
         if entry.reference.prefix == "group"
     )
@@ -298,17 +294,17 @@ def test_a_vendor_entry_names_its_level() -> None:
         update={"reference": Reference(level="*", location="layers", name="PEP")}
     )
     with pytest.raises(ValueError, match="a vendor entry names its level"):
-        _catalogue(every)
+        _vendor(every)
 
 
-def _producer(*entries: SourceEntry, **overrides: object) -> ProducerCatalogue:
+def _producer(*entries: SourceEntry, **overrides: object) -> ProducerEntries:
     fields: dict[str, object] = {
         "producer": "tool",
         "requires": ("tool", "provenance"),
         "instruction": "run `tool`",
         "entries": entries,
     } | overrides
-    return ProducerCatalogue.model_validate(fields)
+    return ProducerEntries.model_validate(fields)
 
 
 def test_app_entries_apply_to_every_software_version() -> None:
@@ -347,7 +343,7 @@ def test_a_varm_reference_names_its_table() -> None:
 
 
 DOMAIN_SETS = tuple(name for name in packaged_descriptions() if name != "apb_alpha")
-"""The sets that catalogue the vendors' own columns; ``apb_alpha`` catalogues the columns APB2 writes."""
+"""The sets that catalog the vendors' own columns; ``apb_alpha`` catalogs the columns APB2 writes."""
 
 
 @pytest.mark.parametrize("name", DOMAIN_SETS)
@@ -355,8 +351,8 @@ def test_domain_sets_hold_no_apb2_columns(name: str) -> None:
     """APB2's canonical ProForma columns belong to the apb set, not to a domain set."""
     canonical = [
         entry.entry_id
-        for catalogue in _catalogues(name)
-        for entry in catalogue.entries
+        for vendor in _vendors(name)
+        for entry in vendor.entries
         if (entry.reference.name or "").startswith("ProForma_")
     ]
     assert canonical == []
@@ -367,12 +363,12 @@ def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> 
     """A decoy or contaminant flag with no vendor input is false by declaration, not reported."""
     constant = [
         f"{entry.entry_id} under {pattern}"
-        for catalogue in _catalogues(name)
-        for entry in catalogue.entries
+        for vendor in _vendors(name)
+        for entry in vendor.entries
         if entry.reference.name in ("apb_Decoy", "apb_Contaminant")
         for pattern in entry.software_version_pattern
         if not declared_var_column(
-            rule_of(catalogue.software_name, pattern, entry.reference.level),
+            rule_of(vendor.software_name, pattern, entry.reference.level),
             entry.reference.level,
             entry.reference.name,
         ).get("inputs")
@@ -381,11 +377,11 @@ def test_vendor_flags_answer_only_where_the_rule_reads_the_vendor(name: str) -> 
 
 
 def _apb_columns() -> set[tuple[str, str, str, str, str]]:
-    """Every (software, pattern, level, column, kind) the apb set catalogues."""
+    """Every (software, pattern, level, column, kind) the apb set catalogs."""
     return {
-        (catalogue.software_name, pattern, entry.reference.level, name, entry.kind)
-        for catalogue in _catalogues("apb_alpha")
-        for entry in catalogue.entries
+        (vendor.software_name, pattern, entry.reference.level, name, entry.kind)
+        for vendor in _vendors("apb_alpha")
+        for entry in vendor.entries
         for pattern in entry.software_version_pattern
         for name in [entry.reference.name or ""]
     }

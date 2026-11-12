@@ -1,4 +1,4 @@
-"""Each catalogue set's vocabulary: its kinds, and the qualifiers that refine a kind."""
+"""Each set's vocabulary: its kinds, and the qualifiers that refine a kind."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 UNKNOWN = "unknown"
 """The qualifier value recording that a reviewer could not establish the fact; a qualifier with
 values defines it, one without values is being planned and needs none. A kind is always known: a
-field whose meaning the reviewer could not establish is not catalogued."""
+field whose meaning the reviewer could not establish is not cataloged."""
 
 VENDOR = "v"
 """The prefix that asks a level's own column, never a set: ``v:q_value``."""
@@ -20,7 +20,7 @@ PREFIX_PATTERN = r"[a-z][a-z0-9_]*"
 
 
 class FrozenModel(BaseModel):
-    """An immutable catalogue record that rejects undeclared fields."""
+    """An immutable catalog record that rejects undeclared fields."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
