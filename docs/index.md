@@ -16,6 +16,13 @@ pep = DataCatalog(result, "confidence_alpha").levels["peptidoform_ion"].layers.g
 
 With pandas, on the MuData or AnnData object APB2 wrote, the same keys return AnnData's own matrices and pandas Series: `from apb_catalog.api_pandas import DataCatalog`, then `DataCatalog(mdata, "confidence_alpha")`; see [pandas](api.md#pandas).
 
+Try it online:
+
+- [Rules viewer](https://fgcz-ms.uzh.ch/public/apb-rules/): every vendor table's parse rules, as apb2 packages them
+- [Catalog viewer](https://fgcz-ms.uzh.ch/public/apb-catalog/): every catalog set with its entries and coverage
+- [APB Studio](https://fgcz-ms.uzh.ch/public/apb-studio/): APB's corpus runs over the test vendor files
+- [APB Export](https://apps-dev.bfabric.org/apb-export/): convert a vendor table for a downstream tool in the browser
+
 | Page | For |
 | --- | --- |
 | [Get started](getting-started.md) | Install, look up fields, use the data |

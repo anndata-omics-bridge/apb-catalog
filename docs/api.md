@@ -51,6 +51,92 @@ Everything is imported from `apb_catalog.api`, except the pandas `DataCatalog`, 
 - A key may name the primary layer and then answers `X`; `layers` holds the other layers, as in AnnData
 - A matrix is built once per level and shared by every later answer
 
+### Prefixes
+
+A prefix before the key asks one set alone; `v:` asks the level's own names alone. Every slot, `[...]`, `get`, `name` and a list take it.
+
+| Prefix | Asks |
+| --- | --- |
+| `a:` | `abundance_alpha` |
+| `c:` | `confidence_alpha` |
+| `pbe:` | `proteobench_entrapment_alpha` |
+| `rt:` | `chromatography_alpha` |
+| `apb:` | `apb_alpha` |
+| `annot:` | `obs_annotation_alpha` |
+| `fpep:` | `fasta_peptides_alpha` |
+| `fprot:` | `fasta_proteins_alpha` |
+| `v:` | the level's own field of that name, never the catalog |
+
+On a synthetic DIA-NN 1.8.1 result, four runs by six precursors:
+
+```python
+from pathlib import Path
+
+from apb2.api import read_parsed_levels
+from apb_catalog.api import Catalog, DataCatalog
+
+diann = read_parsed_levels(Path("diann.h5mu"))
+ion = DataCatalog(
+    diann,
+    "abundance_alpha",
+    "confidence_alpha",
+    "proteobench_entrapment_alpha",
+    "chromatography_alpha",
+    "apb_alpha",
+).levels["peptidoform_ion"]
+
+ion.layers["c:q_value"].shape          # (4, 6)
+ion.layers.name("c:q_value")           # 'Q_Value'
+ion.layers.name("pbe:q_value")         # 'Q_Value'
+ion.layers.name("a:intensity")         # 'Precursor_Quantity'
+ion.layers.name("rt:retention_time")   # 'RT'
+ion.var.name("c:library_q_value")      # 'Lib_Q_Value'
+ion.var.name("apb:peptidoform_ion")    # 'ProForma_ion'
+```
+
+`confidence_alpha` and `proteobench_entrapment_alpha` both have the key `q_value`; `c:` and `pbe:` say which set answers. `v:` reads the vendor's field and never a key, so a vendor column named as a key, such as Sage's `q_value`, stays reachable:
+
+```python
+ion.layers.name("q_value")             # 'Q_Value'
+ion.layers.name("v:Q_Value")           # 'Q_Value'
+ion.layers.get("v:q_value")            # None
+ion.var.get("v:Lib_Q_Value") is None   # False
+```
+
+DIA-NN has no field named `q_value`, so `v:q_value` is `None` while the key `q_value` answers. A list mixes prefixed and plain names:
+
+```python
+ion.var[["apb:peptidoform_ion", "c:library_q_value", "v:Global_Q_Value"]].columns  # ['ProForma_ion', 'Lib_Q_Value', 'Global_Q_Value']
+```
+
+A prefix of a set not named, a key its set lacks, and qualifiers on a `v:` name raise `ValueError`, even from `get`:
+
+```python
+confidence = DataCatalog(diann, "confidence_alpha").levels["peptidoform_ion"]
+for lookup in (
+    lambda: confidence.layers.get("a:intensity"),
+    lambda: confidence.layers.get("c:aligned_peak_end"),
+    lambda: ion.layers.name("v:Q_Value", unit="minute"),
+):
+    try:
+        lookup()
+    except ValueError as error:
+        print(error)
+```
+
+```text
+unknown prefix 'a' in 'a:intensity'; prefixes: ['c', 'v']
+unknown key 'aligned_peak_end'; keys: ['library_q_value', 'pep', 'q_value', 'quantification_q_value']
+'v:Q_Value' names the level's own field, which takes no qualifiers
+```
+
+`Catalog` takes prefixes too; without data there are no own names, so every `v:` name raises `KeyError`:
+
+```python
+names = Catalog("DIA-NN", "2.6.0", "confidence_alpha").levels["peptidoform_ion"]
+names.layers["c:q_value"]              # 'Q_Value'
+```
+
 `Catalog("DIA-NN", "2.6.0", "abundance_alpha").levels["peptidoform_ion"].layers["intensity"]` is `'Precursor_Quantity'`. Without data there is no `X`, `obs_names`, `var_names` or own name: a name that is no key the level answers raises `KeyError`, and so does every `v:` name.
 
 ## pandas
