@@ -135,6 +135,31 @@ A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray
 | `c:q_value` | the set whose prefix is `c`, confidence, alone; never a field of that name | the same |
 | `v:Q_Value` | the level's own field of that name alone; never the catalog | the same |
 
+Each set has its own prefix; `v` is reserved for the level's own names:
+
+| Prefix | Set | Example | Asks for |
+| --- | --- | --- | --- |
+| `a` | [`abundance_alpha`](sets.md#abundance_alpha) | `a:intensity` | the level's measured intensity |
+| `c` | [`confidence_alpha`](sets.md#confidence_alpha) | `c:q_value` | the q-value the software reports for the identification |
+| `pbe` | [`proteobench_entrapment_alpha`](sets.md#proteobench_entrapment_alpha) | `pbe:q_value` | the precursor q-value ProteoBench's entrapment scoring ranks by |
+| `rt` | [`chromatography_alpha`](sets.md#chromatography_alpha) | `rt:retention_time` | the feature's retention time |
+| `apb` | [`apb_alpha`](sets.md#apb_alpha) | `apb:peptidoform_ion` | the ProForma ion identifier APB2 writes for every vendor |
+| `annot` | [`obs_annotation_alpha`](sets.md#obs_annotation_alpha) | `annot:group` | each run's group, once `apb2 annotate` has run |
+| `fpep` | [`fasta_peptides_alpha`](sets.md#fasta_peptides_alpha) | `fpep:reported_leading_gene_name` | the gene name of the peptide's leading protein in the FASTA, once `apb-fasta verify-peptides` has run |
+| `fprot` | [`fasta_proteins_alpha`](sets.md#fasta_proteins_alpha) | `fprot:fasta_gene_names` | the protein's gene names from the FASTA, once `apb-fasta merge-annotations` has run |
+| `v` | none | `v:Q_Value` | the level's own field `Q_Value`, never the catalog |
+
+`confidence_alpha` and `proteobench_entrapment_alpha` both have a `q_value` key, so with both named, `c:` and `pbe:` say which set answers. On the level opened above, with `abundance_alpha`, `confidence_alpha` and `apb_alpha`:
+
+```python
+ion.layers.name("a:intensity")       # 'Precursor_Quantity'
+ion.layers.name("c:q_value")         # 'Q_Value'
+ion.var.name("apb:peptidoform_ion")  # 'ProForma_ion'
+ion.layers.name("v:Q_Value")         # 'Q_Value'
+```
+
+A prefix answers only when its set is named: on `DataCatalog(diann, "confidence_alpha")`, `a:intensity` raises `ValueError`, and the message lists the prefixes that do answer, here `c` and `v`.
+
 `sets()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns with `obs_annotation_alpha` named on an annotated result, `obs["group"]` raises `UnresolvedField` and the list `obs[["group", "Run"]]` reads them all, then `Run`.
 
 ## Read the AnnData object with pandas
