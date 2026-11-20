@@ -11,7 +11,7 @@ Every packaged set, generated from `src/apb_catalog/data/` by `make docs-tables`
 | [`chromatography_alpha`](#chromatography_alpha) | Retention times, elution-peak bounds and peak widths, with the unit the software reports them in. | apb-export: QPX feature retention times in seconds for pMultiQC | 58 |
 | [`confidence_alpha`](#confidence_alpha) | How likely each identification, or the signal quantified for it, is correct: PEP and q-values per run and per feature. | apb-aggregate: confidence-weighted rollups rlm_confidence_case and rlm_confidence_precision<br>apb-export: the prolfqua target's qValue, pg_qValue and pg_qValue_experiment layers | 26 |
 | [`fasta_peptides_alpha`](#fasta_peptides_alpha) | apb-fasta's peptide verification, asked for by kind, once apb-fasta verify-peptides has run on the result. | apb-export: the FASTA columns of its prolfqua, exploreDE, AlphaPeptTools and QFeatures exports and its contaminant flag<br>apb-aggregate: the proteotypic filter<br>apb-proteobench: species and contaminants | 28 |
-| [`fasta_proteins_alpha`](#fasta_proteins_alpha) | apb-fasta's protein annotation, asked for by kind, once apb-fasta merge-annotations has run on the result. | apb-export: gene names, descriptions and organisms in its Perseus, exploreDE and ProteoPy exports | 4 |
+| [`fasta_proteins_alpha`](#fasta_proteins_alpha) | apb-fasta's protein annotation, asked for by kind, once apb-fasta merge-annotations has run on the result. | apb-export: gene names, descriptions and organisms in its Perseus, exploreDE and ProteoPy exports, protein and ion level | 8 |
 | [`obs_annotation_alpha`](#obs_annotation_alpha) | Each run's group and subject, whichever sample table supplied them. | apb-export: export rules ask for sample groups and subjects | 7 |
 | [`proteobench_entrapment_alpha`](#proteobench_entrapment_alpha) | The precursor q-values ProteoBench's entrapment scoring ranks by, each key in each location its own score. | apb-proteobench: EntrapmentAnalyzer and run entrapment<br>apb-export: the msmu target's q_value layer and the prolfqua target's qValue fallback | 7 |
 
@@ -1025,10 +1025,10 @@ A qualifier value `unknown` means the evidence does not establish it; a lookup t
 
 | Key | Slot | Source | Versions | APB field | Levels |
 | --- | --- | --- | --- | --- | --- |
-| `any_member_in_fasta` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.any_member_in_fasta` | protein |
-| `fasta_descriptions` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.fasta_descriptions` | protein |
-| `fasta_gene_names` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.fasta_gene_names` | protein |
-| `fasta_organism_names` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.fasta_organism_names` | protein |
+| `any_member_in_fasta` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.any_member_in_fasta` | protein, peptidoform_ion |
+| `fasta_descriptions` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.fasta_descriptions` | protein, peptidoform_ion |
+| `fasta_gene_names` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.fasta_gene_names` | protein, peptidoform_ion |
+| `fasta_organism_names` | varm | apb-fasta | after `apb-fasta merge-annotations` | `fasta.fasta_organism_names` | protein, peptidoform_ion |
 
 <!-- end of generated block: fasta_proteins_alpha -->
 
