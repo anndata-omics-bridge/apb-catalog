@@ -146,7 +146,7 @@ def _keys(sources: LoadedSet) -> str:
             _code(found.key),
             _code(found.kind),
             *(_code(found.fixed[name]) if name in found.fixed else "" for name in fixed),
-            ", ".join(found.psi_ms),
+            ", ".join(found.cv_accession),
         ]
         for found in sources.keys
     ]

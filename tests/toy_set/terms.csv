@@ -1,4 +1,4 @@
-set,location,key,kind,qualifier,value,requirement,psi_ms,definition
+set,location,key,kind,qualifier,value,requirement,cv_accession,definition
 toy,peptidoform_ion/var,charge,charge,,,required,,
 toy,peptidoform_ion/var,group,group,,,required,,
 toy,peptidoform_ion/var,decoy,decoy,,,optional,,

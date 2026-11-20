@@ -1,4 +1,4 @@
-set,location,key,kind,qualifier,value,requirement,psi_ms,definition
+set,location,key,kind,qualifier,value,requirement,cv_accession,definition
 abundance_alpha,peptidoform_ion/layers,intensity_norm_settings,intensity,normalization,run_setting,,MS:1001850;MS:1001852,
 abundance_alpha,protein/layers,intensity_norm_settings,intensity,normalization,run_setting,,MS:1001850;MS:1001852,
 abundance_alpha,peptidoform/layers,intensity_norm_settings,intensity,normalization,run_setting,,MS:1001850;MS:1001852,

@@ -37,14 +37,14 @@ Then run `make docs-tables`.
 One row in `catalog.csv`:
 
 ```csv
-set,source,location,name,key,kind,qualifier,value,fixed,psi_ms,basis,evidence_url
+set,source,location,name,key,kind,qualifier,value,fixed,cv_accession,basis,evidence_url
 confidence_alpha,DIA-NN/2.x,peptidoform_ion/layers,PEP/-,pep,pep,stage,identification,true,,"DIA-NN README: 'run-specific posterior error probability for the precursor'.",https://github.com/vdemichev/DiaNN#main-output-reference
 ```
 
 | Column | Holds |
 | --- | --- |
 | `source`, `location`, `name` | Who writes the field and where it lives, built as CPE names are, two fields each: `<source>/<version>`, `<level>/<slot>`, `<layer or table>/<column>`; joined by `/` they are the entry id. `test_an_entry_id_names_where_its_field_lives` checks the grammar |
-| `key`, `kind`, `psi_ms` | The key of a term `terms.csv` defines at this location, and the kind and PSI-MS terms that term states. One field with two meanings, such as a protein column APB2 marks `protein_assignment` and `fasta_accessions`, is two rows, one per key |
+| `key`, `kind`, `cv_accession` | The key of a term `terms.csv` defines at this location, and the kind and controlled-vocabulary accessions that term states. One field with two meanings, such as a protein column APB2 marks `protein_assignment` and `fasta_accessions`, is two rows, one per key |
 | `qualifier`, `value` | The entry's value of one qualifier of the set, always as a pair, one row per qualifier: an abundance field has a `normalization`, an `aggregation` and an `ms_level` row; both empty in a set without qualifiers; `unknown` where the evidence does not establish one |
 | `fixed` | `true` where the term fixes that qualifier's value in `terms.csv`, as `intensity` fixes normalization `none` and `intensity_ms1` ms_level `ms1`, and the row carries that value; `false` where the key leaves the qualifier open, and on a row without a qualifier |
 | `basis`, `evidence_url` | Why the meaning holds, and where it is stated; the same on every row of the field |

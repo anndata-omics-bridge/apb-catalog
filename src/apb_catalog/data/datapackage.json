@@ -32,7 +32,7 @@
           {"name": "qualifier", "type": "string", "description": "A qualifier whose value the key fixes, such as normalization; one row per fixed qualifier. Empty with value when the key fixes none."},
           {"name": "value", "type": "string", "description": "The value the key fixes for that qualifier, as intensity fixes normalization none. A key fixes the same values at every location."},
           {"name": "requirement", "type": "string", "description": "How strongly the set's consumers need the term at this location: required, recommended or optional; empty when none is stated. The same on every row of the term.", "constraints": {"pattern": "^(required|recommended|optional)?$"}},
-          {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, separated by ';'; may be empty. The same on every row of the key."},
+          {"name": "cv_accession", "type": "string", "description": "Controlled-vocabulary accessions for the key's meaning, such as PSI-MS terms, separated by ';'; may be empty. The same on every row of the key."},
           {"name": "definition", "type": "string", "description": "What the term means, in words, such as unnormalized ion intensity; may be empty."}
         ],
         "primaryKey": ["set", "location", "key", "qualifier"],
@@ -94,7 +94,7 @@
     {
       "name": "catalog",
       "path": "catalog.csv",
-      "description": "One row per mapping of a term to a field and per qualifier: where the field lives in an APB result, the term's key, and the field's value of one qualifier; a field has one row per qualifier of its set, three in abundance. kind, psi_ms and fixed repeat what terms.csv states for the key, so each row reads alone; a field's basis and evidence_url are the same on all its rows.",
+      "description": "One row per mapping of a term to a field and per qualifier: where the field lives in an APB result, the term's key, and the field's value of one qualifier; a field has one row per qualifier of its set, three in abundance. kind, cv_accession and fixed repeat what terms.csv states for the key, so each row reads alone; a field's basis and evidence_url are the same on all its rows.",
       "schema": {
         "fields": [
           {"name": "set", "type": "string", "description": "The set.", "constraints": {"required": true}},
@@ -106,7 +106,7 @@
           {"name": "qualifier", "type": "string", "description": "One qualifier of the set refining the kind, such as normalization or unit; a field has one row per qualifier of its set. Empty with value when the set has none."},
           {"name": "value", "type": "string", "description": "The field's value of that qualifier."},
           {"name": "fixed", "type": "boolean", "description": "true where the key fixes this qualifier's value, as terms.csv states, and the row carries that value; false where the key leaves the qualifier open, and on a row without a qualifier.", "constraints": {"required": true}},
-          {"name": "psi_ms", "type": "string", "description": "PSI-MS terms for the key's meaning, as terms.csv states them; may be empty."},
+          {"name": "cv_accession", "type": "string", "description": "Controlled-vocabulary accessions for the key's meaning, as terms.csv states them; may be empty."},
           {"name": "basis", "type": "string", "description": "Why the reviewer assigned this meaning; the same on every row of the field.", "constraints": {"required": true}},
           {"name": "evidence_url", "type": "string", "description": "Where the basis can be checked; may be empty."}
         ],

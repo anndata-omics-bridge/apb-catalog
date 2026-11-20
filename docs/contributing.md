@@ -74,7 +74,7 @@ peak_qc,pqc,Retention time and peak width of an ion in one run.,Which quantity t
 <summary>The CSV file: <code>terms.csv</code></summary>
 
 ```csv
-set,location,key,kind,qualifier,value,requirement,psi_ms,definition
+set,location,key,kind,qualifier,value,requirement,cv_accession,definition
 peak_qc,peptidoform_ion/layers,retention_time,retention_time,,,required,,Where the ion eluted in this run.
 peak_qc,peptidoform_ion/layers,peak_fwhm,peak_fwhm,,,recommended,,The width of the ion's elution peak at half maximum.
 ```
@@ -148,7 +148,7 @@ peak_qc,unit,unknown,The reviewer could not establish this.
 <summary>The CSV file: <code>catalog.csv</code></summary>
 
 ```csv
-set,source,location,name,key,kind,qualifier,value,fixed,psi_ms,basis,evidence_url
+set,source,location,name,key,kind,qualifier,value,fixed,cv_accession,basis,evidence_url
 peak_qc,DIA-NN/*,peptidoform_ion/layers,RT/-,retention_time,retention_time,unit,minute,false,,"DIA-NN README: the observed precursor retention time, in minutes.",https://github.com/vdemichev/DiaNN#main-output-reference
 peak_qc,DIA-NN/2.x,peptidoform_ion/layers,FWHM/-,peak_fwhm,peak_fwhm,unit,minute,false,,"DIA-NN README: the estimated peak width at half maximum, in minutes.",https://github.com/vdemichev/DiaNN#main-output-reference
 peak_qc,FragPipe/*,peptidoform_ion/layers,Apex_Retention_Time/-,retention_time,retention_time,unit,unknown,false,,"FragPipe outputs: the retention time of the precursor's apex intensity; the unit depends on the instrument.",https://fragpipe.nesvilab.org/docs/tutorial_fragpipe_outputs.html

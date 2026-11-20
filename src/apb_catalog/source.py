@@ -137,7 +137,7 @@ class Key(FrozenModel):
     key: str
     kind: str
     fixed: dict[str, str] = Field(default_factory=dict)
-    psi_ms: tuple[str, ...] = ()
+    cv_accession: tuple[str, ...] = ()
 
     def accepted(self) -> dict[str, tuple[str, ...]]:
         """The qualifier values a request for this key accepts, besides its kind."""
@@ -691,11 +691,11 @@ def _check_row(label: str, row: Row, key: Key, /) -> None:
             differ from what its key states.
     """
     pair = _pair(label, row)
-    psi_ms = ";".join(key.psi_ms)
-    if (row["kind"], row["psi_ms"]) != (key.kind, psi_ms):
+    cv_accession = ";".join(key.cv_accession)
+    if (row["kind"], row["cv_accession"]) != (key.kind, cv_accession):
         raise ValueError(
             f"catalog.csv: {label} has the kind {row['kind']!r} and the PSI-MS terms "
-            f"{row['psi_ms']!r}; its key {key.key!r} has {key.kind!r} and {psi_ms!r}"
+            f"{row['cv_accession']!r}; its key {key.key!r} has {key.kind!r} and {cv_accession!r}"
         )
     fixes = row["fixed"] == "true"
     if fixes != (row["qualifier"] in key.fixed) or (
@@ -779,7 +779,7 @@ def _key(name: str, key: str, rows: Sequence[Row], /) -> Key:
             locations fix different values.
     """
     kinds = sorted({row["kind"] for row in rows})
-    terms = sorted({row["psi_ms"] for row in rows})
+    terms = sorted({row["cv_accession"] for row in rows})
     if len(kinds) != 1 or len(terms) != 1:
         raise ValueError(
             f"{name}: key {key!r} has the kinds {kinds} and the PSI-MS terms {terms}; every row "
@@ -808,7 +808,7 @@ def _key(name: str, key: str, rows: Sequence[Row], /) -> Key:
         key=key,
         kind=kinds[0],
         fixed=dict(fixes.pop()),
-        psi_ms=tuple(terms[0].split(";")) if terms[0] else (),
+        cv_accession=tuple(terms[0].split(";")) if terms[0] else (),
     )
 
 
