@@ -108,6 +108,6 @@ An app that runs after conversion, such as apb-fasta, is named in `producers.csv
 | `make docs-tables` | Regenerates the tables of `docs/sets.md` |
 | `make schema` | Regenerates the snapshot JSON Schema after a snapshot model change |
 | `make versions` | Rewrites `versions.csv` from APB2's packaged rules |
-| `make bundle` | Builds the language bundle (catalog tables) and its test bundle (expected answers, synthetic results) into `build/`; a release attaches both, and apbCatalogR's `update-bundle.yaml` workflow pulls them into a pull request there |
+| `make bundle` | Builds the language bundle (catalog tables) and its test bundle (expected answers, synthetic results) into `build/`; a release attaches both, and `make update-bundle` in apbCatalogR ships them there |
 | `make check` | Format, lint, types, dependencies, tests, build and documentation |
 | `apb-catalog check SET_NAME` | Every packaged rule level against one set's requirements |

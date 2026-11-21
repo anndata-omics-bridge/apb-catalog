@@ -63,8 +63,8 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
-  # The language bundle and its test bundle, attached to the release. apbCatalogR's update-bundle
-  # workflow pulls them from there into a pull request.
+  # The language bundle and its test bundle, attached to the release. `make update-bundle` in
+  # apbCatalogR ships them from there.
   bundle:
     if: github.event_name == 'release'
     needs: build
