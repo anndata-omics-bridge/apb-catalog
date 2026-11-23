@@ -25,7 +25,7 @@ Try it online:
 
 | Page | For |
 | --- | --- |
-| [Get started](getting-started.md) | Install, look up fields, use the data |
+| [Get started](getting-started.md) | Install, then get the data by key with Polars or pandas, and the prefixes |
 | [Sets](sets.md) | Every set: its vocabulary, which software has which field |
 | [Python API](api.md) | Every call, answer, table and command |
 | [Maintaining](maintaining.md) | APB2 rule changes, new sets, the checks |

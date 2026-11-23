@@ -10,7 +10,9 @@ pip install apb-catalog
 
 The default install supports name lookups and HDF5 results (`.h5ad` and `.h5mu`). APB2 can pass DuckDB and Parquet results to `DataCatalog` through `read_parsed_levels`. Install `apb2[duckdb]` to use DuckDB. Install `apb2[excel]` when converting MSAngel or ProlineStudio workbooks with APB2.
 
-## Open a result
+## Get the data
+
+Open an APB2 result, name the sets to ask, and read each level by key, as AnnData reads it by name. `apb_catalog.api` answers with numpy matrices and Polars Series:
 
 ```python
 from pathlib import Path
@@ -19,83 +21,47 @@ from apb2.api import read_parsed_levels
 from apb_catalog.api import DataCatalog
 
 diann = read_parsed_levels(Path("diann.h5mu"))   # any APB2 result: h5ad, h5mu, Parquet, DuckDB
-confidence = DataCatalog(diann, "confidence_alpha")
-```
+catalog = DataCatalog(diann, "abundance_alpha", "confidence_alpha", "apb_alpha")
+ion = catalog.levels["peptidoform_ion"]
 
-The second argument names the set; [Sets](sets.md) lists them all.
-
-## See what it holds
-
-```python
-confidence.fields().select("level", "slot", "name", "key", "qualifier.stage", "present")
+ion.X.shape                          # (4, 6)
+ion.layers                           # key -> numpy matrix, runs × precursors
+ion.var                              # key -> Polars Series, one value per precursor
+ion.var["peptidoform_ion"].name      # 'ProForma_ion'
+ion.layers.name("pep")               # 'PEP'
+ion.layers.name("q_value")           # 'Q_Value'
+ion.var.get("q_value").name          # 'Global_Q_Value'
+ion.layers.get("library_q_value")    # None
+pep = ion.layers["pep"]              # numpy, runs × precursors
+pep
 ```
 
 ```text
-shape: (7, 6)
-┌─────────────────┬────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
-│ level           ┆ slot   ┆ name              ┆ key             ┆ qualifier.stage ┆ present │
-│ ---             ┆ ---    ┆ ---               ┆ ---             ┆ ---             ┆ ---     │
-│ str             ┆ str    ┆ str               ┆ str             ┆ str             ┆ bool    │
-╞═════════════════╪════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
-│ peptidoform_ion ┆ layers ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
-│ peptidoform_ion ┆ layers ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
-│ peptidoform_ion ┆ var    ┆ Global_Q_Value    ┆ q_value         ┆ identification  ┆ true    │
-│ peptidoform_ion ┆ var    ┆ Lib_Q_Value       ┆ library_q_value ┆ identification  ┆ true    │
-│ protein         ┆ layers ┆ PG_Q_Value        ┆ q_value         ┆ identification  ┆ true    │
-│ protein         ┆ var    ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification  ┆ true    │
-│ protein         ┆ var    ┆ Global_PG_Q_Value ┆ q_value         ┆ identification  ┆ true    │
-└─────────────────┴────────┴───────────────────┴─────────────────┴─────────────────┴─────────┘
+array([[0.01, 0.02, 0.03, 0.04, 0.06,  nan],
+       [0.02, 0.04, 0.06,  nan, 0.12, 0.1 ],
+       [0.03, 0.06,  nan, 0.12, 0.18, 0.15],
+       [0.04,  nan, 0.12, 0.16, 0.24, 0.2 ]])
 ```
 
-`q_value` in `layers` is the q-value of each run; in `var`, the one across the whole experiment. Or ask one level which keys it offers in one slot:
-
-```python
-ion = confidence.levels["peptidoform_ion"]
-ion.layers.keys()   # {'pep', 'q_value'}
-ion.var.keys()      # {'library_q_value', 'q_value'}
-```
-
-Only the sets named answer.
-
-## Get the data
+The arguments after the result name the sets; only the sets named answer, and [Sets](sets.md) lists them all. `apb_alpha` holds the fields `apb2 convert` writes for every vendor, such as the ProForma identifier `peptidoform_ion`. Spectronaut's PEP is `EG_PEP`, MaxQuant's `PEP`; `pep` reads whichever the result holds. `q_value` in `layers` is the q-value of each run; in `var`, the one across the whole experiment.
 
 | Call | Returns | One value per |
 | --- | --- | --- |
-| `layers.get(key)` | a numpy matrix, runs × features | run and feature |
-| `var.get(key)` | the var column, a Polars `Series` | feature |
-| `obs.get(key)` | the obs column, a Polars `Series` | run |
+| `X` | the level's primary layer, a numpy matrix, runs × features | run and feature |
+| `layers[key]` | a numpy matrix, runs × features, as `adata.layers[key]`; `KeyError` when absent | run and feature |
+| `var[key]`, `obs[key]` | the var or obs column, a Polars `Series`; `KeyError` when absent | feature, run |
+| `layers.get(key)`, `var.get(key)`, `obs.get(key)` | the same, or `None` when absent | |
+| `var[[key, ...]]` | several columns, a Polars `DataFrame` | feature |
 | `layers.name(key)`, `var.name(key)`, `obs.name(key)` | the field's name | |
 
-```python
-pep = ion.layers.get("pep")       # numpy, runs × precursors
-pep.shape                         # (4, 6)
-ion.layers.name("pep")            # 'PEP'
-diann.levels["peptidoform_ion"].layers[ion.layers.name("pep")].wide().head(3)   # apb2's own table
-```
+`get` and `name` take the qualifiers a key leaves open, as `ion.layers.get("retention_time", unit="minute")` with the `chromatography_alpha` set; `[...]` takes none.
 
-```text
-shape: (3, 4)
-┌───────┬───────┬───────┬───────┐
-│ obs_0 ┆ obs_1 ┆ obs_2 ┆ obs_3 │
-│ ---   ┆ ---   ┆ ---   ┆ ---   │
-│ f64   ┆ f64   ┆ f64   ┆ f64   │
-╞═══════╪═══════╪═══════╪═══════╡
-│ 0.01  ┆ 0.02  ┆ 0.03  ┆ 0.04  │
-│ 0.02  ┆ 0.04  ┆ 0.06  ┆ null  │
-│ 0.03  ┆ 0.06  ┆ null  ┆ 0.12  │
-└───────┴───────┴───────┴───────┘
-```
-
-Spectronaut's PEP is `EG_PEP`, MaxQuant's `PEP`; `layers.name` names whichever the result holds.
-
-The layer has the same runs and features, in the same order, as the level's abundance layer, so it can become weights directly:
+DIA-NN's library q-value is one value per precursor, so it is in `var`, not `layers`. Every layer has the runs and features of `X`, in the same order, so it can become weights directly:
 
 ```python
-intensities = ion.X                # the primary layer, runs × precursors
 weights = 1 - pep
-weights.shape == intensities.shape  # True
-
-ion.var.get("q_value").name        # 'Global_Q_Value'
+weights.shape == ion.X.shape        # True
+ion.var.get("library_q_value").name  # 'Lib_Q_Value'
 ```
 
 `None` means the vendor reports no such field, or APB2 left it out because it held one value or none. Fall back explicitly:
@@ -106,28 +72,43 @@ if pep is None:
     q_value = ion.layers.get("q_value")
 ```
 
-## Read a level as AnnData does
+## Get the data with pandas
 
-Name several sets. Only the sets named answer: `apb_alpha` holds the fields `apb2 convert` writes, such as `peptidoform_ion`, and answers only when named:
+`apb_catalog.api_pandas` has the same `DataCatalog` for the AnnData or MuData object APB2 wrote: the same keys answer the same fields, with AnnData's own matrices and pandas Series.
 
 ```python
-catalog = DataCatalog(diann, "abundance_alpha", "confidence_alpha", "apb_alpha")
-ion = catalog.levels["peptidoform_ion"]
+import mudata
+from apb_catalog.api_pandas import DataCatalog
 
-ion.layers                         # key -> numpy matrix, runs by precursors
-ion.var                            # key -> polars Series, one value per precursor
-ion.layers["q_value"].shape        # (4, 6)
-ion.var["peptidoform_ion"].name    # 'ProForma_ion'
-ion.layers["Q_Value"]              # not a key: the level's own layer of that name
-ion.layers.keys()                  # {'intensity', 'intensity_norm_settings', 'pep', 'q_value'}
-ion.layers.name("q_value")         # 'Q_Value'
-ion.layers.get("library_q_value")  # None
-ion.var.get("library_q_value").name  # 'Lib_Q_Value'
+mdata = mudata.read_h5mu("diann.h5mu")
+ion = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["peptidoform_ion"]
+
+ion.layers                                # key -> the matrix AnnData holds, runs × precursors
+ion.var                                   # key -> pandas Series, one value per precursor
+ion.layers["pep"] is mdata["peptidoform_ion"].layers["PEP"]           # True
+ion.layers["q_value"] is mdata["peptidoform_ion"].layers["Q_Value"]   # True
+ion.var[["peptidoform_ion", "protein_assignment"]]
 ```
 
-A layer is a numpy matrix, runs by precursors, as AnnData's layers; a `var` column a polars Series. `name` gives the field a key reads. DIA-NN's library q-value is one value per precursor, so it is in `var`, not `layers`.
+```text
+                              ProForma_ion   Protein_Group
+pfi:PEPTIDEK/2                  PEPTIDEK/2              P1
+pfi:AAC[UNIMOD:4]LLK/2  AAC[UNIMOD:4]LLK/2  sp|P2|P2_HUMAN
+pfi:YEASTPEPK/2                YEASTPEPK/2              P3
+pfi:CONTPEPK/2                  CONTPEPK/2         Cont_P4
+pfi:LASTPEPK/2                  LASTPEPK/2              P7
+pfi:SHAREDK/2                    SHAREDK/2      P5;CON__P6
+```
 
-`get` returns `None` where `[...]` raises `KeyError`, and takes the qualifiers a key leaves open, as `ion.layers.get("retention_time", unit="minute")` with the `chromatography_alpha` set.
+An `.h5ad` read with `anndata.read_h5ad` is the one level it holds. `UnresolvedField` comes from `apb_catalog.api`. `as_mudata()` converts: a new MuData of the cataloged fields alone, each under its key; see [A result named by catalog keys](keyed.md).
+
+## Prefixes: one set, or the level's own name
+
+A name that is not a key reads the level's own field of that name, as AnnData does:
+
+```python
+ion.layers["Q_Value"].shape        # (4, 6)
+```
 
 A name that is neither a key nor the level's own raises `KeyError`, as cf_xarray's `ds.cf[...]` does. A vendor may name a column as a key is named, so a prefix makes the lookup exact:
 
@@ -164,26 +145,85 @@ A prefix answers only when its set is named: on `DataCatalog(diann, "confidence_
 
 `sets()` lists each set's prefix. Where a key names several columns, such as a prolfquapp table's `group` and `bait` columns with `obs_annotation_alpha` named on an annotated result, `obs["group"]` raises `UnresolvedField` and the list `obs[["group", "Run"]]` reads them all, then `Run`.
 
-## Read the AnnData object with pandas
-
-`apb_catalog.api_pandas` has the same `DataCatalog` for the AnnData or MuData object APB2 wrote: the same keys answer the same fields, with AnnData's own values.
+## See what a result holds
 
 ```python
-import mudata
-from apb_catalog.api_pandas import DataCatalog
+from apb_catalog.api import DataCatalog
 
-mdata = mudata.read_h5mu("diann.h5mu")
-ion = DataCatalog(mdata, "abundance_alpha", "confidence_alpha", "apb_alpha").levels["peptidoform_ion"]
-
-ion.layers                                # key -> the matrix AnnData holds, runs by precursors
-ion.var                                   # key -> pandas Series, one value per precursor
-ion.layers["q_value"] is mdata["peptidoform_ion"].layers["Q_Value"]   # True
-ion.var[["q_value", "peptidoform_ion"]]   # a pandas DataFrame
+confidence = DataCatalog(diann, "confidence_alpha")
+confidence.fields().select("level", "slot", "name", "key", "qualifier.stage", "present")
 ```
 
-An `.h5ad` read with `anndata.read_h5ad` is the one level it holds. `UnresolvedField` comes from `apb_catalog.api`.
+```text
+shape: (7, 6)
+┌─────────────────┬────────┬───────────────────┬─────────────────┬─────────────────┬─────────┐
+│ level           ┆ slot   ┆ name              ┆ key             ┆ qualifier.stage ┆ present │
+│ ---             ┆ ---    ┆ ---               ┆ ---             ┆ ---             ┆ ---     │
+│ str             ┆ str    ┆ str               ┆ str             ┆ str             ┆ bool    │
+╞═════════════════╪════════╪═══════════════════╪═════════════════╪═════════════════╪═════════╡
+│ peptidoform_ion ┆ layers ┆ Q_Value           ┆ q_value         ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ layers ┆ PEP               ┆ pep             ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var    ┆ Global_Q_Value    ┆ q_value         ┆ identification  ┆ true    │
+│ peptidoform_ion ┆ var    ┆ Lib_Q_Value       ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ layers ┆ PG_Q_Value        ┆ q_value         ┆ identification  ┆ true    │
+│ protein         ┆ var    ┆ Lib_PG_Q_Value    ┆ library_q_value ┆ identification  ┆ true    │
+│ protein         ┆ var    ┆ Global_PG_Q_Value ┆ q_value         ┆ identification  ┆ true    │
+└─────────────────┴────────┴───────────────────┴─────────────────┴─────────────────┴─────────┘
+```
 
-`as_mudata()` converts: a new MuData of the cataloged fields alone, each under its key, which `write_h5mu` writes. See [A result named by catalog keys](keyed.md).
+`q_value` in `layers` is the q-value of each run; in `var`, the one across the whole experiment. Or ask one level which keys it offers in one slot:
+
+```python
+ion = confidence.levels["peptidoform_ion"]
+ion.layers.keys()   # {'pep', 'q_value'}
+ion.var.keys()      # {'library_q_value', 'q_value'}
+```
+
+Only the sets named answer.
+
+## Require what an application needs
+
+A set's requirement rows say how strongly an application needs a field on each level: `required`, `recommended` or `optional`. `abundance_alpha` recommends an intensity on the precursor level; `apb_alpha` requires the identifiers, decoy and contaminant flags, and recommends `protein_assignment`. `fields()` lists them in `requirement`, and [Sets](sets.md) shows each set's table.
+
+`enforce` checks them once, when the catalog opens:
+
+```python
+import polars as pl
+from apb_catalog.api import DataCatalog
+
+checked = DataCatalog(diann, "abundance_alpha", "apb_alpha", enforce="recommended")
+checked.fields().filter(
+    pl.col("level") == "peptidoform_ion", pl.col("requirement").is_not_null()
+).select("key", "slot", "requirement", "present")
+```
+
+```text
+shape: (8, 4)
+┌────────────────────┬────────┬─────────────┬─────────┐
+│ key                ┆ slot   ┆ requirement ┆ present │
+│ ---                ┆ ---    ┆ ---         ┆ ---     │
+│ str                ┆ str    ┆ str         ┆ bool    │
+╞════════════════════╪════════╪═════════════╪═════════╡
+│ intensity          ┆ layers ┆ recommended ┆ true    │
+│ peptide            ┆ var    ┆ required    ┆ true    │
+│ peptidoform        ┆ var    ┆ required    ┆ true    │
+│ peptidoform_ion    ┆ var    ┆ required    ┆ true    │
+│ decoy              ┆ var    ┆ required    ┆ true    │
+│ contaminant        ┆ var    ┆ required    ┆ true    │
+│ protein_assignment ┆ var    ┆ recommended ┆ true    │
+│ fasta_accessions   ┆ var    ┆ optional    ┆ true    │
+└────────────────────┴────────┴─────────────┴─────────┘
+```
+
+| Opened with | `required` absent | `recommended` absent | `optional` absent |
+| --- | --- | --- | --- |
+| no `enforce` | opens | opens | opens |
+| `enforce="required"` | raises `MissingRequiredField` | opens, one logged warning | opens |
+| `enforce="recommended"` | raises | raises | opens |
+
+- `MissingRequiredField` lists every missing field, one line each, so an application stops at the start with all of them named, not at its first lookup
+- Once the catalog is open, a lookup does not enforce: `get` returns `None` for an absent field
+- Which software versions meet a set's requirements, without a result: [Names without data](names.md#requirements-per-software-version)
 
 ## Keys stand for a kind and its qualifiers
 
@@ -213,21 +253,6 @@ A qualifier the key leaves open is a keyword of `get` and `name`; [Sets](sets.md
 - A keyword the key already fixes, such as `stage` with `q_value`, raises `ValueError`
 - `[...]` takes no keywords
 
-## Names without data
-
-`Catalog` takes a software name and version instead of a result; its levels have the same slots, holding names:
-
-```python
-from apb_catalog.api import Catalog
-
-ion = Catalog("DIA-NN", "2.6.0", "abundance_alpha").levels["peptidoform_ion"]
-ion.layers["intensity"]            # 'Precursor_Quantity'
-apb = Catalog("DIA-NN", "2.6.0", "apb_alpha").levels["peptidoform_ion"]
-apb.var[["peptidoform_ion", "protein_assignment"]]  # ('ProForma_ion', 'Protein_Group')
-```
-
-`get` returns the name or `None` and takes qualifiers too: `Catalog("DIA-NN", "2.6.0", "chromatography_alpha").levels["peptidoform_ion"].layers.get("retention_time", unit="minute")` is `'RT'`.
-
 ## When there is no single answer
 
 | Call | Raises |
@@ -236,10 +261,9 @@ apb.var[["peptidoform_ion", "protein_assignment"]]  # ('ProForma_ion', 'Protein_
 | Spectronaut `abundance.levels["protein"].layers.get("intensity_norm_settings", aggregation="sum")` | `UnresolvedField`, unknown: `PG_Quantity` leaves aggregation unknown |
 | `layers.get("intensity", normalization="none")` | `ValueError`: the key `intensity` fixes normalization |
 | `layers["intensities"]` | `KeyError`: no key or field `intensities`; `get` returns `None`, as `dict.get` |
-| `Catalog("DIA-NN", "3.0", "confidence_alpha")` | `ValueError`: no packaged DIA-NN rule admits version `3.0` |
 
 ```python
-from apb_catalog.api import DataCatalog, UnresolvedField
+from apb_catalog.api import UnresolvedField
 
 abundance = DataCatalog(diann, "abundance_alpha")
 try:
@@ -258,6 +282,8 @@ intensity_norm_settings (kind=intensity, normalization=run_setting) on protein i
 from apb2.api import write_parsed_levels
 from apb_catalog.api import ResolutionSnapshot, attach_snapshot
 
+confidence = DataCatalog(diann, "confidence_alpha")
+confidence.levels["peptidoform_ion"].layers.get("pep")
 confidence.levels["peptidoform_ion"].layers.get("q_value")
 annotated = attach_snapshot(diann, confidence.snapshot())
 write_parsed_levels(annotated, Path("annotated.h5mu"))
@@ -268,9 +294,9 @@ stored = ResolutionSnapshot.model_validate(record)
 ```
 
 ```text
-[('peptidoform_ion', 'resolved', 'PEP'), ('peptidoform_ion', 'resolved', 'Global_Q_Value'), ('peptidoform_ion', 'resolved', 'Q_Value')]
+[('peptidoform_ion', 'resolved', 'PEP'), ('peptidoform_ion', 'resolved', 'Q_Value')]
 ```
 
-The snapshot holds every lookup `confidence` answered on this page, in order.
+The snapshot holds every lookup `confidence` answered, in order.
 
 The snapshot is plain JSON in the result, readable without APB Catalog; [Python API](api.md#snapshots) says where.

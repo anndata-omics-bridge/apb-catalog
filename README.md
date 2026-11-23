@@ -16,7 +16,7 @@ Try it online:
 
 | Page | For |
 | --- | --- |
-| [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/) | Install, look up fields, use the data |
+| [Get started](https://anndata-omics-bridge.github.io/apb-catalog/getting-started/) | Install, then get the data by key with Polars or pandas, and the prefixes |
 | [Sets](https://anndata-omics-bridge.github.io/apb-catalog/sets/) | Every set: its vocabulary, which software has which field |
 | [Python API](https://anndata-omics-bridge.github.io/apb-catalog/api/) | Every call, answer, table and command |
 | [Maintaining](https://anndata-omics-bridge.github.io/apb-catalog/maintaining/) | APB2 rule changes, new sets, the checks |

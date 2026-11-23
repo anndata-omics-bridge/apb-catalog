@@ -1,6 +1,6 @@
 # Writing an exporter
 
-An exporter asks the catalog for each field by meaning and writes it under the target's name. The two examples below write a Perseus table with the Polars `DataCatalog` and a prolfquapp `.h5ad` with the pandas one, no export rule. On a DIA-NN result that `apb2 convert` wrote and `apb2 annotate` annotated, with or without apb-fasta, they write the values `apb-export perseus` and `apb-export prolfqua` write; the Perseus table is the same file.
+An exporter asks the catalog for each field by meaning and writes it under the target's name, with no export rule. The examples below write a Perseus table with the Polars `DataCatalog`, a prolfquapp, ProteoPy and AlphaPeptTools file with the pandas one, and QFeatures assays in R with apbCatalogR. On a DIA-NN result that `apb2 convert` wrote and `apb2 annotate` annotated, they write the values `apb-export perseus`, `prolfqua`, `proteopy_ion` and `alphapepttools` write; the Perseus table is the same file. Perseus and prolfquapp also match with apb-fasta's columns.
 
 ## Perseus
 
@@ -204,6 +204,207 @@ adata.write_h5ad("prolfqua.h5ad")
 - **Protein-group fields:** `per_precursor` reads a protein-level matrix for each precursor through its `protein_assignment`; a precursor whose group the protein level lacks gets NaN
 - **Fallbacks:** plain `if … is None`; the experiment-wide protein q-value is the library one where the result has it, else the global one
 - **Left out:** the software name in `uns`, which the catalog does not answer, and ProteoBench's entrapment q-value
+
+## ProteoPy
+
+ProteoPy's main input is peptides: one `.h5ad`, samples by features, with `sample_id` in `obs` and `peptide_id` and `protein_id` in `var`. `check_proteodata` accepts it as peptide level when every feature names one protein. From DIA-NN that is the precursor level, as `proteopy.read.diann(..., aggr_level="Precursor.Id")` reads it.
+
+```python
+import anndata
+import mudata
+import pandas as pd
+from apb_catalog.api_pandas import DataCatalog
+
+mdata = mudata.read_h5mu("diann.h5mu")
+answering = DataCatalog.answering_sets(mdata)  # the sets this result opens
+ion = DataCatalog(mdata, "apb_alpha").levels["peptidoform_ion"]
+runs = list(ion.obs_names)
+
+# One feature per precursor; a precursor naming several proteins is left out
+accessions = ion.var["fasta_accessions"].astype("string").str.strip().fillna("")
+single = ((accessions != "") & ~accessions.str.contains(";", regex=False)).to_numpy()
+var = pd.DataFrame({"peptide_id": ion.var["peptidoform_ion"], "protein_id": accessions})
+decoy = ion.var.get("decoy")
+if decoy is not None:
+    var["decoy"] = decoy.astype(bool)
+
+# apb-fasta's protein annotation, once apb-fasta merge-annotations has run
+if "fasta_proteins_alpha" in answering:
+    fasta = DataCatalog(mdata, "fasta_proteins_alpha").levels["peptidoform_ion"]
+    annotation_fields = {
+        "in_fasta": "any_member_in_fasta",
+        "gene_id": "fasta_gene_names",
+        "description": "fasta_descriptions",
+        "fasta_organisms": "fasta_organism_names",
+    }
+    for column, term in annotation_fields.items():
+        values = fasta.var.get(term)
+        if values is not None:
+            var[column] = values
+
+# Samples, and their groups and subjects once apb2 annotate has run
+obs = pd.DataFrame({"sample_id": runs}, index=runs)
+if "obs_annotation_alpha" in answering:
+    annotation = DataCatalog(mdata, "obs_annotation_alpha").levels["peptidoform_ion"]
+    obs = obs.join(pd.concat([annotation.obs[["group"]], annotation.obs.get("subject")], axis=1))
+
+var = var[single]
+adata = anndata.AnnData(
+    X=ion.X[:, single], obs=obs, var=var.set_index(var["peptide_id"].to_numpy())
+)
+adata.write_h5ad("proteopy_ion.h5ad")
+```
+
+- **One protein per feature:** `fasta_accessions` is the precursor's protein list as the software reports it; ProteoPy's own DIA-NN reader also leaves out precursors naming several proteins
+- **Protein level:** the same on `levels["protein"]`, with `protein_id` from `protein_assignment`
+- **Rollup:** precursors to peptides is ProteoPy's step, not the exporter's
+
+## AlphaPeptTools
+
+AlphaPeptTools reads one `.h5mu` with a `precursors`, a `peptides` and a `proteins` modality: runs by features, the intensity as `X`, `raw_name` in `obs`, identifiers in `var`. A level the result lacks gets no modality; DIA-NN reports no peptide level.
+
+```python
+import anndata
+import mudata
+import pandas as pd
+from apb_catalog.api_pandas import DataCatalog
+
+mdata = mudata.read_h5mu("diann.h5mu")
+answering = DataCatalog.answering_sets(mdata)  # the sets this result opens
+catalog = DataCatalog(mdata, "apb_alpha")
+fasta = None
+if "fasta_peptides_alpha" in answering:  # once apb-fasta verify-peptides has run
+    fasta = DataCatalog(mdata, "fasta_peptides_alpha")
+annotated = "obs_annotation_alpha" in answering  # once apb2 annotate has run
+
+# modality: (level, feature key, its identifier columns and the keys answering them)
+modalities = {
+    "precursors": (
+        "peptidoform_ion",
+        "precursor_id",
+        {"precursor_id": "peptidoform_ion", "sequence": "peptide", "proteins": "protein_assignment"},
+    ),
+    "peptides": ("peptide", "sequence", {"sequence": "peptide", "proteins": "protein_assignment"}),
+    "proteins": ("protein", "proteins", {"proteins": "protein_assignment"}),
+}
+peptide_fields = {
+    "in_fasta": "peptide_in_fasta",
+    "fasta_proteins": "fasta_matching_protein_ids",
+    "fasta_organisms": "fasta_matching_organisms",
+}
+
+
+def modality(name: str, key: str, columns: dict[str, str]) -> anndata.AnnData:
+    """One level as AlphaPeptTools reads it."""
+    level = catalog.levels[name]
+    var = pd.DataFrame({column: level.var.get(term) for column, term in columns.items()})
+    var = var.dropna(axis="columns", how="all")
+    if name != "protein":
+        # apb2's vendor marking, joined with apb-fasta's FASTA match where it has run
+        contaminant = level.var["contaminant"].astype(bool)
+        if fasta is not None:
+            verified = fasta.levels[name].var
+            matched = verified.get("fasta_matches_contaminant")
+            if matched is not None:
+                contaminant |= matched.astype(bool)
+            for column, term in peptide_fields.items():
+                values = verified.get(term)
+                if values is not None:
+                    var[column] = values
+        var["contaminant"] = contaminant
+    runs = list(level.obs_names)
+    obs = pd.DataFrame({"raw_name": runs}, index=runs)
+    if annotated:
+        annotation = DataCatalog(mdata, "obs_annotation_alpha").levels[name]
+        obs = obs.join(pd.concat([annotation.obs[["group"]], annotation.obs.get("subject")], axis=1))
+    return anndata.AnnData(X=level.X, obs=obs, var=var.set_index(var[key].to_numpy()))
+
+
+out = mudata.MuData(
+    {
+        modality_name: modality(name, key, columns)
+        for modality_name, (name, key, columns) in modalities.items()
+        if name in catalog.levels
+    }
+)
+out.write("alphapepttools.h5mu")
+sorted(out.mod)   # ['precursors', 'proteins']
+```
+
+- **Levels:** `name in catalog.levels` asks whether the result has a level; the peptide modality appears for software that reports peptides, such as MaxQuant
+- **Contaminants:** apb2's vendor marking, joined with apb-fasta's FASTA match
+
+## QFeatures
+
+QFeatures is a Bioconductor package, so this exporter asks [apbCatalogR](https://anndata-omics-bridge.github.io/apbCatalogR/), the catalog in R, with the same keys. apbCatalogR reads `.h5ad`, Parquet and DuckDB results, so it opens the Parquet one (`apb2 convert --format parquet`). Each level becomes an assay with the columns `apb-export qfeatures` writes; QFeatures links precursors to proteins by `proteins` and aggregates them.
+
+```r
+library(apbCatalogR)
+library(QFeatures)
+
+result <- read_parsed_levels("diann.parquet")
+answering <- DataCatalog$answering_sets(result)  # the sets this result opens
+catalog <- DataCatalog$new(result, "apb_alpha")
+fasta <- NULL
+if ("fasta_peptides_alpha" %in% answering) {  # once apb-fasta verify-peptides has run
+    fasta <- DataCatalog$new(result, "fasta_peptides_alpha")
+}
+
+# assay: its level and identifier columns, each with the key answering it
+assays <- list(
+    precursors = list("peptidoform_ion", c(
+        precursor_id = "peptidoform_ion", sequence = "peptide", proteins = "protein_assignment"
+    )),
+    peptides = list("peptide", c(sequence = "peptide", proteins = "protein_assignment")),
+    proteins = list("protein", c(proteins = "protein_assignment"))
+)
+peptide_fields <- c(
+    in_fasta = "peptide_in_fasta",
+    fasta_proteins = "fasta_matching_protein_ids",
+    fasta_organisms = "fasta_matching_organisms"
+)
+
+as_assay <- function(name, columns) {
+    level <- catalog$levels[[name]]
+    features <- Filter(Negate(is.null), lapply(columns, level$var$get))
+    if (name != "protein") {
+        # apb2's vendor marking, joined with apb-fasta's FASTA match where it has run
+        contaminant <- as.logical(level$var[["contaminant"]])
+        if (!is.null(fasta)) {
+            verified <- fasta$levels[[name]]$var
+            matched <- verified$get("fasta_matches_contaminant")
+            if (!is.null(matched)) contaminant <- contaminant | as.logical(matched)
+            features <- c(features, Filter(Negate(is.null), lapply(peptide_fields, verified$get)))
+        }
+        features$contaminant <- contaminant
+    }
+    features <- as.data.frame(features)
+    values <- t(as.matrix(level$X))  # SummarizedExperiment holds features x runs
+    dimnames(values) <- list(features[[1]], level$obs_names)
+    SummarizedExperiment(assays = list(intensity = values), rowData = features)
+}
+
+present <- Filter(function(assay) assay[[1]] %in% names(catalog$levels), assays)
+qf <- QFeatures(lapply(present, function(assay) as_assay(assay[[1]], assay[[2]])))
+
+# Groups and subjects, once apb2 annotate has run
+if ("obs_annotation_alpha" %in% answering) {
+    annotation <- DataCatalog$new(result, "obs_annotation_alpha")$levels$peptidoform_ion
+    groups <- annotation$obs[c("group")]
+    subject <- annotation$obs$get("subject")
+    if (!is.null(subject)) groups$subject <- subject
+    colData(qf) <- DataFrame(groups, row.names = annotation$obs_names)
+}
+
+qf <- addAssayLink(qf, from = "precursors", to = "proteins",
+                   varFrom = "proteins", varTo = "proteins")
+qf <- aggregateFeatures(qf, "precursors", fcol = "proteins", name = "aggregated",
+                        fun = colSums, na.rm = TRUE)
+```
+
+- **Same lookups as Python:** `level$var$get(key)` is `level.var.get(key)`, `NULL` where Python returns `None`; `DataCatalog$answering_sets(result)` lists the sets a result opens
+- **Features by runs:** AnnData holds runs by features, SummarizedExperiment features by runs, hence `t()`
+- **Not in the page test:** the test runs Python blocks only; this block was run on both results with apbCatalogR 0.99.5 and QFeatures 1.22.0
 
 ## Sets an app fills
 

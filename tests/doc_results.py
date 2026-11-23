@@ -119,8 +119,21 @@ def _leading(group: str) -> str | None:
     return None if accession.startswith("Cont_") else accession
 
 
+def _annotation(leading: list[str | None]) -> pl.DataFrame:
+    """apb-fasta merge-annotations' ``fasta`` table: one row per feature of the level."""
+    return pl.DataFrame(
+        {
+            "any_member_in_fasta": [a is not None for a in leading],
+            "fasta_gene_names": [f"GENE_{a}" if a else None for a in leading],
+            "fasta_descriptions": [f"Protein {a}" if a else None for a in leading],
+            "fasta_organism_names": ["Homo sapiens" if a else None for a in leading],
+        }
+    )
+
+
 def _verified_ion(level: ParsedLevel) -> ParsedLevel:
-    leading = [_leading(group) for group in level.var.frame.get_column("Protein_Group")]
+    groups = level.var.frame.get_column("Protein_Group").to_list()
+    leading = [_leading(group) for group in groups]
     table = pl.DataFrame(
         {
             "reported_leading_accession": leading,
@@ -129,15 +142,19 @@ def _verified_ion(level: ParsedLevel) -> ParsedLevel:
             "reported_leading_gene_name": [f"GENE_{a}" if a else None for a in leading],
             "reported_leading_protein_length": [300 if a else None for a in leading],
             "reported_leading_tryptic_peptides": [12 if a else None for a in leading],
+            "peptide_in_fasta": [a is not None for a in leading],
+            "fasta_matching_protein_ids": leading,
+            "fasta_matching_organisms": ["Homo sapiens" if a else None for a in leading],
+            "fasta_matches_contaminant": [group.startswith("Cont_") for group in groups],
         }
     )
-    return replace(level, varm={**level.varm, "fasta_validation": table})
+    varm = {**level.varm, "fasta_validation": table, "fasta": _annotation(leading)}
+    return replace(level, varm=varm)
 
 
 def _annotated_protein(level: ParsedLevel) -> ParsedLevel:
     leading = [_leading(group) for group in level.var.frame.get_column("Protein_Group")]
-    table = pl.DataFrame({"fasta_gene_names": [f"GENE_{a}" if a else None for a in leading]})
-    return replace(level, varm={**level.varm, "fasta": table})
+    return replace(level, varm={**level.varm, "fasta": _annotation(leading)})
 
 
 def with_fasta(parsed: ParsedLevels) -> ParsedLevels:
