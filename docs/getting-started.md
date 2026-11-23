@@ -8,6 +8,8 @@ Every example runs on a small synthetic DIA-NN 1.8.1 result, four runs by six pr
 pip install apb-catalog
 ```
 
+The default install supports name lookups and HDF5 results (`.h5ad` and `.h5mu`). APB2 can pass DuckDB and Parquet results to `DataCatalog` through `read_parsed_levels`. Install `apb2[duckdb]` to use DuckDB. Install `apb2[excel]` when converting MSAngel or ProlineStudio workbooks with APB2.
+
 ## Open a result
 
 ```python
